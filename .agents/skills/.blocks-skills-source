@@ -1,0 +1,10 @@
+rules_repo=https://github.com/SELISEdigitalplatforms/blocks-skills.git
+rules_ref=main
+rules_commit=3e36ede8aac902b875512e5ae14e04df1b5410bb
+skills_repo=https://github.com/SELISEdigitalplatforms/blocks-cli.git
+skills_ref=main
+skills_commit=74be268e89d6e8383bb5ef95efd1b9cd0cc7a134
+skills=blocks-bootstrap blocks-captcha blocks-data-gateway-configuration blocks-data-gateway-crud blocks-data-storage blocks-frontend-local-https blocks-iam-access-control blocks-iam-account blocks-iam-mfa blocks-iam-organizations blocks-iam-sso-oidc-configuration blocks-iam-sso-oidc-implementation blocks-iam-users blocks-localization-configuration blocks-localization-implementation blocks-mail blocks-notification blocks-notifier blocks-release-deployment blocks-secrets blocks-storage-configuration blocks-workflow 
+agents=claude-code 
+skill_fronts=.claude/skills 
+instruction_fronts=CLAUDE.md 
