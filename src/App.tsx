@@ -1,8 +1,19 @@
+import { AuthProvider } from "@/app/providers/AuthProvider"
+import { CurrentUserProvider } from "@/app/providers/CurrentUserProvider"
+import { NavigationProvider } from "@/app/router/navigation"
+import { AppRouter } from "@/app/router/routes"
+import { Toaster } from "@/components/ui/sonner"
+
 export function App() {
   return (
-    <main className="flex min-h-svh items-center justify-center p-6">
-      <h1 className="text-2xl font-bold">Inventory</h1>
-    </main>
+    <NavigationProvider>
+      <AuthProvider>
+        <CurrentUserProvider>
+          <AppRouter />
+          <Toaster position="bottom-right" />
+        </CurrentUserProvider>
+      </AuthProvider>
+    </NavigationProvider>
   )
 }
 

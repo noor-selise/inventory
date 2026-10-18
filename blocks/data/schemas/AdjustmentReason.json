@@ -1,0 +1,22 @@
+{
+  "schemaName": "AdjustmentReason",
+  "schemaType": 1,
+  "description": "Stock adjustment reasons (spec 0004 AC-7)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isSystem",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

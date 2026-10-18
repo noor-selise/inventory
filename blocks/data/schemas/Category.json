@@ -1,0 +1,22 @@
+{
+  "schemaName": "Category",
+  "schemaType": 1,
+  "description": "Product category tree (spec 0005 AC-7)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "parentId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "isDefault",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

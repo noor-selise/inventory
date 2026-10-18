@@ -1,0 +1,122 @@
+{
+  "schemaName": "Product",
+  "schemaType": 1,
+  "description": "Products and services (spec 0005)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "sku",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "itemType",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "standardUom",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "purchaseUom",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "purchaseUomRatio",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "salesUom",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "salesUomRatio",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "categoryId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "description",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "length",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "width",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "height",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "weight",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "trackLots",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "trackSerials",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "trackExpiry",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "shelfLifeDays",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "sellBeforeExpiryDays",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "expiryNoticeDays",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "averageCost",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

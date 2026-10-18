@@ -1,0 +1,32 @@
+{
+  "schemaName": "TaxCode",
+  "schemaType": 1,
+  "description": "Per product tax rates (spec 0004 AC-5)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "taxingSchemeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "tax1Rate",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "tax2Rate",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

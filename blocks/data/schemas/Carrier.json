@@ -1,0 +1,22 @@
+{
+  "schemaName": "Carrier",
+  "schemaType": 1,
+  "description": "Shipping carriers (spec 0004 AC-7)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isSystem",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

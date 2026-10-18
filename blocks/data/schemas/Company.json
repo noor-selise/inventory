@@ -1,0 +1,32 @@
+{
+  "schemaName": "Company",
+  "schemaType": 1,
+  "description": "Company profile, one per organization (spec 0004 AC-1)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "address",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "timeZone",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "homeCurrency",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "dateFormat",
+      "type": "String",
+      "isArray": false
+    }
+  ]
+}

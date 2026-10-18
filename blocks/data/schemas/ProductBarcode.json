@@ -1,0 +1,17 @@
+{
+  "schemaName": "ProductBarcode",
+  "schemaType": 1,
+  "description": "Barcodes, unique across the company (spec 0005 AC-3)",
+  "fields": [
+    {
+      "name": "barcode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schemaName": "PaymentMethod",
+  "schemaType": 1,
+  "description": "Payment methods (spec 0004 AC-7)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isSystem",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

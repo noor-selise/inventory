@@ -12,10 +12,10 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | # | Feature | Phase | Status |
 |---|---------|-------|--------|
 | 1 | Stack & scaffold | Foundation | in-progress |
-| 2 | Design system integration | Foundation | planned |
-| 3 | Sign in, team and roles | Foundation | planned |
-| 4 | Company settings and lookups | Foundation | planned |
-| 5 | Product catalog | MVP | planned |
+| 2 | Design system integration | Foundation | in-progress |
+| 3 | Sign in, team and roles | Foundation | in-progress |
+| 4 | Company settings and lookups | Foundation | in-progress |
+| 5 | Product catalog | MVP | in-progress |
 | 6 | Locations and bins | MVP | planned |
 | 7 | Stock ledger and quantities | MVP | planned |
 | 8 | Stock adjustments, transfers and counts | MVP | planned |
@@ -46,31 +46,53 @@ A runnable React + TypeScript project with Tailwind CSS and shadcn/ui set up, ev
 - [ ] Verify it: `/check verify stack & scaffold`
 Spec [0001](../specs/0001-stack-scaffold.md) · code in `./` (`src/`, `package.json`, `vite.config.ts`)
 
-### 2. Design system integration · needs a decision
+### 2. Design system integration · in-progress · assumed decision (spec 0025)
 Wire `docs/DESIGN.md` into the scaffold: color tokens (dark default plus light), radius scale, DM Sans and JetBrains Mono, dark / light / system theme switching that persists, the reduced motion rule, and the custom Button variants. Other components are added later, when a feature needs them.
 **Done when:** the app opens in dark by default and can switch to light or system, every token from DESIGN.md §2 and §4 is usable as a utility class (for example `bg-primary`, `text-destructive-text`), fonts load, and the Button renders all its variants and sizes with near black text on green.
-- [ ] Design it (spec): `/architect design system integration`
+- [ ] Design it (spec): `/architect design system integration` (built on an assumed spec, ratify it)
+- [x] Build it: `/develop design system integration`
+  - [x] Tokens, fonts and dark default theme with light and system
+  - [x] Button and Badge variants from DESIGN.md
+- [ ] Verify it: `/check verify design system integration`
+Spec [0025](../specs/0025-design-system-integration.md) (Assumed) · code in `src/index.css`, `src/components/ui/`, `src/components/theme-provider.tsx`
 
-### 3. Sign in, team and roles · needs a decision
+### 3. Sign in, team and roles · in-progress
 Blocks hosted login, MFA, one company per organization, seven role bundles, cost hidden from people without cost access.
 **Done when:** a user signs in over HTTPS, belongs to one company, and sees only what their role allows (spec 0003 AC-1 to AC-7).
 **Blocks fit:** ✅ mostly; location limits and approval limit partly app side.
-- [ ] Design it (spec): drafted as [0003](../specs/0003-auth-team-roles.md) (Proposed), confirm it: `/architect sign in, team and roles`
+- [x] Design it (spec): [0003](../specs/0003-auth-team-roles.md)
+- [ ] Build it: `/develop sign in, team and roles`
+  - [x] App side: SDK client, hosted login, callback, guards, local HTTPS, team screen, last changed by
+  - [ ] Blocks side: OIDC client, OIDC on, seven roles, admin user (run `scripts/blocks-setup.sh`)
+  - [ ] Multi organization mode (one way switch, needs your go ahead), MFA, cost masking
+- [ ] Verify it: `/check verify sign in, team and roles`
+Spec [0003](../specs/0003-auth-team-roles.md) · code in `src/lib/blocks/`, `src/app/`, `src/features/auth/`, `src/features/team/`, `scripts/blocks-setup.sh`
 
-### 4. Company settings and lookups · needs a decision
+### 4. Company settings and lookups · in-progress
 Company profile, currencies and rates, document numbering, payment terms, taxing schemes, reasons, carriers, payment methods.
 **Done when:** every lookup list is editable and new documents get unique running numbers (spec 0004).
 **Blocks fit:** ✅; numbering needs a retry loop.
-- [ ] Design it (spec): drafted as [0004](../specs/0004-company-settings-lookups.md) (Proposed), confirm it: `/architect company settings and lookups`
+- [x] Design it (spec): [0004](../specs/0004-company-settings-lookups.md)
+- [ ] Build it: `/develop company settings and lookups`
+  - [ ] Schemas live in Blocks (files ready, run `scripts/blocks-setup.sh`)
+  - [x] Company, currencies and rates, numbering with retry, lists and taxes screens
+- [ ] Verify it: `/check verify company settings and lookups`
+Spec [0004](../specs/0004-company-settings-lookups.md) · code in `src/features/settings/`, `blocks/data/schemas/`
 
 ## MVP
 The first sellable release (PRD §8 P0). Items marked ❌ or ⚠️ in Blocks fit wait on decision D1 in spec 0002.
 
-### 5. Product catalog · needs a decision
+### 5. Product catalog · in-progress
 Products, categories, barcodes, units, tracking flags, vendor items, images; variants and custom fields later.
 **Done when:** products save with unique name, SKU, and barcodes, and a scan finds the product (spec 0005).
 **Blocks fit:** ✅.
-- [ ] Design it (spec): drafted as [0005](../specs/0005-product-catalog.md) (Proposed), confirm it: `/architect product catalog`
+- [x] Design it (spec): [0005](../specs/0005-product-catalog.md)
+- [ ] Build it: `/develop product catalog`
+  - [ ] Schemas and unique indexes live in Blocks (files ready, run `scripts/blocks-setup.sh`)
+  - [x] Product list, search, form with type and tracking locks, units, barcodes and scan lookup, deactivate
+  - [ ] Images, vendor items (needs spec 0010 vendors), P1 items
+- [ ] Verify it: `/check verify product catalog`
+Spec [0005](../specs/0005-product-catalog.md) · code in `src/features/products/`, `blocks/data/schemas/`
 
 ### 6. Locations and bins · needs a decision
 Warehouses, stores, trucks and their bins, with a default location.

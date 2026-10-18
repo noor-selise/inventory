@@ -1,7 +1,7 @@
 # 0003. Sign in, team members and roles on Blocks IAM
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -121,15 +121,15 @@ The server must enforce access (PRD §7 Security), and only Blocks permissions a
 
 ## Build plan
 
-1. Register the public OIDC client for the app's real callback URL and enable `isOidcEnabled`, satisfies **AC-1**
-2. Set up local HTTPS on the project domain for the Vite app, satisfies **AC-1**
-3. Install the SDK, create the single `blocksClient`, add login, callback, and route guards, satisfies **AC-1**
-4. Turn on multi organization mode and create the first organization on signup, satisfies **AC-2**
-5. Create the seven roles and their permissions (dry run reviewed, then applied), satisfies **AC-4**, **AC-5**
-6. Team screen: invite, deactivate, change role, satisfies **AC-3**
-7. MFA settings screen and company MFA policy, satisfies **AC-6**
-8. Show last changed by and when on records, satisfies **AC-7**
-9. `TeamMemberProfile` schema with location limits and approval limit (P1), satisfies **AC-8**, **AC-9**
+- [ ] 1. Register the public OIDC client for the app's real callback URL and enable `isOidcEnabled`, satisfies **AC-1** (script ready in `scripts/blocks-setup.sh`, not run yet)
+- [x] 2. Set up local HTTPS on the project domain for the Vite app, satisfies **AC-1**
+- [x] 3. Install the SDK, create the single `blocksClient`, add login, callback, and route guards, satisfies **AC-1**
+- [ ] 4. Turn on multi organization mode and create the first organization on signup, satisfies **AC-2** (deferred: multi org can be switched on only once and never off, needs your explicit go ahead)
+- [ ] 5. Create the seven roles and their permissions (dry run reviewed, then applied), satisfies **AC-4**, **AC-5** (roles and admin team permissions in `scripts/blocks-setup.sh`, not run yet; cost masking not built)
+- [x] 6. Team screen: invite, deactivate, change role, satisfies **AC-3**
+- [ ] 7. MFA settings screen and company MFA policy, satisfies **AC-6** (not built)
+- [x] 8. Show last changed by and when on records, satisfies **AC-7**
+- [ ] 9. `TeamMemberProfile` schema with location limits and approval limit (P1), satisfies **AC-8**, **AC-9** (P1, not built)
 
 ## Consequences
 

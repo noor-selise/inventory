@@ -1,0 +1,27 @@
+{
+  "schemaName": "ExchangeRate",
+  "schemaType": 1,
+  "description": "Exchange rates with an effective date (spec 0004 AC-2)",
+  "fields": [
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "rate",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "effectiveOn",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "source",
+      "type": "String",
+      "isArray": false
+    }
+  ]
+}

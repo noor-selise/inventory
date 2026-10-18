@@ -139,6 +139,12 @@ Light mode uses white surfaces with `shadow-sm` (L1), `shadow-md` (L2), `shadow-
 
 ## 5. Tailwind v4 + shadcn/ui setup
 
+> **This project (Vite SPA, spec 0001) differs from the Next.js snippets below in four places** (spec 0025):
+> the CSS lives in `src/index.css`; `components.json` has `"rsc": false` and style `radix-vega`;
+> fonts are self hosted with `@fontsource/dm-sans` and `@fontsource/jetbrains-mono` (no `next/font`);
+> the theme uses `src/components/theme-provider.tsx` with `defaultTheme="dark"` instead of `next-themes`.
+> The tokens and values are the same.
+
 ### 5.1 `components.json`
 ```json
 {

@@ -1,0 +1,22 @@
+{
+  "schemaName": "PaymentTerm",
+  "schemaType": 1,
+  "description": "Payment terms (spec 0004 AC-4)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "daysDue",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

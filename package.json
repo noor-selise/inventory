@@ -4,14 +4,19 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "cert": "node scripts/generate-cert.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "blocks:setup": "bash scripts/blocks-setup.sh"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@seliseblocks/client": "^0.2.0",
     "@tailwindcss/vite": "^4",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
@@ -20,6 +25,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "shadcn": "^4.22.0",
+    "sonner": "^2.0.8",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.4.0"
   },
@@ -29,6 +35,7 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",
     "oxlint": "^1.88.0",
+    "selfsigned": "^2.4.1",
     "typescript": "^7.0.2",
     "vite": "^8"
   },

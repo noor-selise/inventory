@@ -1,0 +1,27 @@
+{
+  "schemaName": "NumberingRule",
+  "schemaType": 1,
+  "description": "Running document numbers per type (spec 0004 AC-3)",
+  "fields": [
+    {
+      "name": "documentType",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "prefix",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "padding",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "nextNumber",
+      "type": "Int",
+      "isArray": false
+    }
+  ]
+}

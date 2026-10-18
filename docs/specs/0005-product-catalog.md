@@ -1,7 +1,7 @@
 # 0005. Product catalog
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -108,13 +108,13 @@ Barcode and SKU uniqueness are hard rules (PRD §5.6), and unique indexes are th
 
 ## Build plan
 
-1. Push `Category`, `Product`, `ProductBarcode`, `VendorItem` with unique indexes, satisfies **AC-1**, **AC-3**, **AC-7**, **AC-8**
-2. Product list with paged search, product form with type lock and tracking rules, satisfies **AC-1**, **AC-2**, **AC-5**, **AC-13**
-3. Barcode add, generate, scan to find, satisfies **AC-3**
-4. Units and conversions, satisfies **AC-4**
-5. Images via Blocks storage, satisfies **AC-9**
-6. Deactivate instead of delete, satisfies **AC-6**
-7. P1: variants, custom fields, customs data, attachments, satisfies **AC-9** to **AC-12**
+- [ ] 1. Push `Category`, `Product`, `ProductBarcode`, `VendorItem` with unique indexes, satisfies **AC-1**, **AC-3**, **AC-7**, **AC-8** (Category, Product, ProductBarcode files ready, not pushed yet; VendorItem waits for the Vendor schema in spec 0010)
+- [x] 2. Product list with paged search, product form with type lock and tracking rules, satisfies **AC-1**, **AC-2**, **AC-5**, **AC-13**
+- [x] 3. Barcode add, generate, scan to find, satisfies **AC-3**
+- [x] 4. Units and conversions, satisfies **AC-4**
+- [ ] 5. Images via Blocks storage, satisfies **AC-9** (not built)
+- [x] 6. Deactivate instead of delete, satisfies **AC-6**
+- [ ] 7. P1: variants, custom fields, customs data, attachments, satisfies **AC-9** to **AC-12** (P1, not built)
 
 ## Consequences
 

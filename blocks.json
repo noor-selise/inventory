@@ -1,0 +1,11 @@
+{
+  "project": {
+    "tenantId": "Dfe830076882d4e28a313347efed8fbbe",
+    "apiUrl": "https://api.seliseblocks.com",
+    "appDomain": "https://dbpgei-epxmf.slsblx.com"
+  },
+  "data": {
+    "schemas": "blocks/data/schemas",
+    "rules": "blocks/data/rules.json"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "schemaName": "TaxingScheme",
+  "schemaType": 1,
+  "description": "Taxing schemes with up to two taxes (spec 0004 AC-5)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isDefault",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "tax1Name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "tax1Rate",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "tax1OnShipping",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "tax2Name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "tax2Rate",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "tax2CompoundsOnTax1",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "tax2OnShipping",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isTaxInclusive",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

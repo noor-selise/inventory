@@ -1,0 +1,22 @@
+{
+  "schemaName": "Currency",
+  "schemaType": 1,
+  "description": "Currencies the company trades in (spec 0004 AC-2)",
+  "fields": [
+    {
+      "name": "code",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "symbol",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "decimals",
+      "type": "Int",
+      "isArray": false
+    }
+  ]
+}
