@@ -3,6 +3,7 @@ import { Building2, ChevronRight, Package, Users } from "lucide-react"
 import { useCurrentUser, userDisplayName } from "@/app/providers/CurrentUserProvider"
 import { Link } from "@/app/router/navigation"
 import { PageHeader } from "@/components/app/page"
+import { StarterDataCard } from "@/features/settings/StarterDataCard"
 
 const SHORTCUTS = [
   { to: "/products", label: "Products", description: "Add and find products, scan barcodes", icon: Package },
@@ -38,6 +39,7 @@ export function HomePage() {
           </Link>
         ))}
       </div>
+      {isAdmin ? <StarterDataCard /> : null}
     </>
   )
 }
