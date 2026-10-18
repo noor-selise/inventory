@@ -1,5 +1,6 @@
 {
   "schemaName": "NumberingRule",
+  "collectionName": "NumberingRules",
   "schemaType": 1,
   "description": "Running document numbers per type (spec 0004 AC-3)",
   "fields": [

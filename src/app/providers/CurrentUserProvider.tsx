@@ -3,7 +3,7 @@ import type { BlocksUser } from "@seliseblocks/client"
 
 import { useAuth } from "@/app/providers/AuthProvider"
 import { blocksClient } from "@/lib/blocks/client"
-import { ADMIN_ROLE } from "@/features/team/roles"
+import { ADMIN_ROLE, roleSlugs } from "@/features/team/roles"
 
 type CurrentUserValue = {
   user: BlocksUser | undefined
@@ -38,7 +38,7 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
   }, [status, reload])
 
   const value = React.useMemo(() => {
-    const roles = user?.roles ?? []
+    const roles = roleSlugs(user?.roles)
     const hasRole = (...slugs: string[]) =>
       slugs.some((slug) => roles.includes(slug))
     return { user, roles, isAdmin: hasRole(ADMIN_ROLE), hasRole, reload }

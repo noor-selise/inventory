@@ -1,5 +1,6 @@
 {
   "schemaName": "ExchangeRate",
+  "collectionName": "ExchangeRates",
   "schemaType": 1,
   "description": "Exchange rates with an effective date (spec 0004 AC-2)",
   "fields": [

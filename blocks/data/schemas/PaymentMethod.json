@@ -1,5 +1,6 @@
 {
   "schemaName": "PaymentMethod",
+  "collectionName": "PaymentMethods",
   "schemaType": 1,
   "description": "Payment methods (spec 0004 AC-7)",
   "fields": [

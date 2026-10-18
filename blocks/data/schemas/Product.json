@@ -1,5 +1,6 @@
 {
   "schemaName": "Product",
+  "collectionName": "Products",
   "schemaType": 1,
   "description": "Products and services (spec 0005)",
   "fields": [

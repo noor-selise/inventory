@@ -1,5 +1,6 @@
 {
   "schemaName": "AdjustmentReason",
+  "collectionName": "AdjustmentReasons",
   "schemaType": 1,
   "description": "Stock adjustment reasons (spec 0004 AC-7)",
   "fields": [

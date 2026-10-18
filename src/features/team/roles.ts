@@ -21,3 +21,13 @@ export const PRODUCT_EDITORS: RoleSlug[] = ["admin", "manager", "purchasing"]
 export function roleName(slug: string): string {
   return ROLE_BUNDLES.find((role) => role.slug === slug)?.name ?? slug
 }
+
+// IAM returns roles as a plain list on some endpoints and grouped by
+// organization ({ default: [...] }) on others, like the user list.
+export function roleSlugs(roles: unknown): string[] {
+  if (Array.isArray(roles)) return roles.filter((role): role is string => typeof role === "string")
+  if (roles && typeof roles === "object") {
+    return Object.values(roles).flatMap((group) => roleSlugs(group))
+  }
+  return []
+}

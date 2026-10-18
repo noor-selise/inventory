@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { blocksClient } from "@/lib/blocks/client"
-import { ADMIN_ROLE, ROLE_BUNDLES, roleName } from "./roles"
+import { ADMIN_ROLE, ROLE_BUNDLES, roleName, roleSlugs } from "./roles"
 
 // Invite, change role, deactivate and reactivate team members through
 // blocksClient.iam.users (spec 0003 AC-3). Every change is confirmed first.
@@ -47,7 +47,7 @@ function displayName(user: BlocksUser) {
 }
 
 function primaryRole(user: BlocksUser) {
-  return user.roles?.find((slug) => ROLE_BUNDLES.some((role) => role.slug === slug)) ?? ""
+  return roleSlugs(user.roles).find((slug) => ROLE_BUNDLES.some((role) => role.slug === slug)) ?? ""
 }
 
 function ensureOk(response: { isSuccess?: boolean; errors?: unknown; message?: string }) {
@@ -69,11 +69,11 @@ export function TeamPage() {
   const [pending, setPending] = React.useState<Pending>()
   const [busy, setBusy] = React.useState(false)
 
-  const activeAdmins = users.filter((user) => isActive(user) && user.roles?.includes(ADMIN_ROLE))
+  const activeAdmins = users.filter((user) => isActive(user) && roleSlugs(user.roles).includes(ADMIN_ROLE))
 
   // An admin cannot remove the last admin (spec 0003 key invariant).
   function wouldRemoveLastAdmin(user: BlocksUser) {
-    return user.roles?.includes(ADMIN_ROLE) && activeAdmins.length <= 1
+    return roleSlugs(user.roles).includes(ADMIN_ROLE) && activeAdmins.length <= 1
   }
 
   async function confirm() {

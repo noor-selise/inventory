@@ -1,5 +1,6 @@
 {
   "schemaName": "ProductBarcode",
+  "collectionName": "ProductBarcodes",
   "schemaType": 1,
   "description": "Barcodes, unique across the company (spec 0005 AC-3)",
   "fields": [

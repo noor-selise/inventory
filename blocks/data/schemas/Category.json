@@ -1,5 +1,6 @@
 {
   "schemaName": "Category",
+  "collectionName": "Categorys",
   "schemaType": 1,
   "description": "Product category tree (spec 0005 AC-7)",
   "fields": [

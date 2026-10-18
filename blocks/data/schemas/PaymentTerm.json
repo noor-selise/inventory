@@ -1,5 +1,6 @@
 {
   "schemaName": "PaymentTerm",
+  "collectionName": "PaymentTerms",
   "schemaType": 1,
   "description": "Payment terms (spec 0004 AC-4)",
   "fields": [

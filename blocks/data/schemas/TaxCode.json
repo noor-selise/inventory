@@ -1,5 +1,6 @@
 {
   "schemaName": "TaxCode",
+  "collectionName": "TaxCodes",
   "schemaType": 1,
   "description": "Per product tax rates (spec 0004 AC-5)",
   "fields": [

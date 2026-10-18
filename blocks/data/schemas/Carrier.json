@@ -1,5 +1,6 @@
 {
   "schemaName": "Carrier",
+  "collectionName": "Carriers",
   "schemaType": 1,
   "description": "Shipping carriers (spec 0004 AC-7)",
   "fields": [

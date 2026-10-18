@@ -1,5 +1,6 @@
 {
   "schemaName": "Currency",
+  "collectionName": "Currencys",
   "schemaType": 1,
   "description": "Currencies the company trades in (spec 0004 AC-2)",
   "fields": [

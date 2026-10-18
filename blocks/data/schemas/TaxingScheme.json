@@ -1,5 +1,6 @@
 {
   "schemaName": "TaxingScheme",
+  "collectionName": "TaxingSchemes",
   "schemaType": 1,
   "description": "Taxing schemes with up to two taxes (spec 0004 AC-5)",
   "fields": [
