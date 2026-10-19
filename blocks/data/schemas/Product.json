@@ -118,6 +118,11 @@
       "name": "averageCost",
       "type": "Float",
       "isArray": false
+    },
+    {
+      "name": "costVersion",
+      "type": "Int",
+      "isArray": false
     }
   ]
 }

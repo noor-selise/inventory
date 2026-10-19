@@ -1,7 +1,7 @@
 # 0008. Stock adjustments, transfers and counts
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -87,11 +87,11 @@ Blocks writes one document atomically (MongoDB guarantees single document writes
 
 ## Build plan
 
-1. Push the three schemas with line Dtos, satisfies **AC-8**
-2. Adjustment screen with reasons, satisfies **AC-1** (posting after D1)
-3. Transfer screen and lifecycle, satisfies **AC-2**, **AC-3** (posting after D1)
-4. Count, sheets, review, satisfies **AC-4**, **AC-5**, **AC-6** (posting after D1)
-5. P1: cost adjustments, satisfies **AC-7**
+- [x] 1. Push the three schemas with line Dtos, satisfies **AC-8**
+- [x] 2. Adjustment screen with reasons, satisfies **AC-1** (posting after D1)
+- [x] 3. Transfer screen and lifecycle, satisfies **AC-2**, **AC-3** (posting after D1) (approval, AC-3, optional and not built)
+- [x] 4. Count, sheets, review, satisfies **AC-4**, **AC-5**, **AC-6** (posting after D1)
+- [ ] 5. P1: cost adjustments, satisfies **AC-7** (P1, not built)
 
 ## Consequences
 

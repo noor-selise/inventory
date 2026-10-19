@@ -1,0 +1,53 @@
+{
+  "schemaName": "StockCount",
+  "collectionName": "StockCounts",
+  "schemaType": 1,
+  "description": "Stock counts with sheets (spec 0008)",
+  "fields": [
+    {
+      "name": "number",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "startedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "completedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "adjustmentId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "sheets",
+      "type": "CountSheet",
+      "isArray": true
+    },
+    {
+      "name": "revision",
+      "type": "Int",
+      "isArray": false
+    }
+  ]
+}

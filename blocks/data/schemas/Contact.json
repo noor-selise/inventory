@@ -1,0 +1,28 @@
+{
+  "schemaName": "Contact",
+  "collectionName": "Contacts",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "email",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "phone",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "role",
+      "type": "String",
+      "isArray": false
+    }
+  ]
+}

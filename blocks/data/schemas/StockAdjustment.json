@@ -1,0 +1,43 @@
+{
+  "schemaName": "StockAdjustment",
+  "collectionName": "StockAdjustments",
+  "schemaType": 1,
+  "description": "Stock adjustments with reasons (spec 0008)",
+  "fields": [
+    {
+      "name": "number",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "reasonId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "adjustedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "lines",
+      "type": "AdjustmentLine",
+      "isArray": true
+    }
+  ]
+}

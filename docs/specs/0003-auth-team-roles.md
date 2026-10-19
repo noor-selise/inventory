@@ -121,11 +121,11 @@ The server must enforce access (PRD §7 Security), and only Blocks permissions a
 
 ## Build plan
 
-- [ ] 1. Register the public OIDC client for the app's real callback URL and enable `isOidcEnabled`, satisfies **AC-1** (script ready in `scripts/blocks-setup.sh`, not run yet)
+- [x] 1. Register the public OIDC client for the app's real callback URL and enable `isOidcEnabled`, satisfies **AC-1**
 - [x] 2. Set up local HTTPS on the project domain for the Vite app, satisfies **AC-1**
 - [x] 3. Install the SDK, create the single `blocksClient`, add login, callback, and route guards, satisfies **AC-1**
 - [ ] 4. Turn on multi organization mode and create the first organization on signup, satisfies **AC-2** (deferred: multi org can be switched on only once and never off, needs your explicit go ahead)
-- [ ] 5. Create the seven roles and their permissions (dry run reviewed, then applied), satisfies **AC-4**, **AC-5** (roles and admin team permissions in `scripts/blocks-setup.sh`, not run yet; cost masking not built)
+- [ ] 5. Create the seven roles and their permissions (dry run reviewed, then applied), satisfies **AC-4**, **AC-5** (seven roles live; admin has team permissions; other roles' permission sets and cost masking not built)
 - [x] 6. Team screen: invite, deactivate, change role, satisfies **AC-3**
 - [ ] 7. MFA settings screen and company MFA policy, satisfies **AC-6** (not built)
 - [x] 8. Show last changed by and when on records, satisfies **AC-7**

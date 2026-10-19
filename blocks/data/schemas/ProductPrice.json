@@ -1,0 +1,33 @@
+{
+  "schemaName": "ProductPrice",
+  "collectionName": "ProductPrices",
+  "schemaType": 1,
+  "description": "Product price in a pricing scheme (spec 0010)",
+  "fields": [
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "pricingSchemeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "priceType",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "unitPrice",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "markupPct",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

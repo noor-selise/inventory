@@ -1,0 +1,23 @@
+{
+  "schemaName": "PriceBreak",
+  "collectionName": "PriceBreaks",
+  "schemaType": 1,
+  "description": "Volume price breaks (spec 0010)",
+  "fields": [
+    {
+      "name": "productPriceId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "minQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "unitPrice",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

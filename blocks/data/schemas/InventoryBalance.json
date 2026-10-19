@@ -1,0 +1,53 @@
+{
+  "schemaName": "InventoryBalance",
+  "collectionName": "InventoryBalances",
+  "schemaType": 1,
+  "description": "Stock on hand per product, location, bin, lot and serial (spec 0007, 0026)",
+  "fields": [
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "sublocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "lotId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "serial",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "onHand",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "picked",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "version",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "appliedKeys",
+      "type": "String",
+      "isArray": true
+    }
+  ]
+}

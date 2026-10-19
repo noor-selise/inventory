@@ -1,7 +1,7 @@
 # 0006. Locations and bins
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -77,11 +77,11 @@ The PRD makes bins first class records (§9 item 3), and the compound unique ind
 
 ## Build plan
 
-1. Push both schemas with unique indexes, satisfies **AC-1**, **AC-2**
-2. Location and bin screens with deactivate, satisfies **AC-1**, **AC-2**, **AC-4**
-3. Inline bin creation in stock forms, satisfies **AC-3**
-4. Plan limit check, satisfies **AC-5**
-5. P1: bin suggestions, satisfies **AC-6**
+- [x] 1. Push both schemas with unique indexes, satisfies **AC-1**, **AC-2**
+- [x] 2. Location and bin screens with deactivate, satisfies **AC-1**, **AC-2**, **AC-4**
+- [x] 3. Inline bin creation in stock forms, satisfies **AC-3** (on adjustment, transfer and count lines)
+- [ ] 4. Plan limit check, satisfies **AC-5** (waits for plans, spec 0023)
+- [ ] 5. P1: bin suggestions, satisfies **AC-6** (P1, not built)
 
 ## Consequences
 

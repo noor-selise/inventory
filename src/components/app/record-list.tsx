@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { errorMessage, useResource } from "@/hooks/use-resource"
-import type { Collection, Entity } from "@/lib/blocks/data"
+import { DUPLICATE_PATTERN, type Collection, type Entity } from "@/lib/blocks/data"
 import { cn } from "@/lib/utils"
 
 // One list screen for simple lookup records: a table, an add/edit dialog,
@@ -77,6 +77,12 @@ type Props<T extends Entity> = {
   validate?: (values: FormValues, items: T[], editing?: T) => string | undefined
   /** Called after any successful change, so sibling views can refresh. */
   onChanged?: () => void
+  /** Only list records matching this filter (for example one location's bins). */
+  filter?: Record<string, unknown>
+  /** Values written on every create, such as the parent id. */
+  fixedValues?: Record<string, unknown>
+  /** Changes values before save, for example to normalize a code. */
+  transform?: (payload: Record<string, unknown>) => Record<string, unknown>
 }
 
 function toFormValues(fields: FieldDef[], record: Record<string, unknown>): FormValues {
@@ -138,10 +144,15 @@ export function RecordList<T extends Entity>({
   isLocked,
   validate,
   onChanged,
+  filter,
+  fixedValues,
+  transform,
 }: Props<T>) {
+  const filterKey = JSON.stringify(filter ?? null)
   const { data, error, loading, reload } = useResource(
-    () => collection.list({ sort }),
-    [collection]
+    () => collection.list({ sort, filter, pageSize: 500 }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [collection, filterKey]
   )
   const items = data?.items ?? []
   const [editing, setEditing] = React.useState<T | "new">()
@@ -178,7 +189,8 @@ export function RecordList<T extends Entity>({
     setSaving(true)
     setSaveError(undefined)
     try {
-      const payload = toPayload(fields, values)
+      const raw = toPayload(fields, values)
+      const payload = transform ? transform(raw) : raw
       if (defaultField && payload[defaultField] === true) {
         // Not atomic on Blocks (spec 0004, §5.6): clear the old default first.
         for (const item of items) {
@@ -189,7 +201,7 @@ export function RecordList<T extends Entity>({
         }
       }
       if (current) await collection.update(current.ItemId, payload as never)
-      else await collection.create(payload as never)
+      else await collection.create({ ...payload, ...fixedValues } as never)
       toast.success(`${noun} saved`)
       setEditing(undefined)
       await reload()
@@ -197,7 +209,7 @@ export function RecordList<T extends Entity>({
     } catch (caught) {
       const message = errorMessage(caught)
       setSaveError(
-        /duplicate|E11000|unique/i.test(message)
+        DUPLICATE_PATTERN.test(message)
           ? `A ${noun.toLowerCase()} with these details already exists.`
           : message
       )

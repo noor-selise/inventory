@@ -7,6 +7,15 @@ import { CallbackPage } from "@/features/auth/CallbackPage"
 import { LoginPage } from "@/features/auth/LoginPage"
 import { NotFoundPage } from "@/features/auth/NotFoundPage"
 import { HomePage } from "@/features/dashboard/HomePage"
+import { LocationsPage } from "@/features/locations/LocationsPage"
+import { CustomersPage } from "@/features/partners/CustomersPage"
+import { VendorsPage } from "@/features/partners/VendorsPage"
+import { PriceListsPage } from "@/features/pricing/PriceListsPage"
+import { AdjustmentsPage } from "@/features/stock/AdjustmentsPage"
+import { CountsPage } from "@/features/stock/CountsPage"
+import { LotsPage } from "@/features/stock/LotsPage"
+import { StockPage } from "@/features/stock/StockPage"
+import { TransfersPage } from "@/features/stock/TransfersPage"
 import { CategoriesPage } from "@/features/products/CategoriesPage"
 import { ProductsPage } from "@/features/products/ProductsPage"
 import { AppearancePage } from "@/features/settings/AppearancePage"
@@ -21,6 +30,15 @@ const protectedRoutes: Record<string, React.ComponentType> = {
   "/": HomePage,
   "/products": ProductsPage,
   "/categories": CategoriesPage,
+  "/stock": StockPage,
+  "/stock/adjustments": AdjustmentsPage,
+  "/stock/transfers": TransfersPage,
+  "/stock/counts": CountsPage,
+  "/stock/lots": LotsPage,
+  "/locations": LocationsPage,
+  "/customers": CustomersPage,
+  "/price-lists": PriceListsPage,
+  "/vendors": VendorsPage,
   "/settings/company": CompanyPage,
   "/settings/currencies": CurrenciesPage,
   "/settings/numbering": NumberingPage,

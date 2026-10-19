@@ -1,0 +1,33 @@
+{
+  "schemaName": "Lot",
+  "collectionName": "Lots",
+  "schemaType": 1,
+  "description": "Lots per product with expiry (spec 0009)",
+  "fields": [
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "lotNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "madeOn",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "expiresOn",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "sellBy",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}

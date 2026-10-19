@@ -98,34 +98,12 @@ step "5. Admin can manage the team (IAM endpoints the Team screen calls)"
 apply "grant team management to admin" iam roles assign-permissions admin \
   --add-permissions "blocks-iam::iam::users,blocks-iam::iam::mutate-users,blocks-iam::iam::roles,blocks-iam::auth::resend-activation"
 
-step "6. Data model: schemas, access rules, reload (specs 0004, 0005)"
-blocks data validate --json 2>/dev/null
-apply "data sync" data sync
+step "6. Data model: schemas in dependency order, access locked to signed in users, indexes, reload"
+# Handles CLI 0.9.0 quirks (new schemas start public, rules need schema ids). See the script header.
+node scripts/blocks-data-deploy.mjs --dry-run
+node scripts/blocks-data-deploy.mjs
 
-step "7. Unique and lookup indexes"
-SCHEMAS_JSON=$(blocks_json data schema list --page-size 100)
-schema_id() { echo "$SCHEMAS_JSON" | json "((d.data&&d.data.items)||d.items||d.data||[]).find(s=>s.schemaName==='$1')?.id"; }
-add_index() {
-  # add_index <schema> <fields> [--unique]
-  local id
-  id=$(schema_id "$1")
-  if [ -z "$id" ]; then echo "Schema $1 not found, skipping index"; return; fi
-  if blocks_json data schema indexes list "$id" | json "(d.indexes||[]).some(i=>JSON.stringify(i).includes('$2'.split(',')[0].split(':')[0]))" | grep -q true; then
-    echo "Index on $1($2) already exists"
-    return
-  fi
-  apply "index $1($2) $3" data schema indexes create --schema-id "$id" --fields "$2" ${3:-} || echo "Index on $1($2) failed, continuing"
-}
-add_index Currency code --unique
-add_index NumberingRule documentType --unique
-add_index Category name,parentId --unique
-add_index Product name --unique
-add_index Product sku --unique
-add_index ProductBarcode barcode --unique
-add_index ProductBarcode productId
-add_index ExchangeRate currencyCode,effectiveOn:desc
-
-step "8. Admin user"
+step "7. Admin user"
 if [ -z "${ADMIN_EMAIL:-}" ]; then
   echo "ADMIN_EMAIL not set, skipping"
 else

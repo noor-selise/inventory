@@ -1,0 +1,33 @@
+{
+  "schemaName": "CountSheet",
+  "collectionName": "CountSheets",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "sheetId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "assigneeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "lines",
+      "type": "CountLine",
+      "isArray": true
+    }
+  ]
+}

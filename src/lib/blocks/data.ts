@@ -6,6 +6,7 @@ import { blocksClient } from "./client"
 
 export type Entity = {
   ItemId: string
+  CreatedDate?: string
   LastUpdatedBy?: string
   LastUpdatedDate?: string
 }
@@ -19,13 +20,16 @@ export type ListOptions = {
 
 export type ListResult<T> = { items: T[]; totalCount: number }
 
+/** Blocks reports a unique index clash as "A record with the same value for 'x' already exists." */
+export const DUPLICATE_PATTERN = /already exists|duplicate|E11000/i
+
 export class BlocksDataError extends Error {
   readonly isDuplicate: boolean
 
   constructor(message: string) {
     super(message)
     this.name = "BlocksDataError"
-    this.isDuplicate = /duplicate|E11000|unique/i.test(message)
+    this.isDuplicate = DUPLICATE_PATTERN.test(message)
   }
 }
 
@@ -58,24 +62,37 @@ function mutationResult(response: unknown, field: string): string {
 
 export const AUDIT_FIELDS = ["LastUpdatedBy", "LastUpdatedDate"] as const
 
+/** A selection entry: a field name, or a nested selection such as `lines { productId qty }`. */
+export type FieldSelection<T> = (keyof T & string) | `${keyof T & string} { ${string} }`
+
 export function collection<T extends Entity>(
   schemaName: string,
-  fields: readonly (keyof T & string)[]
+  fields: readonly FieldSelection<T>[]
 ) {
-  const helper = blocksClient.data.collection<T>(schemaName, {
-    fields: [...new Set([...fields, ...AUDIT_FIELDS])],
-  })
+  const helper = blocksClient.data.collection<T>(schemaName, { fields: ["ItemId"] })
   // Query names are `get` + schema name + "s", even for names like Company.
   const listField = `get${schemaName}s`
+  const selection = [...new Set(["ItemId", "CreatedDate", ...fields, ...AUDIT_FIELDS])].join("\n")
 
   return {
     async list(options: ListOptions = {}): Promise<ListResult<T>> {
-      const result = unwrap(
-        await helper.list({ pageNo: 1, pageSize: 100, ...options }),
-        listField
-      )
+      const response = await blocksClient.data.graphql({
+        query: `query q($input: DynamicQueryInput) { ${listField}(input: $input) { items { ${selection} } totalCount } }`,
+        variables: {
+          input: {
+            filter: options.filter ? JSON.stringify(options.filter) : undefined,
+            sort: options.sort ? JSON.stringify(options.sort) : undefined,
+            pageNo: options.pageNo ?? 1,
+            pageSize: options.pageSize ?? 100,
+          },
+        },
+      })
+      const result = unwrap(response, listField)
       const items = (result.items as T[] | undefined) ?? []
       return { items, totalCount: Number(result.totalCount ?? items.length) }
+    },
+    async get(itemId: string): Promise<T | undefined> {
+      return (await this.list({ filter: { ItemId: itemId }, pageSize: 1 })).items[0]
     },
     async create(payload: Omit<Partial<T>, keyof Entity>): Promise<string> {
       return mutationResult(
@@ -91,6 +108,23 @@ export function collection<T extends Entity>(
         await helper.update(itemId, payload as Partial<T>),
         `update${schemaName}`
       )
+    },
+    /**
+     * Filtered update: changes the records matching `filter` and returns how
+     * many changed. Proven atomic per record (spec 0026), so a filter on a
+     * version or old value works as compare and set.
+     */
+    async updateWhere(
+      filter: Record<string, unknown>,
+      payload: Omit<Partial<T>, keyof Entity>
+    ): Promise<number> {
+      const field = `update${schemaName}`
+      const response = await blocksClient.data.graphql({
+        query: `mutation m($filter: String, $input: ${schemaName}UpdateInput!) { ${field}(filter: $filter, input: $input) { acknowledged totalImpactedData message } }`,
+        variables: { filter: JSON.stringify(filter), input: payload },
+      })
+      const result = unwrap(response, field)
+      return Number(result.totalImpactedData ?? 0)
     },
     async remove(itemId: string): Promise<void> {
       mutationResult(await helper.delete(itemId), `delete${schemaName}`)

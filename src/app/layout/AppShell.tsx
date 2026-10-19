@@ -1,7 +1,11 @@
 import * as React from "react"
 import {
+  ArrowLeftRight,
   Boxes,
   Building2,
+  ClipboardCheck,
+  ClipboardList,
+  Contact,
   Coins,
   FolderTree,
   Hash,
@@ -9,9 +13,14 @@ import {
   ListChecks,
   LogOut,
   Menu,
+  MapPin,
   Package,
+  PackageSearch,
   Palette,
+  Tags,
+  Truck,
   Users,
+  Waypoints,
 } from "lucide-react"
 
 import { useAuth } from "@/app/providers/AuthProvider"
@@ -53,10 +62,27 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [{ to: "/", label: "Dashboard", icon: LayoutDashboard }],
   },
   {
+    label: "Sales",
+    items: [
+      { to: "/customers", label: "Customers", icon: Contact },
+      { to: "/price-lists", label: "Price lists", icon: Tags },
+    ],
+  },
+  {
+    label: "Purchasing",
+    items: [{ to: "/vendors", label: "Vendors", icon: Truck }],
+  },
+  {
     label: "Inventory",
     items: [
       { to: "/products", label: "Products", icon: Package },
       { to: "/categories", label: "Categories", icon: FolderTree },
+      { to: "/stock", label: "Stock", icon: PackageSearch },
+      { to: "/stock/adjustments", label: "Adjustments", icon: ClipboardList },
+      { to: "/stock/transfers", label: "Transfers", icon: ArrowLeftRight },
+      { to: "/stock/counts", label: "Counts", icon: ClipboardCheck },
+      { to: "/stock/lots", label: "Lots and serials", icon: Waypoints },
+      { to: "/locations", label: "Locations", icon: MapPin },
     ],
   },
   {
@@ -72,8 +98,11 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   },
 ]
 
+// Exact match for parents that have their own child entries (/stock vs /stock/counts).
+const EXACT = new Set(["/", "/stock"])
+
 function isActive(path: string, to: string) {
-  return to === "/" ? path === "/" : path === to || path.startsWith(`${to}/`)
+  return EXACT.has(to) ? path === to : path === to || path.startsWith(`${to}/`)
 }
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

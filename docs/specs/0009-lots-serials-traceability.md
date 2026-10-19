@@ -1,7 +1,7 @@
 # 0009. Lots, serials, expiry and traceability
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -82,11 +82,11 @@ Fewer writes per posting means fewer partial failures while D1 is open. Movement
 
 ## Build plan
 
-1. Push `Lot` and serial indexes, satisfies **AC-1**, **AC-2**
-2. Lot and serial capture on receive and put away, satisfies **AC-3**
-3. Lot allocation by expiry, satisfies **AC-4**
-4. Expiry alert schedule workflow, satisfies **AC-5**
-5. Trace screens, satisfies **AC-6**, **AC-7**
+- [x] 1. Push `Lot` and serial indexes, satisfies **AC-1**, **AC-2**
+- [x] 2. Lot and serial capture on receive and put away, satisfies **AC-3** (on adjustments, transfers and counts; receiving and put away arrive with specs 0012 and 0020)
+- [x] 3. Lot allocation by expiry, satisfies **AC-4** (allocateLots, used to suggest lots on transfers; picking arrives with spec 0011)
+- [ ] 4. Expiry alert schedule workflow, satisfies **AC-5** (expiry badges shown on the lots screen; the alert workflow is not built)
+- [x] 5. Trace screens, satisfies **AC-6**, **AC-7** (sales and purchase documents appear once specs 0011 and 0012 exist)
 
 ## Consequences
 

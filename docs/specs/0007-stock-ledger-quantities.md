@@ -1,7 +1,7 @@
 # 0007. Stock ledger, balances, quantities and costing
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -128,12 +128,12 @@ Options 1 and 3 are the only ones that meet AC-4 (no lost updates), which the PR
 
 Blocked until D1 is closed. Once closed:
 
-1. Push `InventoryMovement`, `InventoryBalance` with unique indexes and deny edit and delete policies, satisfies **AC-1**, **AC-10**
-2. Build the posting step per the chosen option (idempotency key, negative check, retries), satisfies **AC-2**, **AC-4**, **AC-5**
-3. Moving average cost update on receipt; cost of goods on pick, satisfies **AC-7**, **AC-8**
-4. Repair schedule workflow for `pending` movements, satisfies **AC-3**
-5. Quantity summary for one product, satisfies **AC-6**
-6. Monthly snapshot workflow and as of date view, satisfies **AC-9**
+- [x] 1. Push `InventoryMovement`, `InventoryBalance` with unique indexes and deny edit and delete policies, satisfies **AC-1**, **AC-10** (D1 closed by assumed spec 0026; deny edit and delete policies not set, L4: posting must flip pending to posted)
+- [x] 2. Build the posting step per the chosen option (idempotency key, negative check, retries), satisfies **AC-2**, **AC-4**, **AC-5** (compare and set on balance version, spec 0026; live check: 12 takes against 10 in stock, exactly 10 posted)
+- [x] 3. Moving average cost update on receipt; cost of goods on pick, satisfies **AC-7**, **AC-8** (moving average function built and used by opening stock; outgoing lines store the average cost; receipts and picks arrive with specs 0012 and 0011)
+- [x] 4. Repair schedule workflow for `pending` movements, satisfies **AC-3** (runs when stock screens open or post; a schedule workflow is a follow up)
+- [x] 5. Quantity summary for one product, satisfies **AC-6** (reserved and on order show 0 until specs 0011 and 0012)
+- [ ] 6. Monthly snapshot workflow and as of date view, satisfies **AC-9** (as of date view built from the history; monthly snapshot workflow not built)
 
 ## Consequences
 

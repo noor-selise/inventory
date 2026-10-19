@@ -44,15 +44,20 @@ console.log("Token ok, seeding…")
 const client = createBlocksClient({ ...base, accessToken })
 const store = createStore(client)
 // Log each call so a slow or stuck request is visible.
+// Pass every argument through: list takes an optional filter.
 const logged = {
-  list: (schema, fields) => (console.log(`  read ${schema}`), store.list(schema, fields)),
-  create: (schema, payload) => (console.log(`  add ${schema}`), store.create(schema, payload)),
+  ...store,
+  list: (...args) => (console.log(`  read ${args[0]}`), store.list(...args)),
+  create: (...args) => (console.log(`  add ${args[0]}`), store.create(...args)),
 }
 const report = await runSeed(logged, {
   demoCompany: true,
   starterSettings: true,
   demoRatesAndTaxCodes: true,
   sampleCatalog: true,
+  demoLocations: true,
+  demoPartnersAndPrices: true,
+  openingStock: true,
 })
 for (const row of report) {
   console.log(`${row.label.padEnd(20)} ${String(row.added).padStart(3)} added, ${row.existing} already there`)

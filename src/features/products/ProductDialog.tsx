@@ -34,6 +34,7 @@ import {
   type ProductBarcode,
 } from "./api"
 import { generateEan13, normalizeBarcode } from "./barcode"
+import { ProductVendors } from "./ProductVendors"
 
 // Create and edit a product (spec 0005 AC-1 to AC-6). The type and tracking
 // flags lock after the first save; Blocks cannot enforce that, the form does.
@@ -444,6 +445,13 @@ export function ProductDialog({
               </div>
             ) : null}
           </div>
+
+          {product ? (
+            <>
+              <Separator />
+              <ProductVendors product={product} canEdit={canEdit} />
+            </>
+          ) : null}
 
           <Separator />
           <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 md:grid-cols-4">

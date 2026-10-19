@@ -1,0 +1,33 @@
+{
+  "schemaName": "PricingScheme",
+  "collectionName": "PricingSchemes",
+  "schemaType": 1,
+  "description": "Price lists (spec 0010)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isTaxInclusive",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isDefault",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

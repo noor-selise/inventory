@@ -39,6 +39,8 @@ export type Product = Entity & {
   sellBeforeExpiryDays?: number | null
   expiryNoticeDays?: number | null
   isActive?: boolean | null
+  /** Written only by stock posting (spec 0007, 0026). */
+  averageCost?: number | null
 }
 
 export type ProductBarcode = Entity & {
@@ -72,8 +74,46 @@ export const PRODUCT_FIELDS = [
 ] as const satisfies readonly (keyof Product)[]
 
 export const categories = collection<Category>("Category", ["name", "parentId", "isDefault"])
-export const products = collection<Product>("Product", PRODUCT_FIELDS)
+export const products = collection<Product>("Product", [...PRODUCT_FIELDS, "averageCost"])
 export const productBarcodes = collection<ProductBarcode>("ProductBarcode", ["barcode", "productId"])
+
+export type VendorItem = Entity & {
+  vendorId: string
+  productId: string
+  vendorItemCode?: string | null
+  unitCost?: number | null
+  currencyCode?: string | null
+  leadTimeDays?: number | null
+  preference?: number | null
+}
+
+export const vendorItems = collection<VendorItem>("VendorItem", [
+  "vendorId",
+  "productId",
+  "vendorItemCode",
+  "unitCost",
+  "currencyCode",
+  "leadTimeDays",
+  "preference",
+])
+
+/** Converts an entered quantity in one of the product's units to its standard unit. */
+export function toStandardQty(product: Pick<Product, "standardUom" | "purchaseUom" | "purchaseUomRatio" | "salesUom" | "salesUomRatio">, qty: number, uom: string) {
+  if (uom && uom === product.purchaseUom && product.purchaseUomRatio) return qty * product.purchaseUomRatio
+  if (uom && uom === product.salesUom && product.salesUomRatio) return qty * product.salesUomRatio
+  return qty
+}
+
+export function unitOptions(product: Pick<Product, "standardUom" | "purchaseUom" | "purchaseUomRatio" | "salesUom" | "salesUomRatio">) {
+  const options = [{ value: product.standardUom, label: product.standardUom }]
+  if (product.purchaseUom && product.purchaseUomRatio) {
+    options.push({ value: product.purchaseUom, label: `${product.purchaseUom} (${product.purchaseUomRatio} ${product.standardUom})` })
+  }
+  if (product.salesUom && product.salesUomRatio && product.salesUom !== product.purchaseUom) {
+    options.push({ value: product.salesUom, label: `${product.salesUom} (${product.salesUomRatio} ${product.standardUom})` })
+  }
+  return options
+}
 
 /** "Parent / Child" labels for every category, in tree order. */
 export function categoryPaths(items: Category[]): { value: string; label: string }[] {

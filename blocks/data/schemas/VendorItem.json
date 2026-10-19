@@ -1,0 +1,43 @@
+{
+  "schemaName": "VendorItem",
+  "collectionName": "VendorItems",
+  "schemaType": 1,
+  "description": "Vendor codes, costs and lead times per product (spec 0005 AC-8)",
+  "fields": [
+    {
+      "name": "vendorId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "vendorItemCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "unitCost",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "leadTimeDays",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "preference",
+      "type": "Int",
+      "isArray": false
+    }
+  ]
+}

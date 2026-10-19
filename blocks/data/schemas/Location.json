@@ -1,0 +1,33 @@
+{
+  "schemaName": "Location",
+  "collectionName": "Locations",
+  "schemaType": 1,
+  "description": "Warehouses, stores, trucks and sites (spec 0006)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "address",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "kind",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isDefault",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

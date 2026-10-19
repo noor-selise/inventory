@@ -16,11 +16,11 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 3 | Sign in, team and roles | Foundation | in-progress |
 | 4 | Company settings and lookups | Foundation | in-progress |
 | 5 | Product catalog | MVP | in-progress |
-| 6 | Locations and bins | MVP | planned |
-| 7 | Stock ledger and quantities | MVP | planned |
-| 8 | Stock adjustments, transfers and counts | MVP | planned |
-| 9 | Lots, serials and traceability | v1.1 | planned |
-| 10 | Customers, vendors and pricing | MVP | planned |
+| 6 | Locations and bins | MVP | in-progress |
+| 7 | Stock ledger and quantities | MVP | in-progress |
+| 8 | Stock adjustments, transfers and counts | MVP | in-progress |
+| 9 | Lots, serials and traceability | v1.1 | in-progress |
+| 10 | Customers, vendors and pricing | MVP | in-progress |
 | 11 | Sales orders and fulfillment | MVP | planned |
 | 12 | Purchasing and receiving | MVP | planned |
 | 13 | Payments and balances | MVP | planned |
@@ -63,7 +63,7 @@ Blocks hosted login, MFA, one company per organization, seven role bundles, cost
 - [x] Design it (spec): [0003](../specs/0003-auth-team-roles.md)
 - [ ] Build it: `/develop sign in, team and roles`
   - [x] App side: SDK client, hosted login, callback, guards, local HTTPS, team screen, last changed by
-  - [ ] Blocks side: OIDC client, OIDC on, seven roles, admin user (run `scripts/blocks-setup.sh`)
+  - [x] Blocks side: OIDC client, OIDC on, seven roles, admin user
   - [ ] Multi organization mode (one way switch, needs your go ahead), MFA, cost masking
 - [ ] Verify it: `/check verify sign in, team and roles`
 Spec [0003](../specs/0003-auth-team-roles.md) · code in `src/lib/blocks/`, `src/app/`, `src/features/auth/`, `src/features/team/`, `scripts/blocks-setup.sh`
@@ -74,8 +74,8 @@ Company profile, currencies and rates, document numbering, payment terms, taxing
 **Blocks fit:** ✅; numbering needs a retry loop.
 - [x] Design it (spec): [0004](../specs/0004-company-settings-lookups.md)
 - [ ] Build it: `/develop company settings and lookups`
-  - [ ] Schemas live in Blocks (files ready, run `scripts/blocks-setup.sh`)
-  - [x] Company, currencies and rates, numbering with retry, lists and taxes screens
+  - [x] Schemas live in Blocks
+  - [x] Company, currencies and rates, numbering (compare and set), lists and taxes screens
 - [ ] Verify it: `/check verify company settings and lookups`
 Spec [0004](../specs/0004-company-settings-lookups.md) · code in `src/features/settings/`, `blocks/data/schemas/`
 
@@ -88,35 +88,56 @@ Products, categories, barcodes, units, tracking flags, vendor items, images; var
 **Blocks fit:** ✅.
 - [x] Design it (spec): [0005](../specs/0005-product-catalog.md)
 - [ ] Build it: `/develop product catalog`
-  - [ ] Schemas and unique indexes live in Blocks (files ready, run `scripts/blocks-setup.sh`)
-  - [x] Product list, search, form with type and tracking locks, units, barcodes and scan lookup, deactivate
-  - [ ] Images, vendor items (needs spec 0010 vendors), P1 items
+  - [x] Schemas and unique indexes live in Blocks
+  - [x] Product list, search, form with type and tracking locks, units, barcodes and scan lookup, deactivate, vendor items
+  - [ ] Images and P1 items
 - [ ] Verify it: `/check verify product catalog`
 Spec [0005](../specs/0005-product-catalog.md) · code in `src/features/products/`, `blocks/data/schemas/`
 
-### 6. Locations and bins · needs a decision
+### 6. Locations and bins · in-progress
 Warehouses, stores, trucks and their bins, with a default location.
 **Done when:** locations and bins exist with unique codes and are deactivated, never deleted (spec 0006).
 **Blocks fit:** ✅.
-- [ ] Design it (spec): drafted as [0006](../specs/0006-locations-bins.md) (Proposed), confirm it: `/architect locations and bins`
+- [x] Design it (spec): [0006](../specs/0006-locations-bins.md)
+- [ ] Build it: `/develop locations and bins`
+  - [x] Schemas, unique indexes, locations and bins screen, bins created on the fly
+  - [ ] Plan limit (spec 0023) and bin suggestions (P1)
+- [ ] Verify it: `/check verify locations and bins`
+Spec [0006](../specs/0006-locations-bins.md) · code in `src/features/locations/`
 
-### 7. Stock ledger and quantities · needs a decision
+### 7. Stock ledger and quantities · in-progress · assumed decision (spec 0026)
 The posting step every stock change uses: movement ledger, balances, quantities, moving average cost.
 **Done when:** balances always equal the ledger and two people can never take the same last unit (spec 0007).
-**Blocks fit:** ❌ blocked by decision D1 (no transactions on Blocks).
-- [ ] Design it (spec): drafted as [0007](../specs/0007-stock-ledger-quantities.md) (Proposed), confirm it: `/architect stock ledger and quantities`
+**Blocks fit:** ✅ with compare and set (D1 closed by assumed spec 0026, proven live).
+- [ ] Design it (spec): [0007](../specs/0007-stock-ledger-quantities.md), D1 recorded in [0026](../specs/0026-stock-posting-compare-and-set.md) (Assumed), ratify it: `/architect stock ledger and quantities`
+- [ ] Build it: `/develop stock ledger and quantities`
+  - [x] Posting step with compare and set, retries, rollback, repair; ledger and balances live
+  - [x] Stock screen: on hand, quantities per location, history with as of date
+  - [ ] Monthly snapshot workflow, scheduled repair, deny edit and delete policies
+- [ ] Verify it: `/check verify stock ledger and quantities`
+Spec [0007](../specs/0007-stock-ledger-quantities.md) · [0026](../specs/0026-stock-posting-compare-and-set.md) · code in `src/features/stock/posting.ts`, `src/features/stock/StockPage.tsx`, `scripts/checks/posting-live.mjs`
 
-### 8. Stock adjustments, transfers and counts · needs a decision
+### 8. Stock adjustments, transfers and counts · in-progress
 Adjust with reasons, transfer between locations with in transit, run counts with sheets and review.
 **Done when:** each document saves atomically and posts its stock through spec 0007 (spec 0008).
-**Blocks fit:** ✅ documents; ⚠️ stock waits on D1.
-- [ ] Design it (spec): drafted as [0008](../specs/0008-stock-adjustments-transfers-counts.md) (Proposed), confirm it: `/architect stock adjustments, transfers and counts`
+**Blocks fit:** ✅ documents and stock (through spec 0026 posting).
+- [x] Design it (spec): [0008](../specs/0008-stock-adjustments-transfers-counts.md)
+- [ ] Build it: `/develop stock adjustments, transfers and counts`
+  - [x] Adjustments with cancel and retry, transfers with in transit, counts with sheets and review
+  - [ ] Transfer approval (optional) and cost adjustments (P1)
+- [ ] Verify it: `/check verify stock adjustments, transfers and counts`
+Spec [0008](../specs/0008-stock-adjustments-transfers-counts.md) · code in `src/features/stock/`, `scripts/checks/stock-docs-live.mjs`
 
-### 10. Customers, vendors and pricing · needs a decision
+### 10. Customers, vendors and pricing · in-progress
 Customers and vendors with defaults, pricing schemes, price breaks, one shared price and tax calculation.
 **Done when:** an order line gets the right price and tax for its customer and quantity (spec 0010).
 **Blocks fit:** ✅; prices checked in app only.
-- [ ] Design it (spec): drafted as [0010](../specs/0010-customers-vendors-pricing.md) (Proposed), confirm it: `/architect customers, vendors and pricing`
+- [x] Design it (spec): [0010](../specs/0010-customers-vendors-pricing.md)
+- [x] Build it: `/develop customers, vendors and pricing`
+  - [x] Customers and vendors with contacts, addresses and defaults
+  - [x] Price lists with fixed or markup prices and quantity breaks; shared price and tax module with checks
+- [ ] Verify it: `/check verify customers, vendors and pricing`
+Spec [0010](../specs/0010-customers-vendors-pricing.md) · code in `src/features/partners/`, `src/features/pricing/`, `scripts/checks/pricing.mjs`
 
 ### 11. Sales orders and fulfillment · needs a decision
 Quote to order, pick, pack, ship, returns, back orders, quick actions, derived statuses, profit.
@@ -175,11 +196,16 @@ Installable web app for warehouse phones, scanning, offline queue with safe repl
 ## v1.1
 PRD §8 P1.
 
-### 9. Lots, serials and traceability · needs a decision
+### 9. Lots, serials and traceability · in-progress
 Lots with expiry, serials, first expiry first out, expiry alerts, forward and backward trace.
 **Done when:** tracked products need lots or serials and any lot traces to its customers and PO (spec 0009).
-**Blocks fit:** ✅; serial 0 or 1 waits on D1.
-- [ ] Design it (spec): drafted as [0009](../specs/0009-lots-serials-traceability.md) (Proposed), confirm it: `/architect lots, serials and traceability`
+**Blocks fit:** ✅; serial 0 or 1 enforced by posting (spec 0026).
+- [x] Design it (spec): [0009](../specs/0009-lots-serials-traceability.md)
+- [ ] Build it: `/develop lots, serials and traceability`
+  - [x] Lots with expiry, lot and serial capture on stock documents, earliest expiry first, trace screen
+  - [ ] Expiry alert workflow; capture on receiving and picking (with specs 0011, 0012)
+- [ ] Verify it: `/check verify lots, serials and traceability`
+Spec [0009](../specs/0009-lots-serials-traceability.md) · code in `src/features/stock/LotsPage.tsx`, `src/features/stock/api.ts`
 
 ### 20. Manufacturing · needs a decision
 Multi level BOMs, manufacture orders, operations, timesheets, buildable quantity.

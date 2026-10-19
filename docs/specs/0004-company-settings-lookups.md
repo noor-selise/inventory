@@ -103,7 +103,7 @@ Validation rules and unique indexes in Blocks are per schema, so separate schema
 
 ## Build plan
 
-- [ ] 1. Push the lookup schemas with unique indexes and validation rules, satisfies **AC-1**, **AC-4**, **AC-5**, **AC-7** (schema files in `blocks/data/schemas/`, pushed by `scripts/blocks-setup.sh`, not run yet)
+- [x] 1. Push the lookup schemas with unique indexes and validation rules, satisfies **AC-1**, **AC-4**, **AC-5**, **AC-7** (live; field validation rules not added, checks run in the app)
 - [x] 2. Company profile and currency screens, satisfies **AC-1**, **AC-2**, **AC-8**
 - [x] 3. Numbering rule with retry on unique conflict, satisfies **AC-3**
 - [x] 4. Lookup list screens with defaults, satisfies **AC-4** to **AC-7**

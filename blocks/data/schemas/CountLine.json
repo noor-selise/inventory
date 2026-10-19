@@ -1,0 +1,43 @@
+{
+  "schemaName": "CountLine",
+  "collectionName": "CountLines",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "lineId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "sublocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "lotId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "serial",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "expectedQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "countedQty",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

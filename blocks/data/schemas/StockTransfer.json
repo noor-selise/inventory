@@ -1,0 +1,48 @@
+{
+  "schemaName": "StockTransfer",
+  "collectionName": "StockTransfers",
+  "schemaType": 1,
+  "description": "Transfers between locations (spec 0008)",
+  "fields": [
+    {
+      "name": "number",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "fromLocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "toLocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "sentAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "receivedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "lines",
+      "type": "TransferLine",
+      "isArray": true
+    }
+  ]
+}

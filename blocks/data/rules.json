@@ -1,420 +1,868 @@
 {
   "security": [
     {
-      "schemaName": "Company",
+      "schemaName": "AdjustmentReason",
+      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc",
       "operation": 0,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1"
-    },
-    {
-      "schemaName": "Company",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1"
-    },
-    {
-      "schemaName": "Company",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1"
-    },
-    {
-      "schemaName": "Company",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1"
-    },
-    {
-      "schemaName": "Currency",
-      "operation": 0,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13"
-    },
-    {
-      "schemaName": "Currency",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13"
-    },
-    {
-      "schemaName": "Currency",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13"
-    },
-    {
-      "schemaName": "Currency",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13"
-    },
-    {
-      "schemaName": "ExchangeRate",
-      "operation": 0,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03"
-    },
-    {
-      "schemaName": "ExchangeRate",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03"
-    },
-    {
-      "schemaName": "ExchangeRate",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03"
-    },
-    {
-      "schemaName": "ExchangeRate",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03"
-    },
-    {
-      "schemaName": "NumberingRule",
-      "operation": 0,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd"
-    },
-    {
-      "schemaName": "NumberingRule",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd"
-    },
-    {
-      "schemaName": "NumberingRule",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd"
-    },
-    {
-      "schemaName": "NumberingRule",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd"
-    },
-    {
-      "schemaName": "PaymentTerm",
-      "operation": 0,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b"
-    },
-    {
-      "schemaName": "PaymentTerm",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b"
-    },
-    {
-      "schemaName": "PaymentTerm",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b"
-    },
-    {
-      "schemaName": "PaymentTerm",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b"
-    },
-    {
-      "schemaName": "TaxingScheme",
-      "operation": 0,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d"
-    },
-    {
-      "schemaName": "TaxingScheme",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d"
-    },
-    {
-      "schemaName": "TaxingScheme",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d"
-    },
-    {
-      "schemaName": "TaxingScheme",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d"
-    },
-    {
-      "schemaName": "TaxCode",
-      "operation": 0,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330"
-    },
-    {
-      "schemaName": "TaxCode",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330"
-    },
-    {
-      "schemaName": "TaxCode",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330"
-    },
-    {
-      "schemaName": "TaxCode",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330"
+      "fieldNames": []
     },
     {
       "schemaName": "AdjustmentReason",
-      "operation": 0,
+      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc",
+      "operation": 1,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc"
+      "fieldNames": []
     },
     {
       "schemaName": "AdjustmentReason",
-      "operation": 1,
+      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc",
+      "operation": 2,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc"
+      "fieldNames": []
     },
     {
       "schemaName": "AdjustmentReason",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc"
-    },
-    {
-      "schemaName": "AdjustmentReason",
+      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc",
       "operation": 3,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "3c2a4a98-289c-44bd-bda5-a48ee557eccc"
+      "fieldNames": []
     },
     {
       "schemaName": "Carrier",
+      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3",
       "operation": 0,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3"
+      "fieldNames": []
     },
     {
       "schemaName": "Carrier",
+      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3",
       "operation": 1,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3"
+      "fieldNames": []
     },
     {
       "schemaName": "Carrier",
+      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3",
       "operation": 2,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3"
+      "fieldNames": []
     },
     {
       "schemaName": "Carrier",
+      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3",
       "operation": 3,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "191a837b-7834-45cd-b825-83ab4f68b1b3"
-    },
-    {
-      "schemaName": "PaymentMethod",
-      "operation": 0,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd"
-    },
-    {
-      "schemaName": "PaymentMethod",
-      "operation": 1,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd"
-    },
-    {
-      "schemaName": "PaymentMethod",
-      "operation": 2,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd"
-    },
-    {
-      "schemaName": "PaymentMethod",
-      "operation": 3,
-      "policyType": 0,
-      "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd"
+      "fieldNames": []
     },
     {
       "schemaName": "Category",
+      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16",
       "operation": 0,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16"
+      "fieldNames": []
     },
     {
       "schemaName": "Category",
+      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16",
       "operation": 1,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16"
+      "fieldNames": []
     },
     {
       "schemaName": "Category",
+      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16",
       "operation": 2,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16"
+      "fieldNames": []
     },
     {
       "schemaName": "Category",
+      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16",
       "operation": 3,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "2263a02c-1b5e-4c6f-b2e1-86ec46475d16"
+      "fieldNames": []
     },
     {
-      "schemaName": "Product",
+      "schemaName": "Company",
+      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1",
       "operation": 0,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272"
+      "fieldNames": []
     },
     {
-      "schemaName": "Product",
+      "schemaName": "Company",
+      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1",
       "operation": 1,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272"
+      "fieldNames": []
     },
     {
-      "schemaName": "Product",
+      "schemaName": "Company",
+      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1",
       "operation": 2,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272"
+      "fieldNames": []
     },
     {
-      "schemaName": "Product",
+      "schemaName": "Company",
+      "schemaId": "9e305a9f-7453-4e83-9ffa-3599da7be7a1",
       "operation": 3,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272"
+      "fieldNames": []
     },
     {
-      "schemaName": "ProductBarcode",
+      "schemaName": "Currency",
+      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13",
       "operation": 0,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71"
+      "fieldNames": []
     },
     {
-      "schemaName": "ProductBarcode",
+      "schemaName": "Currency",
+      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13",
       "operation": 1,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71"
+      "fieldNames": []
     },
     {
-      "schemaName": "ProductBarcode",
+      "schemaName": "Currency",
+      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13",
       "operation": 2,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71"
+      "fieldNames": []
     },
     {
-      "schemaName": "ProductBarcode",
+      "schemaName": "Currency",
+      "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13",
       "operation": 3,
       "policyType": 0,
       "accessLevel": 1,
-      "fieldNames": [],
-      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71"
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Customer",
+      "schemaId": "7e854001-c43c-411d-a7a1-3fd1e93a9620",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Customer",
+      "schemaId": "7e854001-c43c-411d-a7a1-3fd1e93a9620",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Customer",
+      "schemaId": "7e854001-c43c-411d-a7a1-3fd1e93a9620",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Customer",
+      "schemaId": "7e854001-c43c-411d-a7a1-3fd1e93a9620",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ExchangeRate",
+      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ExchangeRate",
+      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ExchangeRate",
+      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ExchangeRate",
+      "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryBalance",
+      "schemaId": "9f76b454-9128-4f71-80d9-0fdc6c2030cb",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryBalance",
+      "schemaId": "9f76b454-9128-4f71-80d9-0fdc6c2030cb",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryBalance",
+      "schemaId": "9f76b454-9128-4f71-80d9-0fdc6c2030cb",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryBalance",
+      "schemaId": "9f76b454-9128-4f71-80d9-0fdc6c2030cb",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryMovement",
+      "schemaId": "0d988764-c5c8-42f6-b29e-0a79697dfc5a",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryMovement",
+      "schemaId": "0d988764-c5c8-42f6-b29e-0a79697dfc5a",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryMovement",
+      "schemaId": "0d988764-c5c8-42f6-b29e-0a79697dfc5a",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "InventoryMovement",
+      "schemaId": "0d988764-c5c8-42f6-b29e-0a79697dfc5a",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Location",
+      "schemaId": "9d7a5cb1-10c8-460c-a6ed-fea21e533fdc",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Location",
+      "schemaId": "9d7a5cb1-10c8-460c-a6ed-fea21e533fdc",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Location",
+      "schemaId": "9d7a5cb1-10c8-460c-a6ed-fea21e533fdc",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Location",
+      "schemaId": "9d7a5cb1-10c8-460c-a6ed-fea21e533fdc",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Lot",
+      "schemaId": "48d69ec3-6ff3-4819-bcf2-607d307d3410",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Lot",
+      "schemaId": "48d69ec3-6ff3-4819-bcf2-607d307d3410",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Lot",
+      "schemaId": "48d69ec3-6ff3-4819-bcf2-607d307d3410",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Lot",
+      "schemaId": "48d69ec3-6ff3-4819-bcf2-607d307d3410",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "NumberingRule",
+      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "NumberingRule",
+      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "NumberingRule",
+      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "NumberingRule",
+      "schemaId": "af88a04e-c34d-479f-8ced-c9c60ff946bd",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentMethod",
+      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentMethod",
+      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentMethod",
+      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentMethod",
+      "schemaId": "818ef451-19fb-46b4-90c6-e9375367d7cd",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentTerm",
+      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentTerm",
+      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentTerm",
+      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PaymentTerm",
+      "schemaId": "e0337a55-f237-4831-9d76-f15c5600424b",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PriceBreak",
+      "schemaId": "36c7c6de-c35b-4638-9cb4-b00c4e60ab73",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PriceBreak",
+      "schemaId": "36c7c6de-c35b-4638-9cb4-b00c4e60ab73",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PriceBreak",
+      "schemaId": "36c7c6de-c35b-4638-9cb4-b00c4e60ab73",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PriceBreak",
+      "schemaId": "36c7c6de-c35b-4638-9cb4-b00c4e60ab73",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PricingScheme",
+      "schemaId": "90f9887c-f35a-4424-9de4-5bf1cc5eb71d",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PricingScheme",
+      "schemaId": "90f9887c-f35a-4424-9de4-5bf1cc5eb71d",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PricingScheme",
+      "schemaId": "90f9887c-f35a-4424-9de4-5bf1cc5eb71d",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "PricingScheme",
+      "schemaId": "90f9887c-f35a-4424-9de4-5bf1cc5eb71d",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Product",
+      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Product",
+      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Product",
+      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Product",
+      "schemaId": "88a348b0-aeda-40e7-8145-4674a5d55272",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductBarcode",
+      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductBarcode",
+      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductBarcode",
+      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductBarcode",
+      "schemaId": "80030c98-aa1b-4fed-8694-13171c942c71",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductPrice",
+      "schemaId": "5ec17e9f-e852-4e6e-a456-05743e53bfbe",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductPrice",
+      "schemaId": "5ec17e9f-e852-4e6e-a456-05743e53bfbe",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductPrice",
+      "schemaId": "5ec17e9f-e852-4e6e-a456-05743e53bfbe",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ProductPrice",
+      "schemaId": "5ec17e9f-e852-4e6e-a456-05743e53bfbe",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockAdjustment",
+      "schemaId": "250de371-780b-400c-9ec2-38a3f879a815",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockAdjustment",
+      "schemaId": "250de371-780b-400c-9ec2-38a3f879a815",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockAdjustment",
+      "schemaId": "250de371-780b-400c-9ec2-38a3f879a815",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockAdjustment",
+      "schemaId": "250de371-780b-400c-9ec2-38a3f879a815",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockCount",
+      "schemaId": "59688a35-5a34-44da-a1fc-95967aa1ed98",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockCount",
+      "schemaId": "59688a35-5a34-44da-a1fc-95967aa1ed98",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockCount",
+      "schemaId": "59688a35-5a34-44da-a1fc-95967aa1ed98",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockCount",
+      "schemaId": "59688a35-5a34-44da-a1fc-95967aa1ed98",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockTransfer",
+      "schemaId": "381566ae-7571-4d44-a02b-f348e4e0e99e",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockTransfer",
+      "schemaId": "381566ae-7571-4d44-a02b-f348e4e0e99e",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockTransfer",
+      "schemaId": "381566ae-7571-4d44-a02b-f348e4e0e99e",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "StockTransfer",
+      "schemaId": "381566ae-7571-4d44-a02b-f348e4e0e99e",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Sublocation",
+      "schemaId": "e7e16f8c-725d-4576-901f-32b754fd43df",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Sublocation",
+      "schemaId": "e7e16f8c-725d-4576-901f-32b754fd43df",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Sublocation",
+      "schemaId": "e7e16f8c-725d-4576-901f-32b754fd43df",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Sublocation",
+      "schemaId": "e7e16f8c-725d-4576-901f-32b754fd43df",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxCode",
+      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxCode",
+      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxCode",
+      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxCode",
+      "schemaId": "df9caf77-664a-45e9-b6ba-60f1c3f73330",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxingScheme",
+      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxingScheme",
+      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxingScheme",
+      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TaxingScheme",
+      "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Vendor",
+      "schemaId": "e6f58d6a-ce79-402c-ba4d-5dba1f5737b8",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Vendor",
+      "schemaId": "e6f58d6a-ce79-402c-ba4d-5dba1f5737b8",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Vendor",
+      "schemaId": "e6f58d6a-ce79-402c-ba4d-5dba1f5737b8",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "Vendor",
+      "schemaId": "e6f58d6a-ce79-402c-ba4d-5dba1f5737b8",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "VendorItem",
+      "schemaId": "f9bb12ca-d02f-4a45-82cc-f010229c8b05",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "VendorItem",
+      "schemaId": "f9bb12ca-d02f-4a45-82cc-f010229c8b05",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "VendorItem",
+      "schemaId": "f9bb12ca-d02f-4a45-82cc-f010229c8b05",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "VendorItem",
+      "schemaId": "f9bb12ca-d02f-4a45-82cc-f010229c8b05",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
     }
   ],
   "policies": []

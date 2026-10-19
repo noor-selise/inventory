@@ -23,9 +23,9 @@ const ACTIONS = {
     run: seedStarterSettings,
   },
   catalog: {
-    title: "Add sample products?",
+    title: "Add sample data?",
     description:
-      "Adds 11 categories and 30 sample products with barcodes. Their SKUs start with SAMPLE- so you can find and deactivate them later.",
+      "Adds 11 categories, 30 sample products with barcodes, 3 locations with bins, 7 customers, 4 vendors, 3 price lists with breaks, and opening stock posted through the stock ledger. Run starter settings first. Sample SKUs start with SAMPLE-.",
     run: seedSampleCatalog,
   },
 } as const
@@ -69,7 +69,7 @@ export function StarterDataCard() {
           <Database aria-hidden /> Add starter settings
         </Button>
         <Button variant="secondary" onClick={() => setPending("catalog")}>
-          <Package aria-hidden /> Add sample products
+          <Package aria-hidden /> Add sample data
         </Button>
       </div>
       {report ? (

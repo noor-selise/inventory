@@ -1,0 +1,40 @@
+{
+  "_comment": "Indexes per schema, applied by scripts/blocks-data-deploy.mjs. Fields use name[:asc|desc]. Max 15 per schema.",
+  "indexes": [
+    { "schema": "Currency", "fields": "code", "unique": true },
+    { "schema": "NumberingRule", "fields": "documentType", "unique": true },
+    { "schema": "Category", "fields": "name,parentId", "unique": true },
+    { "schema": "Product", "fields": "name", "unique": true },
+    { "schema": "Product", "fields": "sku", "unique": true },
+    { "schema": "ProductBarcode", "fields": "barcode", "unique": true },
+    { "schema": "ProductBarcode", "fields": "productId" },
+    { "schema": "ExchangeRate", "fields": "currencyCode,effectiveOn:desc" },
+
+    { "schema": "Location", "fields": "name", "unique": true },
+    { "schema": "Sublocation", "fields": "locationId,code", "unique": true },
+
+    { "schema": "InventoryMovement", "fields": "postingKey", "unique": true },
+    { "schema": "InventoryMovement", "fields": "productId,effectiveAt:desc" },
+    { "schema": "InventoryMovement", "fields": "sourceType,sourceId" },
+    { "schema": "InventoryMovement", "fields": "status,effectiveAt" },
+    { "schema": "InventoryMovement", "fields": "lotId" },
+    { "schema": "InventoryMovement", "fields": "serial" },
+    { "schema": "InventoryBalance", "fields": "productId,locationId,sublocationId,lotId,serial", "unique": true },
+    { "schema": "InventoryBalance", "fields": "locationId" },
+
+    { "schema": "StockAdjustment", "fields": "number", "unique": true },
+    { "schema": "StockTransfer", "fields": "number", "unique": true },
+    { "schema": "StockCount", "fields": "number", "unique": true },
+
+    { "schema": "Lot", "fields": "productId,lotNumber", "unique": true },
+    { "schema": "Lot", "fields": "expiresOn" },
+
+    { "schema": "Customer", "fields": "name", "unique": true },
+    { "schema": "Vendor", "fields": "name", "unique": true },
+    { "schema": "PricingScheme", "fields": "name", "unique": true },
+    { "schema": "ProductPrice", "fields": "productId,pricingSchemeId", "unique": true },
+    { "schema": "PriceBreak", "fields": "productPriceId,minQty", "unique": true },
+    { "schema": "VendorItem", "fields": "vendorId,productId", "unique": true },
+    { "schema": "VendorItem", "fields": "productId" }
+  ]
+}

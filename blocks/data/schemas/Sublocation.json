@@ -1,0 +1,23 @@
+{
+  "schemaName": "Sublocation",
+  "collectionName": "Sublocations",
+  "schemaType": 1,
+  "description": "Bins inside a location (spec 0006)",
+  "fields": [
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "code",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

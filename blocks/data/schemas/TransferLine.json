@@ -1,0 +1,53 @@
+{
+  "schemaName": "TransferLine",
+  "collectionName": "TransferLines",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "lineId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "fromSublocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "toSublocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "lotId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "serial",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "qty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "enteredQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "uom",
+      "type": "String",
+      "isArray": false
+    }
+  ]
+}

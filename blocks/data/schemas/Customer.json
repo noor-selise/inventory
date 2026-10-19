@@ -1,0 +1,83 @@
+{
+  "schemaName": "Customer",
+  "collectionName": "Customers",
+  "schemaType": 1,
+  "description": "Customers with defaults (spec 0010)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "email",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "phone",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "contacts",
+      "type": "Contact",
+      "isArray": true
+    },
+    {
+      "name": "billingAddress",
+      "type": "Address",
+      "isArray": false
+    },
+    {
+      "name": "shippingAddress",
+      "type": "Address",
+      "isArray": false
+    },
+    {
+      "name": "pricingSchemeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "taxingSchemeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "paymentTermId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "defaultDiscountPct",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "salesRepUserId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "creditLimit",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

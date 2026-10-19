@@ -1,9 +1,9 @@
 import { BlocksDataError } from "@/lib/blocks/data"
 import { numberingRules, type NumberingRule } from "./api"
 
-// Running document numbers (spec 0004 AC-3). Blocks has no atomic counter, so the
-// document's unique index is the real guard: read the rule, try the insert with the
-// next number, and on a duplicate read again and retry. Numbers can have gaps.
+// Running document numbers (spec 0004 AC-3). The counter is reserved with a
+// compare and set on the rule; the document's unique index stays as a backstop.
+// Numbers can have gaps after a failed save.
 
 export const DOCUMENT_TYPES = [
   { value: "product", label: "Product SKU", prefix: "SKU-" },
@@ -49,28 +49,37 @@ async function loadRule(documentType: string): Promise<NumberingRule> {
   }
 }
 
+/** Reserves the next number with a compare and set on the rule (spec 0026 evidence). */
+async function reserveNumber(documentType: string): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const rule = await loadRule(documentType)
+    const changed = await numberingRules.updateWhere(
+      { ItemId: rule.ItemId, nextNumber: rule.nextNumber },
+      { nextNumber: rule.nextNumber + 1 }
+    )
+    if (changed === 1) return formatDocumentNumber(rule, rule.nextNumber)
+  }
+  throw new Error("Could not reserve a document number. Try again.")
+}
+
 /**
- * Gives `insert` the next number for `documentType` and retries on a unique
- * index conflict. `insert` must create the document and throw on a duplicate.
+ * Gives `insert` the next number for `documentType`. The number is reserved
+ * first, so two saves at once never get the same one. If the document's unique
+ * index still reports a clash (someone lowered the next number), the next free
+ * number is tried. A failed save leaves a gap, which is allowed.
  */
 export async function withNextNumber<T>(
   documentType: string,
   insert: (number: string) => Promise<T>
 ): Promise<{ number: string; result: T }> {
   let lastError: unknown
-  let skip = 0
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const rule = await loadRule(documentType)
-    const value = rule.nextNumber + skip
-    const number = formatDocumentNumber(rule, value)
+    const number = await reserveNumber(documentType)
     try {
-      const result = await insert(number)
-      await numberingRules.update(rule.ItemId, { nextNumber: value + 1 })
-      return { number, result }
+      return { number, result: await insert(number) }
     } catch (error) {
       if (!(error instanceof BlocksDataError && error.isDuplicate)) throw error
       lastError = error
-      skip += 1
     }
   }
   throw lastError

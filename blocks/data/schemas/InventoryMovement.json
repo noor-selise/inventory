@@ -1,0 +1,93 @@
+{
+  "schemaName": "InventoryMovement",
+  "collectionName": "InventoryMovements",
+  "schemaType": 1,
+  "description": "Stock ledger, one row per quantity change (spec 0007, 0026)",
+  "fields": [
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "sublocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "lotId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "serial",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "qtyDelta",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "enteredQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "enteredUom",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "unitCost",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "sourceType",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "sourceId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "sourceNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "sourceLineId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "effectiveAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "postingKey",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "note",
+      "type": "String",
+      "isArray": false
+    }
+  ]
+}

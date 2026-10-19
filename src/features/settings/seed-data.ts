@@ -154,3 +154,156 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
   { name: "Assembly service", sku: p(29), itemType: "service", standardUom: "hour", category: "Services", description: "On site assembly, billed per hour." },
   { name: "Delivery charge", sku: p(30), itemType: "service", standardUom: "each", category: "Services", description: "Flat local delivery fee." },
 ]
+
+// Features 6 to 10 demo data.
+
+export const DEMO_LOCATIONS = [
+  {
+    name: "Main warehouse",
+    kind: "warehouse",
+    address: "Plot 7, Tejgaon Industrial Area, Dhaka",
+    isDefault: true,
+    bins: ["RECEIVING", "A-01", "A-02", "A-03", "B-01", "B-02", "C-01"],
+  },
+  { name: "Downtown store", kind: "store", address: "45 Gulshan Avenue, Dhaka", bins: ["FRONT", "BACK"] },
+  { name: "Delivery van 1", kind: "truck", address: "", bins: [] },
+]
+
+export const DEMO_PRICING_SCHEMES = [
+  { name: "Retail", currencyCode: "USD", isTaxInclusive: false, isDefault: true },
+  { name: "Wholesale", currencyCode: "USD", isTaxInclusive: false },
+  { name: "Euro retail", currencyCode: "EUR", isTaxInclusive: true },
+]
+
+/** Cost from the main vendor and retail price, by SKU. Wholesale is cost plus 30%. */
+export const DEMO_COST_AND_PRICE: Record<string, [cost: number, retail: number]> = {
+  "SAMPLE-0001": [0.12, 0.35], "SAMPLE-0002": [0.18, 0.45], "SAMPLE-0003": [0.06, 0.2], "SAMPLE-0004": [0.04, 0.12],
+  "SAMPLE-0005": [0.02, 0.08], "SAMPLE-0006": [0.03, 0.09], "SAMPLE-0007": [0.01, 0.05], "SAMPLE-0008": [62, 109],
+  "SAMPLE-0009": [38, 69], "SAMPLE-0010": [41, 75], "SAMPLE-0011": [6.5, 14.9], "SAMPLE-0012": [7.2, 15.5],
+  "SAMPLE-0013": [5.1, 11.9], "SAMPLE-0014": [6.8, 13.5], "SAMPLE-0015": [2.4, 5.99], "SAMPLE-0016": [1.9, 4.5],
+  "SAMPLE-0017": [2.6, 5.75], "SAMPLE-0018": [1.8, 4.25], "SAMPLE-0019": [1.5, 3.9], "SAMPLE-0020": [0.55, 1.2],
+  "SAMPLE-0021": [1.1, 2.99], "SAMPLE-0022": [4.2, 9.5], "SAMPLE-0023": [1.3, 3.5], "SAMPLE-0024": [1.6, 4.0],
+  "SAMPLE-0025": [0.7, 1.95], "SAMPLE-0026": [0.45, 1.1], "SAMPLE-0027": [7.5, 15.0], "SAMPLE-0028": [0.9, 2.2],
+  "SAMPLE-0029": [0, 35], "SAMPLE-0030": [0, 8],
+}
+
+/** Volume breaks on the Wholesale scheme: [sku, minQty, unitPrice]. */
+export const DEMO_PRICE_BREAKS: [string, number, number][] = [
+  ["SAMPLE-0001", 500, 0.15], ["SAMPLE-0001", 1000, 0.14],
+  ["SAMPLE-0003", 500, 0.075], ["SAMPLE-0003", 1000, 0.07],
+  ["SAMPLE-0006", 1000, 0.035],
+  ["SAMPLE-0021", 50, 1.25],
+]
+
+export const DEMO_VENDORS = [
+  {
+    name: "Bolt & Nut Supply Ltd",
+    email: "orders@boltnut.example",
+    phone: "+880 2 5500 1100",
+    currencyCode: "USD",
+    paymentTerm: "Net 30",
+    leadTimeDays: 7,
+    address: { line1: "22 Kawran Bazar", city: "Dhaka", postalCode: "1215", country: "Bangladesh" },
+    contacts: [{ name: "Rafiq Ahmed", email: "rafiq@boltnut.example", phone: "+880 1711 000111", role: "Sales" }],
+  },
+  {
+    name: "ToolPro International",
+    email: "sales@toolpro.example",
+    phone: "+49 30 1234 5678",
+    currencyCode: "EUR",
+    paymentTerm: "Net 60",
+    leadTimeDays: 21,
+    address: { line1: "Industriestrasse 5", city: "Berlin", postalCode: "10115", country: "Germany" },
+    contacts: [{ name: "Anna Weber", email: "anna.weber@toolpro.example", role: "Account manager" }],
+  },
+  {
+    name: "Bright Electric Co.",
+    email: "hello@brightelectric.example",
+    phone: "+880 2 9876 5432",
+    currencyCode: "USD",
+    paymentTerm: "Net 15",
+    leadTimeDays: 5,
+    address: { line1: "8 Elephant Road", city: "Dhaka", postalCode: "1205", country: "Bangladesh" },
+    contacts: [],
+  },
+  {
+    name: "PackRight Packaging",
+    email: "support@packright.example",
+    phone: "+44 20 7946 0000",
+    currencyCode: "GBP",
+    paymentTerm: "Due on receipt",
+    leadTimeDays: 10,
+    address: { line1: "Unit 3, Riverside Park", city: "Leeds", postalCode: "LS1 4AP", country: "United Kingdom" },
+    contacts: [{ name: "Tom Harris", email: "tom@packright.example", phone: "+44 7700 900123", role: "Orders" }],
+  },
+]
+
+/** Which vendor supplies which product prefix range: [vendor, first SKU number, last SKU number]. */
+export const DEMO_VENDOR_SUPPLY: [string, number, number][] = [
+  ["Bolt & Nut Supply Ltd", 1, 7],
+  ["ToolPro International", 8, 16],
+  ["Bolt & Nut Supply Ltd", 17, 19],
+  ["Bright Electric Co.", 20, 22],
+  ["ToolPro International", 23, 25],
+  ["PackRight Packaging", 26, 28],
+]
+
+export const DEMO_CUSTOMERS = [
+  { name: "Acme Builders", email: "accounts@acmebuilders.example", phone: "+880 1811 222333", scheme: "Wholesale", term: "Net 30", currency: "USD", discount: 5, creditLimit: 20000, city: "Dhaka", line1: "14 Banani Road 11" },
+  { name: "Green Leaf Interiors", email: "buy@greenleaf.example", phone: "+880 1911 444555", scheme: "Retail", term: "Net 15", currency: "USD", discount: 0, creditLimit: 5000, city: "Chattogram", line1: "3 Agrabad C/A" },
+  { name: "Northside Hardware", email: "orders@northside.example", phone: "+880 1611 777888", scheme: "Wholesale", term: "Net 60", currency: "USD", discount: 8, creditLimit: 35000, city: "Sylhet", line1: "90 Zindabazar" },
+  { name: "Müller Werkstatt GmbH", email: "einkauf@mueller.example", phone: "+49 89 555 0101", scheme: "Euro retail", term: "Net 30", currency: "EUR", discount: 0, creditLimit: 10000, city: "Munich", line1: "Werkstrasse 12", country: "Germany" },
+  { name: "City Maintenance Services", email: "ops@citymaint.example", phone: "+880 1511 999000", scheme: "Retail", term: "Due on receipt", currency: "USD", discount: 2, creditLimit: 2000, city: "Dhaka", line1: "77 Mirpur Road" },
+  { name: "Harbor Logistics", email: "procurement@harbor.example", phone: "+44 161 555 0199", scheme: "Wholesale", term: "Net 30", currency: "GBP", discount: 3, creditLimit: 15000, city: "Manchester", line1: "1 Dock Street", country: "United Kingdom" },
+  { name: "Walk in customer", email: "", phone: "", scheme: "Retail", term: "Due on receipt", currency: "USD", discount: 0, creditLimit: 0, city: "", line1: "" },
+]
+
+/** Opening stock per location: [sku, qty, bin, lots or serials]. */
+export type OpeningLine = {
+  sku: string
+  qty: number
+  bin?: string
+  lots?: { lotNumber: string; qty: number; expiresInDays: number }[]
+  serials?: string[]
+}
+
+export const DEMO_OPENING_STOCK: Record<string, OpeningLine[]> = {
+  "Main warehouse": [
+    { sku: "SAMPLE-0001", qty: 2400, bin: "A-01" },
+    { sku: "SAMPLE-0002", qty: 1200, bin: "A-01" },
+    { sku: "SAMPLE-0003", qty: 3000, bin: "A-02" },
+    { sku: "SAMPLE-0004", qty: 2800, bin: "A-02" },
+    { sku: "SAMPLE-0005", qty: 5000, bin: "A-03" },
+    { sku: "SAMPLE-0006", qty: 4500, bin: "A-03" },
+    { sku: "SAMPLE-0007", qty: 8000, bin: "A-03" },
+    { sku: "SAMPLE-0008", qty: 3, bin: "B-01", serials: ["DR18-0001", "DR18-0002", "DR18-0003"] },
+    { sku: "SAMPLE-0009", qty: 2, bin: "B-01", serials: ["AG125-1001", "AG125-1002"] },
+    { sku: "SAMPLE-0010", qty: 2, bin: "B-01", serials: ["JS650-501", "JS650-502"] },
+    { sku: "SAMPLE-0011", qty: 25, bin: "B-02" },
+    { sku: "SAMPLE-0012", qty: 18, bin: "B-02" },
+    { sku: "SAMPLE-0013", qty: 30, bin: "B-02" },
+    { sku: "SAMPLE-0014", qty: 22, bin: "B-02" },
+    { sku: "SAMPLE-0015", qty: 60, bin: "B-02" },
+    { sku: "SAMPLE-0016", qty: 45, bin: "B-02" },
+    { sku: "SAMPLE-0017", qty: 48, bin: "C-01", lots: [{ lotNumber: "WG-2401", qty: 24, expiresInDays: 40 }, { lotNumber: "WG-2405", qty: 24, expiresInDays: 300 }] },
+    { sku: "SAMPLE-0018", qty: 36, bin: "C-01", lots: [{ lotNumber: "EP-0912", qty: 36, expiresInDays: 420 }] },
+    { sku: "SAMPLE-0019", qty: 24, bin: "C-01", lots: [{ lotNumber: "SS-7781", qty: 24, expiresInDays: 0 }] },
+    { sku: "SAMPLE-0020", qty: 500, bin: "C-01", lots: [{ lotNumber: "CU-25-A", qty: 300, expiresInDays: 0 }, { lotNumber: "CU-25-B", qty: 200, expiresInDays: 0 }] },
+    { sku: "SAMPLE-0021", qty: 150, bin: "A-01" },
+    { sku: "SAMPLE-0022", qty: 40, bin: "A-02" },
+    { sku: "SAMPLE-0023", qty: 120, bin: "A-03" },
+    { sku: "SAMPLE-0024", qty: 96, bin: "A-03" },
+    { sku: "SAMPLE-0025", qty: 200, bin: "C-01", lots: [{ lotNumber: "FFP2-2209", qty: 80, expiresInDays: -10 }, { lotNumber: "FFP2-2503", qty: 120, expiresInDays: 700 }] },
+    { sku: "SAMPLE-0026", qty: 400, bin: "RECEIVING" },
+    { sku: "SAMPLE-0027", qty: 15, bin: "RECEIVING" },
+  ],
+  "Downtown store": [
+    { sku: "SAMPLE-0001", qty: 300, bin: "FRONT" },
+    { sku: "SAMPLE-0003", qty: 400, bin: "FRONT" },
+    { sku: "SAMPLE-0008", qty: 1, bin: "BACK", serials: ["DR18-0004"] },
+    { sku: "SAMPLE-0012", qty: 6, bin: "FRONT" },
+    { sku: "SAMPLE-0015", qty: 12, bin: "FRONT" },
+    { sku: "SAMPLE-0017", qty: 6, bin: "BACK", lots: [{ lotNumber: "WG-2401", qty: 6, expiresInDays: 40 }] },
+    { sku: "SAMPLE-0021", qty: 30, bin: "FRONT" },
+  ],
+}

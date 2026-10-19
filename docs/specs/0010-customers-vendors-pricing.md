@@ -1,7 +1,7 @@
 # 0010. Customers, vendors, pricing schemes and price resolution
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -84,10 +84,10 @@ One shared calculation keeps every screen consistent. Unique indexes stop duplic
 
 ## Build plan
 
-1. Push the five schemas with unique indexes, satisfies **AC-1** to **AC-4**
-2. Customer and vendor screens, satisfies **AC-1**, **AC-2**
-3. Pricing scheme and price list screens with breaks, satisfies **AC-3**, **AC-4**
-4. Shared price and tax module with tests, satisfies **AC-5**, **AC-6**, **AC-7**
+- [x] 1. Push the five schemas with unique indexes, satisfies **AC-1** to **AC-4**
+- [x] 2. Customer and vendor screens, satisfies **AC-1**, **AC-2**
+- [x] 3. Pricing scheme and price list screens with breaks, satisfies **AC-3**, **AC-4**
+- [x] 4. Shared price and tax module with tests, satisfies **AC-5**, **AC-6**, **AC-7** (shared module plus scripts/checks/pricing.mjs; the price edit right, AC-7, applies on order lines in spec 0011)
 
 ## Consequences
 
