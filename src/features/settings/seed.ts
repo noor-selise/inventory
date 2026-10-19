@@ -19,5 +19,7 @@ export function seedSampleCatalog(): Promise<SeedReport> {
     demoLocations: true,
     demoPartnersAndPrices: true,
     openingStock: true,
+    demoTeam: true,
+    demoActivity: true,
   })
 }

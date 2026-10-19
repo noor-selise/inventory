@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   Boxes,
   Building2,
+  ChartColumn,
   ClipboardCheck,
   ClipboardList,
   Contact,
@@ -11,15 +12,18 @@ import {
   Hash,
   LayoutDashboard,
   ListChecks,
+  ListRestart,
   LogOut,
   Menu,
   MapPin,
   Package,
   PackageSearch,
   Palette,
+  ShoppingCart,
   Tags,
   Truck,
   Users,
+  Wallet,
   Waypoints,
 } from "lucide-react"
 
@@ -64,13 +68,18 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Sales",
     items: [
+      { to: "/sales/orders", label: "Sales orders", icon: ShoppingCart },
       { to: "/customers", label: "Customers", icon: Contact },
       { to: "/price-lists", label: "Price lists", icon: Tags },
+      { to: "/payments", label: "Payments", icon: Wallet },
     ],
   },
   {
     label: "Purchasing",
-    items: [{ to: "/vendors", label: "Vendors", icon: Truck }],
+    items: [
+      { to: "/purchasing/orders", label: "Purchase orders", icon: ClipboardList },
+      { to: "/vendors", label: "Vendors", icon: Truck },
+    ],
   },
   {
     label: "Inventory",
@@ -82,8 +91,13 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
       { to: "/stock/transfers", label: "Transfers", icon: ArrowLeftRight },
       { to: "/stock/counts", label: "Counts", icon: ClipboardCheck },
       { to: "/stock/lots", label: "Lots and serials", icon: Waypoints },
+      { to: "/stock/reorder", label: "Reordering", icon: ListRestart },
       { to: "/locations", label: "Locations", icon: MapPin },
     ],
+  },
+  {
+    label: "Reports",
+    items: [{ to: "/reports", label: "Reports", icon: ChartColumn }],
   },
   {
     label: "Settings",

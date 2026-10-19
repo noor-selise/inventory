@@ -1,0 +1,223 @@
+{
+  "schemaName": "SalesOrder",
+  "collectionName": "SalesOrders",
+  "schemaType": 1,
+  "description": "Sales quotes and orders with lines, packages, shipments and history inside (spec 0011)",
+  "fields": [
+    {
+      "name": "number",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isQuote",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "orderDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "dueDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "requestedShipDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "exchangeRate",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "taxingSchemeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "paymentTermId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "freight",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "subtotal",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "taxTotal",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "total",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "amountPaid",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "inventoryStatus",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "paymentStatus",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isCancelled",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "cancelledAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "revision",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "history",
+      "type": "OrderEvent",
+      "isArray": true
+    },
+    {
+      "name": "customerId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "contact",
+      "type": "Contact",
+      "isArray": false
+    },
+    {
+      "name": "billingAddress",
+      "type": "Address",
+      "isArray": false
+    },
+    {
+      "name": "shippingAddress",
+      "type": "Address",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "pricingSchemeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "salesRepUserId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "assignedUserId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "customerPoNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "externalId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "source",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "priority",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "needsConfirmation",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "confirmedBy",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "invoicedOn",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "shipRemarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "cogs",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "nonCustomerCosts",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "lines",
+      "type": "SalesLine",
+      "isArray": true
+    },
+    {
+      "name": "packages",
+      "type": "SalesPackage",
+      "isArray": true
+    },
+    {
+      "name": "shipments",
+      "type": "SalesShipment",
+      "isArray": true
+    },
+    {
+      "name": "stockSteps",
+      "type": "StockStep",
+      "isArray": true
+    }
+  ]
+}

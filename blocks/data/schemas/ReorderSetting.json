@@ -1,0 +1,58 @@
+{
+  "schemaName": "ReorderSetting",
+  "collectionName": "ReorderSettings",
+  "schemaType": 1,
+  "description": "Reorder point and method per product and location (spec 0014)",
+  "fields": [
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "reorderPoint",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "reorderQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "method",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "vendorId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "sourceLocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "sublocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "isAlerting",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "lastAlertedAt",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}

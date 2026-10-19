@@ -1,0 +1,246 @@
+{
+  "name": "Payment Ledger",
+  "settings": {},
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Payment Inserted",
+      "category": "trigger",
+      "type": "dataGateway",
+      "version": "v1",
+      "position": {
+        "x": 240,
+        "y": 0
+      },
+      "parameters": {
+        "collectionName": "Payments",
+        "schemaName": "Payment",
+        "operation": "Inserted"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g1",
+      "name": "Get Payments",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 480,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "Payments",
+        "schemaName": "Payment",
+        "projectShortKey": "dbpgei",
+        "filter": {},
+        "getFields": [
+          "ItemId",
+          "party",
+          "partyId",
+          "type",
+          "amount",
+          "currencyCode",
+          "isVoided",
+          "allocations { orderType orderId amount }"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g2",
+      "name": "Get Sales Orders",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 720,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "SalesOrders",
+        "schemaName": "SalesOrder",
+        "projectShortKey": "dbpgei",
+        "filter": {
+          "isQuote": false
+        },
+        "getFields": [
+          "ItemId",
+          "customerId",
+          "currencyCode",
+          "total",
+          "amountPaid",
+          "isQuote",
+          "isCancelled",
+          "invoicedOn",
+          "needsConfirmation",
+          "confirmedBy",
+          "revision"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g3",
+      "name": "Get Purchase Orders",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 960,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "PurchaseOrders",
+        "schemaName": "PurchaseOrder",
+        "projectShortKey": "dbpgei",
+        "filter": {
+          "isQuote": false
+        },
+        "getFields": [
+          "ItemId",
+          "vendorId",
+          "currencyCode",
+          "total",
+          "amountPaid",
+          "isQuote",
+          "isCancelled",
+          "revision"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g4",
+      "name": "Get Balances",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 1200,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "PartyBalances",
+        "schemaName": "PartyBalance",
+        "projectShortKey": "dbpgei",
+        "filter": {},
+        "getFields": [
+          "ItemId",
+          "party",
+          "partyId",
+          "currencyCode"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "c1",
+      "name": "Compute Ledger",
+      "category": "transform",
+      "type": "code",
+      "version": "v1",
+      "position": {
+        "x": 1440,
+        "y": 0
+      },
+      "parameters": {
+        "mode": "all",
+        "language": "js",
+        "script": "\nconst EPSILON = 0.005;\nconst rowsOf = (value) => {\n  let v = value;\n  for (let i = 0; i < 4 && v && !Array.isArray(v); i++) v = v.items ?? v.output ?? v.data ?? (v.json && v.json !== v ? v.json : undefined);\n  return Array.isArray(v) ? v : [];\n};\nconst nodeRows = (name) => { try { return rowsOf($node[name].json); } catch (e) { return []; } };\nconst gql = (value) => JSON.stringify(value).replace(/\"([A-Za-z_][A-Za-z0-9_]*)\":/g, \"$1:\");\n\nfunction computeLedger(\n  payments                 ,\n  orders                                                      \n)               {\n  const round = (value        ) => Math.round((value + Number.EPSILON) * 100) / 100\n  const orderPaid                         = {}\n  const balances = new Map                                          ()\n  const row = (party        , partyId        , currencyCode        ) => {\n    const key = `${party}|${partyId}|${currencyCode}`\n    let entry = balances.get(key)\n    if (!entry) {\n      entry = { party, partyId, currencyCode, invoiced: 0, paid: 0, openBalance: 0, storeCredit: 0 }\n      balances.set(key, entry)\n    }\n    return entry\n  }\n\n  for (const payment of payments) {\n    if (payment.isVoided) continue\n    const allocations = payment.allocations ?? []\n    const allocated = allocations.reduce((sum, allocation) => sum + Number(allocation.amount ?? 0), 0)\n    const sign = payment.type === \"refund\" || payment.type === \"convert_to_credit\" ? -1 : 1\n    for (const allocation of allocations) {\n      orderPaid[allocation.orderId] = (orderPaid[allocation.orderId] ?? 0) + sign * Number(allocation.amount ?? 0)\n    }\n    const entry = row(payment.party, payment.partyId, payment.currencyCode)\n    const amount = Number(payment.amount ?? 0)\n    if (payment.type === \"payment\" || payment.type === \"batch\") entry.storeCredit += amount - allocated\n    else if (payment.type === \"apply_credit\") entry.storeCredit -= allocated\n    else if (payment.type === \"convert_to_credit\") entry.storeCredit += allocated\n    else if (payment.type === \"refund\") entry.storeCredit -= amount - allocated\n  }\n\n  for (const order of orders) {\n    if (order.isQuote || order.isCancelled) continue\n    const entry = row(order.party, order.partyId, order.currencyCode)\n    const paid = orderPaid[order.ItemId] ?? 0\n    const counts = order.party === \"vendor\" || Boolean(order.invoicedOn)\n    if (counts) entry.invoiced += Number(order.total ?? 0)\n    entry.paid += paid\n  }\n\n  const result               = { orderPaid: {}, balances: [] }\n  for (const [orderId, paid] of Object.entries(orderPaid)) result.orderPaid[orderId] = round(paid)\n  for (const entry of balances.values()) {\n    result.balances.push({\n      ...entry,\n      invoiced: round(entry.invoiced),\n      paid: round(entry.paid),\n      openBalance: round(entry.invoiced - entry.paid),\n      storeCredit: round(entry.storeCredit),\n    })\n  }\n  return result\n}\nfunction salesPaymentStatus(\n  order                                                                                                                           \n)                {\n  if (order.isCancelled) return \"cancelled\"\n  if (order.isQuote) return \"quote\"\n  if (order.needsConfirmation && !order.confirmedBy) return \"unconfirmed\"\n  const total = Number(order.total ?? 0)\n  const paid = Number(order.amountPaid ?? 0)\n  if (paid > total + EPSILON) return \"owing\"\n  if (paid > EPSILON && paid >= total - EPSILON) return \"paid\"\n  if (paid > EPSILON) return \"partial\"\n  return order.invoicedOn ? \"invoiced\" : \"uninvoiced\"\n}\nfunction purchasePaymentStatus(order                                                                         )                {\n  if (order.isCancelled) return \"cancelled\"\n  if (order.isQuote) return \"quote\"\n  const total = Number(order.total ?? 0)\n  const paid = Number(order.amountPaid ?? 0)\n  if (paid > total + EPSILON) return \"owing\"\n  if (paid > EPSILON && paid >= total - EPSILON) return \"paid\"\n  if (paid > EPSILON) return \"partial\"\n  return \"unpaid\"\n}\nconst payments = nodeRows(\"Get Payments\");\nconst sales = nodeRows(\"Get Sales Orders\").map((o) => ({ ...o, party: \"customer\", partyId: o.customerId }));\nconst purchases = nodeRows(\"Get Purchase Orders\").map((o) => ({ ...o, party: \"vendor\", partyId: o.vendorId }));\nconst balances = nodeRows(\"Get Balances\");\nconst ledger = computeLedger(payments, [...sales, ...purchases]);\nconst parts = [];\nlet n = 0;\nfor (const order of [...sales, ...purchases]) {\n  if (order.isQuote) continue;\n  const amountPaid = ledger.orderPaid[order.ItemId] ?? 0;\n  if (Math.abs(amountPaid - Number(order.amountPaid ?? 0)) < EPSILON) continue;\n  const schema = order.party === \"customer\" ? \"SalesOrder\" : \"PurchaseOrder\";\n  const status = order.party === \"customer\" ? salesPaymentStatus({ ...order, amountPaid }) : purchasePaymentStatus({ ...order, amountPaid });\n  // Compare and set on revision, like the app; a clash is fixed by the next run.\n  const filter = JSON.stringify({ ItemId: order.ItemId, revision: order.revision ?? null });\n  parts.push(`o${n++}: update${schema}(filter: ${JSON.stringify(filter)}, input: ${gql({ amountPaid, paymentStatus: status, revision: (order.revision ?? 0) + 1 })}) { acknowledged totalImpactedData }`);\n}\nconst rebuiltAt = new Date().toISOString();\nfor (const row of ledger.balances) {\n  const existing = balances.find((b) => b.party === row.party && b.partyId === row.partyId && b.currencyCode === row.currencyCode);\n  const values = { invoiced: row.invoiced, paid: row.paid, openBalance: row.openBalance, storeCredit: row.storeCredit, rebuiltAt };\n  if (existing) parts.push(`b${n++}: updatePartyBalance(filter: ${JSON.stringify(JSON.stringify({ ItemId: existing.ItemId }))}, input: ${gql(values)}) { acknowledged }`);\n  else parts.push(`b${n++}: insertPartyBalance(input: ${gql({ party: row.party, partyId: row.partyId, currencyCode: row.currencyCode, ...values })}) { acknowledged }`);\n}\nconst details = `${payments.length} payments, ${sales.length + purchases.length} orders, ${parts.length} writes`;\nparts.push(`log: insertWorkflowRun(input: ${gql({ workflow: \"payment-ledger\", status: \"ok\", details, ranAt: rebuiltAt })}) { acknowledged }`);\nreturn { query: `mutation { ${parts.join(\" \")} }`, details };"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "m1",
+      "name": "Apply Ledger",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 1680,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "updateData",
+        "collectionName": "WorkflowRuns",
+        "schemaName": "WorkflowRun",
+        "projectShortKey": "dbpgei",
+        "rawQueryMode": true,
+        "rawQuery": "{{$json.output.query}}",
+        "filter": {},
+        "getFields": [],
+        "fieldMapping": {},
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-t1-g1",
+      "source": "t1",
+      "target": "g1",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g1-g2",
+      "source": "g1",
+      "target": "g2",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g2-g3",
+      "source": "g2",
+      "target": "g3",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g3-g4",
+      "source": "g3",
+      "target": "g4",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g4-c1",
+      "source": "g4",
+      "target": "c1",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-c1-m1",
+      "source": "c1",
+      "target": "m1",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    }
+  ]
+}

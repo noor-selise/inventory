@@ -1,0 +1,188 @@
+{
+  "schemaName": "PurchaseOrder",
+  "collectionName": "PurchaseOrders",
+  "schemaType": 1,
+  "description": "Purchase quotes and orders with lines, receipts and history inside (spec 0012)",
+  "fields": [
+    {
+      "name": "number",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isQuote",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "orderDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "dueDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "requestedShipDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "exchangeRate",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "taxingSchemeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "paymentTermId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "freight",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "subtotal",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "taxTotal",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "total",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "amountPaid",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "inventoryStatus",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "paymentStatus",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isCancelled",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "cancelledAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "revision",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "history",
+      "type": "OrderEvent",
+      "isArray": true
+    },
+    {
+      "name": "vendorId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "contact",
+      "type": "Contact",
+      "isArray": false
+    },
+    {
+      "name": "vendorAddress",
+      "type": "Address",
+      "isArray": false
+    },
+    {
+      "name": "shipToName",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "shipToAddress",
+      "type": "Address",
+      "isArray": false
+    },
+    {
+      "name": "dropshipSalesOrderId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "receiveLocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "carrierId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "vendorOrderNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "nonVendorCosts",
+      "type": "ExtraCost",
+      "isArray": true
+    },
+    {
+      "name": "allocationMethod",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "approvedBy",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "approvedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "lines",
+      "type": "PurchaseLine",
+      "isArray": true
+    },
+    {
+      "name": "stockSteps",
+      "type": "StockStep",
+      "isArray": true
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 import { blocksClient } from "@/lib/blocks/client"
 import { collection, type Entity } from "@/lib/blocks/data"
+import { OPEN_PO_FILTER, purchaseOrders } from "@/features/purchasing/api"
+import { OPEN_ORDER_FILTER, salesOrders } from "@/features/sales/api"
 import { createPosting } from "./posting.ts"
+import { computeQuantities, type QuantityRow } from "./quantities"
 
 // Stock documents (spec 0008), lots (spec 0009) and the shared posting step
 // (spec 0007, decision in spec 0026).
@@ -165,49 +168,20 @@ export async function allocateLots(productId: string, locationId: string, today 
     .sort((a, b) => (a.lot.expiresOn ?? "9999").localeCompare(b.lot.expiresOn ?? "9999"))
 }
 
-export type QuantitySummary = {
-  locationId: string
-  onHand: number
-  picked: number
-  reserved: number
-  available: number
-  onOrder: number
-  inTransit: number
-}
+export type QuantitySummary = QuantityRow
 
 /**
- * The PRD §5.3 quantities for one product, per location. Reserved and on order
- * come from sales and purchase orders (specs 0011, 0012), not built yet, so
- * they are 0 for now. In transit is stock sent on open transfers.
+ * The PRD §5.3 quantities for one product, per location (spec 0007 AC-6):
+ * balances plus open sales orders, open purchase orders and open transfers.
  */
 export async function quantitiesFor(productId: string): Promise<QuantitySummary[]> {
-  const [{ items: balances }, { items: transfers }] = await Promise.all([
+  const [{ items: balances }, { items: transfers }, { items: sales }, { items: purchases }] = await Promise.all([
     posting.balances({ productId }, { pageSize: 500 }),
-    stockTransfers.list({ filter: { status: "in_transit" }, pageSize: 200 }),
+    stockTransfers.list({ filter: { status: { $in: ["open", "in_transit"] } }, pageSize: 500 }),
+    salesOrders.list({ filter: { ...OPEN_ORDER_FILTER, "lines.productId": productId }, pageSize: 500 }),
+    purchaseOrders.list({ filter: { ...OPEN_PO_FILTER, "lines.productId": productId }, pageSize: 500 }),
   ])
-  const byLocation = new Map<string, QuantitySummary>()
-  const row = (locationId: string) => {
-    let summary = byLocation.get(locationId)
-    if (!summary) {
-      summary = { locationId, onHand: 0, picked: 0, reserved: 0, available: 0, onOrder: 0, inTransit: 0 }
-      byLocation.set(locationId, summary)
-    }
-    return summary
-  }
-  for (const balance of balances) {
-    const summary = row(balance.locationId)
-    summary.onHand += Number(balance.onHand ?? 0)
-    summary.picked += Number(balance.picked ?? 0)
-  }
-  for (const transfer of transfers) {
-    for (const line of transfer.lines ?? []) {
-      if (line.productId === productId) row(transfer.toLocationId).inTransit += Number(line.qty ?? 0)
-    }
-  }
-  for (const summary of byLocation.values()) {
-    summary.available = summary.onHand - summary.picked - summary.reserved
-  }
-  return [...byLocation.values()]
+  return computeQuantities({ balances, transfers, salesOrders: sales, purchaseOrders: purchases, productIds: [productId] })
 }
 
 let lastRepair = 0

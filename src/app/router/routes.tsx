@@ -10,7 +10,12 @@ import { HomePage } from "@/features/dashboard/HomePage"
 import { LocationsPage } from "@/features/locations/LocationsPage"
 import { CustomersPage } from "@/features/partners/CustomersPage"
 import { VendorsPage } from "@/features/partners/VendorsPage"
+import { PaymentsPage } from "@/features/payments/PaymentsPage"
 import { PriceListsPage } from "@/features/pricing/PriceListsPage"
+import { PurchaseOrdersPage } from "@/features/purchasing/PurchaseOrdersPage"
+import { ReorderPage } from "@/features/reorder/ReorderPage"
+import { ReportsPage } from "@/features/reports/ReportsPage"
+import { SalesOrdersPage } from "@/features/sales/SalesOrdersPage"
 import { AdjustmentsPage } from "@/features/stock/AdjustmentsPage"
 import { CountsPage } from "@/features/stock/CountsPage"
 import { LotsPage } from "@/features/stock/LotsPage"
@@ -35,6 +40,11 @@ const protectedRoutes: Record<string, React.ComponentType> = {
   "/stock/transfers": TransfersPage,
   "/stock/counts": CountsPage,
   "/stock/lots": LotsPage,
+  "/stock/reorder": ReorderPage,
+  "/sales/orders": SalesOrdersPage,
+  "/purchasing/orders": PurchaseOrdersPage,
+  "/payments": PaymentsPage,
+  "/reports": ReportsPage,
   "/locations": LocationsPage,
   "/customers": CustomersPage,
   "/price-lists": PriceListsPage,

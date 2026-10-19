@@ -1,0 +1,43 @@
+{
+  "schemaName": "DailyStockSummary",
+  "collectionName": "DailyStockSummarys",
+  "schemaType": 1,
+  "description": "Stock on hand and value per day, product and location, rebuilt nightly (spec 0015)",
+  "fields": [
+    {
+      "name": "summaryKey",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "day",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "onHand",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "value",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "rebuiltAt",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}

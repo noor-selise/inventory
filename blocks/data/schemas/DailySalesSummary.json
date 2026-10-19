@@ -1,0 +1,63 @@
+{
+  "schemaName": "DailySalesSummary",
+  "collectionName": "DailySalesSummarys",
+  "schemaType": 1,
+  "description": "Sales per day, product, location, customer and rep in home currency, rebuilt nightly (spec 0015)",
+  "fields": [
+    {
+      "name": "summaryKey",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "day",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "customerId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "salesRepUserId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "qty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "revenue",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "cogs",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "tax",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "rebuiltAt",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}

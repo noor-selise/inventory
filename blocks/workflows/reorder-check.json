@@ -1,0 +1,330 @@
+{
+  "name": "Reorder Check",
+  "settings": {},
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Every Night",
+      "category": "trigger",
+      "type": "schedule",
+      "version": "v1",
+      "position": {
+        "x": 240,
+        "y": 0
+      },
+      "parameters": {
+        "triggerInterval": "custom",
+        "cronExpression": "30 2 * * *"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g1",
+      "name": "Get Settings",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 480,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "ReorderSettings",
+        "schemaName": "ReorderSetting",
+        "projectShortKey": "dbpgei",
+        "filter": {},
+        "getFields": [
+          "ItemId",
+          "productId",
+          "locationId",
+          "reorderPoint",
+          "reorderQty",
+          "method",
+          "vendorId",
+          "sourceLocationId",
+          "isAlerting"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g2",
+      "name": "Get Balances",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 720,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "InventoryBalances",
+        "schemaName": "InventoryBalance",
+        "projectShortKey": "dbpgei",
+        "filter": {},
+        "getFields": [
+          "productId",
+          "locationId",
+          "onHand"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g3",
+      "name": "Get Transfers",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 960,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "StockTransfers",
+        "schemaName": "StockTransfer",
+        "projectShortKey": "dbpgei",
+        "filter": {
+          "status": {
+            "$in": [
+              "open",
+              "in_transit"
+            ]
+          }
+        },
+        "getFields": [
+          "fromLocationId",
+          "toLocationId",
+          "status",
+          "lines { productId qty }"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g4",
+      "name": "Get Open Sales",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 1200,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "SalesOrders",
+        "schemaName": "SalesOrder",
+        "projectShortKey": "dbpgei",
+        "filter": {
+          "isQuote": false,
+          "isCancelled": {
+            "$ne": true
+          },
+          "inventoryStatus": {
+            "$in": [
+              "unconfirmed",
+              "unapproved",
+              "unfulfilled",
+              "started"
+            ]
+          }
+        },
+        "getFields": [
+          "locationId",
+          "lines { productId stdQty pickedQty shippedQty }"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g5",
+      "name": "Get Open Purchases",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 1440,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "PurchaseOrders",
+        "schemaName": "PurchaseOrder",
+        "projectShortKey": "dbpgei",
+        "filter": {
+          "isQuote": false,
+          "isCancelled": {
+            "$ne": true
+          },
+          "inventoryStatus": {
+            "$in": [
+              "unconfirmed",
+              "unapproved",
+              "unfulfilled",
+              "started"
+            ]
+          }
+        },
+        "getFields": [
+          "receiveLocationId",
+          "lines { productId stdQty receivedQty }"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "g6",
+      "name": "Get Suggestions",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 1680,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "getData",
+        "collectionName": "ReorderSuggestions",
+        "schemaName": "ReorderSuggestion",
+        "projectShortKey": "dbpgei",
+        "filter": {},
+        "getFields": [
+          "ItemId",
+          "productId",
+          "locationId"
+        ],
+        "fieldMapping": {},
+        "rawQueryMode": false,
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "c1",
+      "name": "Compute Reorder List",
+      "category": "transform",
+      "type": "code",
+      "version": "v1",
+      "position": {
+        "x": 1920,
+        "y": 0
+      },
+      "parameters": {
+        "mode": "all",
+        "language": "js",
+        "script": "\nconst EPSILON = 0.005;\nconst rowsOf = (value) => {\n  let v = value;\n  for (let i = 0; i < 4 && v && !Array.isArray(v); i++) v = v.items ?? v.output ?? v.data ?? (v.json && v.json !== v ? v.json : undefined);\n  return Array.isArray(v) ? v : [];\n};\nconst nodeRows = (name) => { try { return rowsOf($node[name].json); } catch (e) { return []; } };\nconst gql = (value) => JSON.stringify(value).replace(/\"([A-Za-z_][A-Za-z0-9_]*)\":/g, \"$1:\");\n\nfunction computeQuantities(input   \n                                                                               \n                                                                                                                                                      \n                                                                                                                                      \n                                                                                                                                    \n                              \n )                {\n  const wanted = input.productIds ? new Set(input.productIds) : null\n  const rows = new Map                     ()\n  const row = (productId        , locationId        ) => {\n    const key = `${productId}|${locationId}`\n    let entry = rows.get(key)\n    if (!entry) {\n      entry = { productId, locationId, onHand: 0, picked: 0, reserved: 0, available: 0, onOrder: 0, inTransit: 0, anticipated: 0 }\n      rows.set(key, entry)\n    }\n    return entry\n  }\n  const keep = (productId        ) => !wanted || wanted.has(productId)\n  const num = (value         ) => Number(value ?? 0) || 0\n\n  for (const balance of input.balances) {\n    if (keep(balance.productId)) row(balance.productId, balance.locationId).onHand += num(balance.onHand)\n  }\n  for (const order of input.salesOrders) {\n    for (const line of order.lines ?? []) {\n      if (!keep(line.productId) || num(line.stdQty) <= 0) continue\n      const entry = row(line.productId, order.locationId)\n      entry.reserved += Math.max(0, num(line.stdQty) - num(line.pickedQty))\n      entry.picked += Math.max(0, num(line.pickedQty) - num(line.shippedQty))\n    }\n  }\n  for (const order of input.purchaseOrders) {\n    for (const line of order.lines ?? []) {\n      if (!keep(line.productId) || num(line.stdQty) <= 0) continue\n      row(line.productId, order.receiveLocationId).onOrder += Math.max(0, num(line.stdQty) - num(line.receivedQty))\n    }\n  }\n  for (const transfer of input.transfers) {\n    for (const line of transfer.lines ?? []) {\n      if (!keep(line.productId)) continue\n      if (transfer.status === \"open\") {\n        row(line.productId, transfer.fromLocationId).reserved += num(line.qty)\n        row(line.productId, transfer.toLocationId).onOrder += num(line.qty)\n      } else if (transfer.status === \"in_transit\") {\n        const entry = row(line.productId, transfer.toLocationId)\n        entry.inTransit += num(line.qty)\n        entry.onOrder += num(line.qty)\n      }\n    }\n  }\n  const result                = []\n  for (const entry of rows.values()) {\n    entry.available = entry.onHand - entry.reserved\n    entry.anticipated = entry.onHand - entry.reserved + entry.onOrder\n    result.push(entry)\n  }\n  return result\n}\nfunction computeReorder(\n  settings                     ,\n  quantities                                                                                                                     \n)                 {\n  const byKey = new Map(quantities.map((row) => [`${row.productId}|${row.locationId}`, row]))\n  const outcome                 = { suggestions: [], alerts: [] }\n  for (const setting of settings) {\n    const point = Number(setting.reorderPoint ?? 0)\n    const q = byKey.get(`${setting.productId}|${setting.locationId}`) ?? { onHand: 0, reserved: 0, onOrder: 0, anticipated: 0 }\n    const below = q.anticipated < point\n    if (below) {\n      // Order the reorder quantity, or at least enough to get back to the point.\n      const suggestedQty = Math.max(Number(setting.reorderQty ?? 0), point - q.anticipated)\n      outcome.suggestions.push({\n        productId: setting.productId,\n        locationId: setting.locationId,\n        onHand: q.onHand,\n        reserved: q.reserved,\n        onOrder: q.onOrder,\n        anticipated: q.anticipated,\n        reorderPoint: point,\n        suggestedQty,\n        method: setting.method || \"purchase\",\n        vendorId: setting.vendorId ?? null,\n        sourceLocationId: setting.sourceLocationId ?? null,\n      })\n    }\n    if (below && !setting.isAlerting) outcome.alerts.push({ settingId: setting.ItemId, productId: setting.productId, locationId: setting.locationId, alerting: true })\n    if (!below && setting.isAlerting) outcome.alerts.push({ settingId: setting.ItemId, productId: setting.productId, locationId: setting.locationId, alerting: false })\n  }\n  return outcome\n}\nconst settings = nodeRows(\"Get Settings\");\nconst quantities = computeQuantities({\n  balances: nodeRows(\"Get Balances\"),\n  transfers: nodeRows(\"Get Transfers\"),\n  salesOrders: nodeRows(\"Get Open Sales\"),\n  purchaseOrders: nodeRows(\"Get Open Purchases\"),\n});\nconst outcome = computeReorder(settings, quantities);\nconst existing = nodeRows(\"Get Suggestions\");\nconst computedAt = new Date().toISOString();\nconst key = (r) => r.productId + \"|\" + r.locationId;\nconst wanted = new Map(outcome.suggestions.map((r) => [key(r), r]));\nconst parts = [];\nlet n = 0;\nfor (const row of existing) if (!wanted.has(key(row))) parts.push(`d${n++}: deleteReorderSuggestion(filter: ${JSON.stringify(JSON.stringify({ ItemId: row.ItemId }))}) { acknowledged }`);\nfor (const row of outcome.suggestions) {\n  const current = existing.find((e) => key(e) === key(row));\n  if (current) parts.push(`s${n++}: updateReorderSuggestion(filter: ${JSON.stringify(JSON.stringify({ ItemId: current.ItemId }))}, input: ${gql({ ...row, computedAt })}) { acknowledged }`);\n  else parts.push(`s${n++}: insertReorderSuggestion(input: ${gql({ ...row, computedAt })}) { acknowledged }`);\n}\nfor (const alert of outcome.alerts) {\n  const filter = JSON.stringify({ ItemId: alert.settingId, isAlerting: alert.alerting ? { $ne: true } : true });\n  const input = alert.alerting ? { isAlerting: true, lastAlertedAt: computedAt } : { isAlerting: false };\n  parts.push(`a${n++}: updateReorderSetting(filter: ${JSON.stringify(filter)}, input: ${gql(input)}) { acknowledged }`);\n}\nconst details = `${outcome.suggestions.length} below reorder point, ${outcome.alerts.filter((a) => a.alerting).length} new alerts`;\nparts.push(`log: insertWorkflowRun(input: ${gql({ workflow: \"reorder-check\", status: \"ok\", details, ranAt: computedAt })}) { acknowledged }`);\nreturn { query: `mutation { ${parts.join(\" \")} }`, details };"
+      },
+      "settings": {},
+      "pinData": null
+    },
+    {
+      "id": "m1",
+      "name": "Apply Reorder List",
+      "category": "action",
+      "type": "dataAction",
+      "version": "v1",
+      "position": {
+        "x": 2160,
+        "y": 0
+      },
+      "parameters": {
+        "actionType": "updateData",
+        "collectionName": "WorkflowRuns",
+        "schemaName": "WorkflowRun",
+        "projectShortKey": "dbpgei",
+        "rawQueryMode": true,
+        "rawQuery": "{{$json.output.query}}",
+        "filter": {},
+        "getFields": [],
+        "fieldMapping": {},
+        "authenticationType": "blocksAuthentication"
+      },
+      "settings": {},
+      "pinData": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-t1-g1",
+      "source": "t1",
+      "target": "g1",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g1-g2",
+      "source": "g1",
+      "target": "g2",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g2-g3",
+      "source": "g2",
+      "target": "g3",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g3-g4",
+      "source": "g3",
+      "target": "g4",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g4-g5",
+      "source": "g4",
+      "target": "g5",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g5-g6",
+      "source": "g5",
+      "target": "g6",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-g6-c1",
+      "source": "g6",
+      "target": "c1",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    },
+    {
+      "id": "e-c1-m1",
+      "source": "c1",
+      "target": "m1",
+      "sourceHandle": "source",
+      "targetHandle": "target"
+    }
+  ]
+}

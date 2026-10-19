@@ -1,0 +1,83 @@
+{
+  "schemaName": "Payment",
+  "collectionName": "Payments",
+  "schemaType": 1,
+  "description": "Customer and vendor payments with their split across orders inside (spec 0013)",
+  "fields": [
+    {
+      "name": "number",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "party",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "partyId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "type",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "methodId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "reference",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "amount",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "paidOn",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "isVoided",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "voidedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "remarks",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "postingKey",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "revision",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "allocations",
+      "type": "PaymentAllocation",
+      "isArray": true
+    }
+  ]
+}

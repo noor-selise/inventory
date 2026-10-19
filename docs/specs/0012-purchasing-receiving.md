@@ -1,7 +1,7 @@
 # 0012. Purchase quotes, orders, receiving, returns and landed cost
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

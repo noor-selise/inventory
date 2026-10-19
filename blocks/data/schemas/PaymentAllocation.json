@@ -1,0 +1,28 @@
+{
+  "schemaName": "PaymentAllocation",
+  "collectionName": "PaymentAllocations",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "orderType",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "orderId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "orderNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "amount",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

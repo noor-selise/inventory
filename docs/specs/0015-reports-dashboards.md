@@ -1,7 +1,7 @@
 # 0015. Reports and dashboards
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

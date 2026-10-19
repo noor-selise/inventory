@@ -1,7 +1,7 @@
 # 0013. Payments, credits and balances
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

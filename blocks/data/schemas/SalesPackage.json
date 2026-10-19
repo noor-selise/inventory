@@ -1,0 +1,28 @@
+{
+  "schemaName": "SalesPackage",
+  "collectionName": "SalesPackages",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "number",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "packedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "shipmentId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "lines",
+      "type": "PackageLine",
+      "isArray": true
+    }
+  ]
+}

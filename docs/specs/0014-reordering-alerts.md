@@ -1,7 +1,7 @@
 # 0014. Reorder settings, reorder list and low stock alerts
 
 **Date**: 2026-10-18
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

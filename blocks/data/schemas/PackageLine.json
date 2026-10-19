@@ -1,0 +1,18 @@
+{
+  "schemaName": "PackageLine",
+  "collectionName": "PackageLines",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "lineId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "qty",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

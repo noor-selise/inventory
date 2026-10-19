@@ -1,0 +1,33 @@
+{
+  "schemaName": "WorkflowRun",
+  "collectionName": "WorkflowRuns",
+  "schemaType": 1,
+  "description": "One row per workflow run, so runs can be checked without portal logs",
+  "fields": [
+    {
+      "name": "workflow",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "trigger",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "details",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "ranAt",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}

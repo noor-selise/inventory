@@ -1,0 +1,68 @@
+{
+  "schemaName": "ReorderSuggestion",
+  "collectionName": "ReorderSuggestions",
+  "schemaType": 1,
+  "description": "Products below their reorder point, rebuilt by the reorder check (spec 0014)",
+  "fields": [
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "onHand",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "reserved",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "onOrder",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "anticipated",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "reorderPoint",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "suggestedQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "method",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "vendorId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "sourceLocationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "computedAt",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}

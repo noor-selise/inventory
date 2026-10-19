@@ -58,6 +58,8 @@ const report = await runSeed(logged, {
   demoLocations: true,
   demoPartnersAndPrices: true,
   openingStock: true,
+  demoTeam: true,
+  demoActivity: true,
 })
 for (const row of report) {
   console.log(`${row.label.padEnd(20)} ${String(row.added).padStart(3)} added, ${row.existing} already there`)

@@ -62,6 +62,14 @@ function mutationResult(response: unknown, field: string): string {
 
 export const AUDIT_FIELDS = ["LastUpdatedBy", "LastUpdatedDate"] as const
 
+/**
+ * A DateTime value for a filter. Blocks matches dates only in this form; a
+ * plain ISO string in a range filter silently matches nothing.
+ */
+export function dateFilter(iso: string) {
+  return { $date: iso }
+}
+
 /** A selection entry: a field name, or a nested selection such as `lines { productId qty }`. */
 export type FieldSelection<T> = (keyof T & string) | `${keyof T & string} { ${string} }`
 

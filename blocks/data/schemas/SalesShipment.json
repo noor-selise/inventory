@@ -1,0 +1,33 @@
+{
+  "schemaName": "SalesShipment",
+  "collectionName": "SalesShipments",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "shipmentId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "carrierId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "trackingNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "shippedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "packageNumbers",
+      "type": "String",
+      "isArray": true
+    }
+  ]
+}

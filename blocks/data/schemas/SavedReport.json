@@ -1,0 +1,38 @@
+{
+  "schemaName": "SavedReport",
+  "collectionName": "SavedReports",
+  "schemaType": 1,
+  "description": "Saved report filters and columns (spec 0015)",
+  "fields": [
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "reportKey",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "filters",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "columns",
+      "type": "String",
+      "isArray": true
+    },
+    {
+      "name": "isShared",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "ownerId",
+      "type": "ID",
+      "isArray": false
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "schemaName": "SalesLine",
+  "collectionName": "SalesLines",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "lineId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "description",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "qty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "uom",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "stdQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "unitPrice",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "discountType",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "discount",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "taxCodeId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "serviceDone",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "returnAction",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "pickedQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "packedQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "shippedQty",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "restockedQty",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

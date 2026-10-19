@@ -1,0 +1,28 @@
+{
+  "schemaName": "OrderEvent",
+  "collectionName": "OrderEvents",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "at",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "by",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "action",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "details",
+      "type": "String",
+      "isArray": false
+    }
+  ]
+}

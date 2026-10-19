@@ -307,3 +307,47 @@ export const DEMO_OPENING_STOCK: Record<string, OpeningLine[]> = {
     { sku: "SAMPLE-0021", qty: 30, bin: "FRONT" },
   ],
 }
+
+// Team, rate history and stock activity demo data.
+
+/** One demo member per role. @example.com never receives mail, so these accounts cannot be activated by anyone. */
+export const DEMO_TEAM = [
+  { email: "manager.demo@example.com", firstName: "Maya", lastName: "Manager", role: "manager" },
+  { email: "sales.demo@example.com", firstName: "Sami", lastName: "Sales", role: "sales" },
+  { email: "purchasing.demo@example.com", firstName: "Priya", lastName: "Purchasing", role: "purchasing" },
+  { email: "warehouse.demo@example.com", firstName: "Wasim", lastName: "Warehouse", role: "warehouse" },
+  { email: "production.demo@example.com", firstName: "Pablo", lastName: "Production", role: "production" },
+  { email: "readonly.demo@example.com", firstName: "Rita", lastName: "Readonly", role: "readonly" },
+]
+
+/** Older sample rates: [currency, days ago, rate]. */
+export const DEMO_RATE_HISTORY: [string, number, number][] = [
+  ["EUR", 60, 0.94], ["EUR", 30, 0.93],
+  ["GBP", 60, 0.8], ["GBP", 30, 0.79],
+  ["BDT", 60, 119.8], ["BDT", 30, 120.6],
+]
+
+export type DemoLine = { sku: string; qty: number; bin?: string; lot?: string; serial?: string; toBin?: string }
+
+/** Backdated adjustments: remarks are the idempotency marker. */
+export const DEMO_ADJUSTMENTS: { remarks: string; location: string; reason: string; daysAgo: number; lines: DemoLine[] }[] = [
+  { remarks: "Dropped pallet in aisle A (demo)", location: "Main warehouse", reason: "Damaged", daysAgo: 21, lines: [{ sku: "SAMPLE-0012", qty: -2, bin: "B-02" }, { sku: "SAMPLE-0021", qty: -6, bin: "A-01" }] },
+  { remarks: "Expired masks written off (demo)", location: "Main warehouse", reason: "Expired", daysAgo: 9, lines: [{ sku: "SAMPLE-0025", qty: -80, bin: "C-01", lot: "FFP2-2209" }] },
+  { remarks: "Found behind shelving (demo)", location: "Downtown store", reason: "Found", daysAgo: 6, lines: [{ sku: "SAMPLE-0015", qty: 1, bin: "FRONT" }] },
+  { remarks: "Workshop tools for staff (demo)", location: "Main warehouse", reason: "Internal use", daysAgo: 4, lines: [{ sku: "SAMPLE-0016", qty: -2, bin: "B-02" }, { sku: "SAMPLE-0024", qty: -4, bin: "A-03" }] },
+  { remarks: "Missing after weekend (demo)", location: "Downtown store", reason: "Lost or stolen", daysAgo: 2, lines: [{ sku: "SAMPLE-0012", qty: -1, bin: "FRONT" }] },
+]
+
+/** Transfers in three states. */
+export const DEMO_TRANSFERS: { remarks: string; from: string; to: string; state: "completed" | "in_transit" | "open"; sentDaysAgo?: number; receivedDaysAgo?: number; lines: DemoLine[] }[] = [
+  { remarks: "Weekly store restock (demo)", from: "Main warehouse", to: "Downtown store", state: "completed", sentDaysAgo: 12, receivedDaysAgo: 11, lines: [{ sku: "SAMPLE-0006", qty: 250, bin: "A-03", toBin: "FRONT" }, { sku: "SAMPLE-0021", qty: 20, bin: "A-01", toBin: "FRONT" }, { sku: "SAMPLE-0017", qty: 6, bin: "C-01", lot: "WG-2401", toBin: "BACK" }] },
+  { remarks: "Van stock for site jobs (demo)", from: "Main warehouse", to: "Delivery van 1", state: "in_transit", sentDaysAgo: 1, lines: [{ sku: "SAMPLE-0008", qty: 1, bin: "B-01", serial: "DR18-0002" }, { sku: "SAMPLE-0024", qty: 12, bin: "A-03" }, { sku: "SAMPLE-0001", qty: 200, bin: "A-01" }] },
+  { remarks: "Tape measures for the store (demo)", from: "Main warehouse", to: "Downtown store", state: "open", lines: [{ sku: "SAMPLE-0015", qty: 10, bin: "B-02", toBin: "FRONT" }] },
+]
+
+/** Counts in three states. `counted` is how far off the count is from what was expected, per line. */
+export const DEMO_COUNTS: { remarks: string; location: string; state: "completed" | "in_review" | "in_progress"; daysAgo: number; sheets: { name: string; assignee: string; skus: string[]; offsets?: Record<string, number>; submitted: boolean }[] }[] = [
+  { remarks: "Monthly store count (demo)", location: "Downtown store", state: "completed", daysAgo: 5, sheets: [{ name: "Front counter", assignee: "warehouse.demo@example.com", skus: ["SAMPLE-0001", "SAMPLE-0003", "SAMPLE-0021"], offsets: { "SAMPLE-0003": -4 }, submitted: true }] },
+  { remarks: "Aisle A cycle count (demo)", location: "Main warehouse", state: "in_review", daysAgo: 1, sheets: [{ name: "Aisle A", assignee: "warehouse.demo@example.com", skus: ["SAMPLE-0002", "SAMPLE-0004", "SAMPLE-0005"], offsets: { "SAMPLE-0004": 12, "SAMPLE-0005": -25 }, submitted: true }] },
+  { remarks: "Power tools spot check (demo)", location: "Main warehouse", state: "in_progress", daysAgo: 0, sheets: [{ name: "Bin B-01", assignee: "warehouse.demo@example.com", skus: ["SAMPLE-0009", "SAMPLE-0010"], submitted: false }, { name: "Bin B-02", assignee: "manager.demo@example.com", skus: ["SAMPLE-0011", "SAMPLE-0013"], submitted: false }] },
+]

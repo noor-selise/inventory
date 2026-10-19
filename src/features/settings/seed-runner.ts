@@ -10,7 +10,12 @@ import {
   DEMO_CUSTOMERS,
   DEMO_LOCATIONS,
   DEMO_OPENING_STOCK,
+  DEMO_ADJUSTMENTS,
+  DEMO_COUNTS,
   DEMO_PRICE_BREAKS,
+  DEMO_RATE_HISTORY,
+  DEMO_TEAM,
+  DEMO_TRANSFERS,
   DEMO_PRICING_SCHEMES,
   DEMO_VENDOR_SUPPLY,
   DEMO_VENDORS,
@@ -34,7 +39,14 @@ type CollectionLike = {
   create(payload: Record<string, unknown>): Promise<unknown>
 }
 
+type IamUsersLike = {
+  create(request: Record<string, unknown>): Promise<{ isSuccess?: boolean; errors?: unknown }>
+  list(request?: Record<string, unknown>): Promise<{ data?: { itemId?: string; email?: string }[] }>
+  emailAvailable(query: Record<string, string | undefined>): Promise<{ isAvailable?: boolean; IsAvailable?: boolean }>
+}
+
 type ClientLike = {
+  iam?: { users: IamUsersLike }
   data: {
     collection(schema: string, options: { fields: string[] }): CollectionLike
     graphql(request: { query: string; variables?: Record<string, unknown> }): Promise<unknown>
@@ -60,6 +72,10 @@ export type SeedParts = {
   demoPartnersAndPrices?: boolean
   /** Posts opening stock through the real posting step (spec 0026). Needs locations and catalog. */
   openingStock?: boolean
+  /** One demo team member per role, on @example.com addresses that never receive mail. */
+  demoTeam?: boolean
+  /** Backdated adjustments, transfers in three states and counts in three states. Needs opening stock. */
+  demoActivity?: boolean
 }
 
 function gatewayErrors(response: unknown): string | undefined {
@@ -67,10 +83,30 @@ function gatewayErrors(response: unknown): string | undefined {
   return errors?.length ? errors.map((error) => error.message ?? "Unknown error").join("; ") : undefined
 }
 
+/**
+ * Blocks sometimes answers 502/503/504 or drops the connection. Reads are
+ * always safe to repeat; writes are repeated only when the gateway says the
+ * request never reached the service ("before headers").
+ */
+async function withRetry<T>(call: () => Promise<T>, isRead: boolean): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await call()
+    } catch (error) {
+      const message = String((error as { message?: string })?.message ?? error)
+      const status = Number((error as { status?: number })?.status ?? 0)
+      const transient = [502, 503, 504].includes(status) || /fetch failed|ECONNRESET|socket hang up/i.test(message)
+      const neverArrived = /before headers/i.test(message)
+      if (attempt >= 4 || !transient || (!isRead && !neverArrived)) throw error
+      await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt))
+    }
+  }
+}
+
 /** Wraps a Blocks SDK client. A GraphQL `errors` array is a failure even on HTTP 200. */
 export function createStore(client: ClientLike): SeedStore {
   async function run(field: string, query: string, variables: Record<string, unknown>) {
-    const response = await client.data.graphql({ query, variables })
+    const response = await withRetry(() => client.data.graphql({ query, variables }), query.trimStart().startsWith("query"))
     const failure = gatewayErrors(response)
     if (failure) throw new Error(`${field}: ${failure}`)
     return (response as { data?: Record<string, unknown> }).data?.[field] as Record<string, unknown> | undefined
@@ -109,6 +145,27 @@ export function createStore(client: ClientLike): SeedStore {
 }
 
 const lower = (value: unknown) => String(value ?? "").trim().toLowerCase()
+
+/** A date N days ago; at midnight UTC for rates, mid morning for activity. */
+function daysAgoDate(days: number, midnight = false) {
+  const date = new Date(Date.now() - days * 86_400_000)
+  if (midnight) date.setUTCHours(0, 0, 0, 0)
+  else if (days > 0) date.setUTCHours(9, 30, 0, 0)
+  return date.toISOString()
+}
+
+/** Reserves the next document number with a compare and set on its rule (spec 0026). */
+async function reserveNumber(store: SeedStore, documentType: string): Promise<string> {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const rule = (await store.list("NumberingRule", ["prefix", "padding", "nextNumber"], { documentType }))[0]
+    if (!rule) throw new Error(`Run starter settings first: the ${documentType} numbering rule is missing.`)
+    const next = Number(rule.nextNumber)
+    if ((await store.updateWhere("NumberingRule", { ItemId: rule.ItemId, nextNumber: next }, { nextNumber: next + 1 })) === 1) {
+      return `${String(rule.prefix ?? "")}${String(next).padStart(Number(rule.padding ?? 5), "0")}`
+    }
+  }
+  throw new Error(`Could not reserve a ${documentType} number.`)
+}
 
 export function ean13CheckDigit(first12: string): number {
   const sum = [...first12].reduce((total, digit, index) => total + Number(digit) * (index % 2 === 0 ? 1 : 3), 0)
@@ -251,6 +308,18 @@ export async function runSeed(store: SeedStore, parts: SeedParts): Promise<SeedR
           ["currencyCode"],
           DEMO_EXCHANGE_RATES.map((rate) => ({ ...rate, effectiveOn, source: "manual" })),
           (row) => String(row.currencyCode)
+        )
+      ).report
+    )
+    report.push(
+      (
+        await ensure(
+          store,
+          "Exchange rate history",
+          "ExchangeRate",
+          ["currencyCode", "effectiveOn"],
+          DEMO_RATE_HISTORY.map(([currencyCode, daysAgo, rate]) => ({ currencyCode, rate, effectiveOn: daysAgoDate(daysAgo, true), source: "manual" })),
+          (row) => `${row.currencyCode}:${String(row.effectiveOn).slice(0, 10)}`
         )
       ).report
     )
@@ -539,6 +608,223 @@ export async function runSeed(store: SeedStore, parts: SeedParts): Promise<SeedR
     }
     report.push({ label: "Opening stock documents", added: documents, existing: existingDocuments })
     report.push({ label: "Opening stock lines posted", added: linesPosted, existing: 0 })
+  }
+
+  if (parts.demoTeam) {
+    const users = store.client.iam?.users
+    if (!users) throw new Error("This client cannot manage team members.")
+    let added = 0
+    for (const member of DEMO_TEAM) {
+      const available = await users.emailAvailable({ email: member.email })
+      if ((available.isAvailable ?? available.IsAvailable) === false) continue
+      // No password: an @example.com address never gets the activation mail, so nobody can sign in as these.
+      const result = await users.create({ email: member.email, firstName: member.firstName, lastName: member.lastName, roles: [member.role] })
+      if (result.isSuccess === false) throw new Error(`Team member ${member.email}: ${JSON.stringify(result.errors)}`)
+      added += 1
+    }
+    report.push({ label: "Team members", added, existing: DEMO_TEAM.length - added })
+  }
+
+  if (parts.demoActivity) {
+    const posting = createPosting(store.client)
+    const locationRows = await store.list("Location", ["name"])
+    const binRows = await store.list("Sublocation", ["locationId", "code"])
+    const productRows = await store.list("Product", ["sku", "standardUom", "averageCost"])
+    const reasonRows = await store.list("AdjustmentReason", ["name"])
+    const lotRows = await store.list("Lot", ["productId", "lotNumber"])
+    const team = store.client.iam ? ((await store.client.iam.users.list({ pageNo: 1, pageSize: 100 }).catch(() => ({ data: [] }))).data ?? []) : []
+    const location = (name: string) => {
+      const row = locationRows.find((item) => lower(item.name) === lower(name))
+      if (!row) throw new Error(`Run demo locations first: ${name} is missing.`)
+      return row
+    }
+    const product = (sku: string) => {
+      const row = productRows.find((item) => item.sku === sku)
+      if (!row) throw new Error(`Run the sample catalog first: ${sku} is missing.`)
+      return row
+    }
+    const binId = (locationId: string, code?: string) =>
+      code ? binRows.find((bin) => bin.locationId === locationId && bin.code === code)?.ItemId ?? null : null
+    const lotId = (productId: string, lotNumber?: string) =>
+      lotNumber ? lotRows.find((lot) => lot.productId === productId && lot.lotNumber === lotNumber)?.ItemId ?? null : null
+    const reasonId = (name: string) => {
+      const row = reasonRows.find((item) => lower(item.name) === lower(name))
+      if (!row) throw new Error(`Run starter settings first: reason ${name} is missing.`)
+      return row.ItemId
+    }
+    const cost = (productId: string) => {
+      const value = productRows.find((item) => item.ItemId === productId)?.averageCost
+      return value == null ? null : Number(value)
+    }
+
+    // Adjustments.
+    let adjAdded = 0
+    for (const demo of DEMO_ADJUSTMENTS) {
+      const prior = (await store.list("StockAdjustment", ["number", "status", "lines { lineId productId sublocationId lotId serial qtyDelta enteredQty uom }"], { remarks: demo.remarks }))[0]
+      if (prior?.status === "posted") continue
+      const loc = location(demo.location)
+      const adjustedAt = daysAgoDate(demo.daysAgo)
+      const lines = demo.lines.map((line, index) => {
+        const item = product(line.sku)
+        return {
+          lineId: `demo-${index}-${line.sku}`,
+          productId: item.ItemId,
+          sublocationId: binId(loc.ItemId, line.bin),
+          lotId: lotId(item.ItemId, line.lot),
+          serial: line.serial ?? null,
+          qtyDelta: line.qty,
+          enteredQty: line.qty,
+          uom: String(item.standardUom),
+        }
+      })
+      let documentId = prior?.ItemId
+      let number = String(prior?.number ?? "")
+      if (!documentId) {
+        number = await reserveNumber(store, "stock_adjustment")
+        documentId = await store.create("StockAdjustment", { number, locationId: loc.ItemId, reasonId: reasonId(demo.reason), adjustedAt, status: "posting", remarks: demo.remarks, lines })
+      }
+      await posting.postDocument(
+        lines.map((line) => ({ ...line, locationId: loc.ItemId, enteredUom: line.uom, unitCost: cost(line.productId) })),
+        { sourceType: "adjustment", sourceId: documentId, sourceNumber: number, effectiveAt: adjustedAt }
+      )
+      await store.updateWhere("StockAdjustment", { ItemId: documentId }, { status: "posted" })
+      adjAdded += 1
+    }
+    report.push({ label: "Backdated adjustments", added: adjAdded, existing: DEMO_ADJUSTMENTS.length - adjAdded })
+
+    // Transfers.
+    let trAdded = 0
+    for (const demo of DEMO_TRANSFERS) {
+      const prior = (await store.list("StockTransfer", ["status"], { remarks: demo.remarks }))[0]
+      if (prior && (prior.status === (demo.state === "completed" ? "completed" : demo.state))) continue
+      const from = location(demo.from)
+      const to = location(demo.to)
+      const lines = demo.lines.map((line, index) => {
+        const item = product(line.sku)
+        return {
+          lineId: `demo-${index}-${line.sku}`,
+          productId: item.ItemId,
+          fromSublocationId: binId(from.ItemId, line.bin),
+          toSublocationId: binId(to.ItemId, line.toBin),
+          lotId: lotId(item.ItemId, line.lot),
+          serial: line.serial ?? null,
+          qty: line.qty,
+          enteredQty: line.qty,
+          uom: String(item.standardUom),
+        }
+      })
+      let documentId = prior?.ItemId
+      if (!documentId) {
+        const number = await reserveNumber(store, "stock_transfer")
+        documentId = await store.create("StockTransfer", { number, fromLocationId: from.ItemId, toLocationId: to.ItemId, status: "open", remarks: demo.remarks, lines })
+      }
+      const doc = (await store.list("StockTransfer", ["number", "status"], { ItemId: documentId }))[0]
+      const number = String(doc.number)
+      if (demo.state !== "open" && doc.status === "open") {
+        const sentAt = daysAgoDate(demo.sentDaysAgo ?? 0)
+        await posting.postDocument(
+          lines.map((line) => ({
+            lineId: line.lineId, productId: line.productId, locationId: from.ItemId, sublocationId: line.fromSublocationId,
+            lotId: line.lotId, serial: line.serial, qtyDelta: -line.qty, enteredQty: -line.qty, enteredUom: line.uom, unitCost: cost(line.productId),
+          })),
+          { sourceType: "transfer_send", sourceId: documentId, sourceNumber: number, effectiveAt: sentAt }
+        )
+        await store.updateWhere("StockTransfer", { ItemId: documentId, status: "open" }, { status: "in_transit", sentAt })
+      }
+      if (demo.state === "completed") {
+        const receivedAt = daysAgoDate(demo.receivedDaysAgo ?? 0)
+        await posting.postDocument(
+          lines.map((line) => ({
+            lineId: line.lineId, productId: line.productId, locationId: to.ItemId, sublocationId: line.toSublocationId,
+            lotId: line.lotId, serial: line.serial, qtyDelta: line.qty, enteredQty: line.qty, enteredUom: line.uom, unitCost: cost(line.productId),
+          })),
+          { sourceType: "transfer_receive", sourceId: documentId, sourceNumber: number, effectiveAt: receivedAt }
+        )
+        await store.updateWhere("StockTransfer", { ItemId: documentId, status: "in_transit" }, { status: "completed", receivedAt })
+      }
+      trAdded += 1
+    }
+    report.push({ label: "Transfers", added: trAdded, existing: DEMO_TRANSFERS.length - trAdded })
+
+    // Counts.
+    let countAdded = 0
+    for (const demo of DEMO_COUNTS) {
+      if ((await store.list("StockCount", ["status"], { remarks: demo.remarks }))[0]) continue
+      const loc = location(demo.location)
+      const balances = (await posting.balances({ locationId: loc.ItemId }, { pageSize: 2000 })).items
+      const assignee = (email: string) => team.find((member) => lower(member.email) === lower(email))?.itemId ?? null
+      const startedAt = daysAgoDate(demo.daysAgo)
+      const sheets = demo.sheets.map((sheet, sheetIndex) => {
+        const counting = demo.state !== "in_progress" || sheetIndex === 0
+        const lines = sheet.skus.flatMap((sku) => {
+          const item = product(sku)
+          const rows = balances.filter((balance) => balance.productId === item.ItemId && balance.onHand !== 0)
+          const base = rows.length ? rows : [{ sublocationId: null, lotId: null, serial: null, onHand: 0 }]
+          return base.map((balance, index) => {
+            const expected = Number(balance.onHand)
+            const offset = index === 0 ? sheet.offsets?.[sku] ?? 0 : 0
+            return {
+              lineId: `demo-${sheetIndex}-${sku}-${index}`,
+              productId: item.ItemId,
+              sublocationId: balance.sublocationId ?? null,
+              lotId: balance.lotId ?? null,
+              serial: balance.serial ?? null,
+              expectedQty: counting ? expected : null,
+              countedQty: sheet.submitted ? expected + offset : null,
+            }
+          })
+        })
+        return {
+          sheetId: `demo-sheet-${sheetIndex}`,
+          name: sheet.name,
+          assigneeId: assignee(sheet.assignee),
+          status: sheet.submitted ? "submitted" : counting ? "counting" : "open",
+          lines,
+        }
+      })
+      const number = await reserveNumber(store, "stock_count")
+      const countId = await store.create("StockCount", {
+        number,
+        locationId: loc.ItemId,
+        status: demo.state === "completed" ? "completing" : demo.state,
+        startedAt,
+        remarks: demo.remarks,
+        revision: 0,
+        sheets,
+      })
+      if (demo.state === "completed") {
+        const variances = sheets.flatMap((sheet) =>
+          sheet.lines.filter((line) => line.countedQty != null && line.expectedQty != null && line.countedQty !== line.expectedQty)
+        )
+        let adjustmentId: string | null = null
+        if (variances.length) {
+          const adjNumber = await reserveNumber(store, "stock_adjustment")
+          const lines = variances.map((line) => ({
+            lineId: line.lineId,
+            productId: line.productId,
+            sublocationId: line.sublocationId,
+            lotId: line.lotId,
+            serial: line.serial,
+            qtyDelta: Number(line.countedQty) - Number(line.expectedQty),
+            enteredQty: Number(line.countedQty) - Number(line.expectedQty),
+            uom: null,
+          }))
+          adjustmentId = await store.create("StockAdjustment", {
+            number: adjNumber, locationId: loc.ItemId, reasonId: reasonId("Count correction"), adjustedAt: startedAt,
+            status: "posting", remarks: `Count ${number}`, lines,
+          })
+          await posting.postDocument(
+            lines.map((line) => ({ ...line, locationId: loc.ItemId, unitCost: cost(line.productId) })),
+            { sourceType: "adjustment", sourceId: adjustmentId, sourceNumber: adjNumber, effectiveAt: startedAt },
+            { allowNegative: true }
+          )
+          await store.updateWhere("StockAdjustment", { ItemId: adjustmentId }, { status: "posted" })
+        }
+        await store.updateWhere("StockCount", { ItemId: countId, status: "completing" }, { status: "completed", completedAt: startedAt, adjustmentId })
+      }
+      countAdded += 1
+    }
+    report.push({ label: "Counts", added: countAdded, existing: DEMO_COUNTS.length - countAdded })
   }
 
   return report

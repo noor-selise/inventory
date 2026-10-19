@@ -21,11 +21,11 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 8 | Stock adjustments, transfers and counts | MVP | in-progress |
 | 9 | Lots, serials and traceability | v1.1 | in-progress |
 | 10 | Customers, vendors and pricing | MVP | in-progress |
-| 11 | Sales orders and fulfillment | MVP | planned |
-| 12 | Purchasing and receiving | MVP | planned |
-| 13 | Payments and balances | MVP | planned |
-| 14 | Reordering and alerts | MVP | planned |
-| 15 | Reports and dashboards | MVP | planned |
+| 11 | Sales orders and fulfillment | MVP | in-progress |
+| 12 | Purchasing and receiving | MVP | in-progress |
+| 13 | Payments and balances | MVP | in-progress |
+| 14 | Reordering and alerts | MVP | in-progress |
+| 15 | Reports and dashboards | MVP | in-progress |
 | 16 | Documents and email | MVP | planned |
 | 17 | CSV import and export | MVP | planned |
 | 18 | Accounting, ecommerce and shipping | MVP | planned |
@@ -139,35 +139,60 @@ Customers and vendors with defaults, pricing schemes, price breaks, one shared p
 - [ ] Verify it: `/check verify customers, vendors and pricing`
 Spec [0010](../specs/0010-customers-vendors-pricing.md) · code in `src/features/partners/`, `src/features/pricing/`, `scripts/checks/pricing.mjs`
 
-### 11. Sales orders and fulfillment · needs a decision
+### 11. Sales orders and fulfillment · in-progress
 Quote to order, pick, pack, ship, returns, back orders, quick actions, derived statuses, profit.
 **Done when:** an order goes quote to fulfilled with partial shipments and correct statuses (spec 0011).
 **Blocks fit:** ✅ documents; ⚠️ fulfillment waits on D1.
-- [ ] Design it (spec): drafted as [0011](../specs/0011-sales-orders-fulfillment.md) (Proposed), confirm it: `/architect sales orders and fulfillment`
+- [ ] Design it (spec): [0011](../specs/0011-sales-orders-fulfillment.md), built to the draft; confirm it: `/architect sales orders and fulfillment`
+- [ ] Build it: `/develop sales orders and fulfillment`
+  - [x] Quote to order, pick, pack, ship, returns and restock, back orders, quick actions, derived statuses, profit, cancel
+  - [ ] Credit limit gate, sales rep restriction, picking sessions (P1)
+- [ ] Verify it: `/check verify sales orders and fulfillment`
+Spec [0011](../specs/0011-sales-orders-fulfillment.md) · code in `src/features/sales/`, `scripts/checks/orders-live.mjs`
 
-### 12. Purchasing and receiving · needs a decision
+### 12. Purchasing and receiving · in-progress
 Quote to PO, approval limits, partial receiving with lots and serials, returns, landed cost.
 **Done when:** a PO is received in parts and landed cost feeds product cost (spec 0012).
 **Blocks fit:** ✅ documents; ⚠️ receiving waits on D1.
-- [ ] Design it (spec): drafted as [0012](../specs/0012-purchasing-receiving.md) (Proposed), confirm it: `/architect purchasing and receiving`
+- [ ] Design it (spec): [0012](../specs/0012-purchasing-receiving.md), built to the draft; confirm it: `/architect purchasing and receiving`
+- [ ] Build it: `/develop purchasing and receiving`
+  - [x] Quote to PO, partial receiving with bins, lots and serials, returns, landed cost into average cost
+  - [ ] Approval limits (P1)
+- [ ] Verify it: `/check verify purchasing and receiving`
+Spec [0012](../specs/0012-purchasing-receiving.md) · code in `src/features/purchasing/`
 
-### 13. Payments and balances · needs a decision
+### 13. Payments and balances · in-progress
 Customer and vendor payments split across orders, credits, balances per currency, aging.
 **Done when:** a payment saves with its splits at once and balances update (spec 0013).
 **Blocks fit:** ✅; balances can lag seconds.
-- [ ] Design it (spec): drafted as [0013](../specs/0013-payments-balances.md) (Proposed), confirm it: `/architect payments and balances`
+- [ ] Design it (spec): [0013](../specs/0013-payments-balances.md), built to the draft; confirm it: `/architect payments and balances`
+- [ ] Build it: `/develop payments and balances`
+  - [x] Payments split over orders in one save, saved twice records once, voids, store credit, balances per currency, aging
+  - [ ] Server side balance workflow (waits on the workflow sign in decision)
+- [ ] Verify it: `/check verify payments and balances`
+Spec [0013](../specs/0013-payments-balances.md) · code in `src/features/payments/`, `blocks/workflows/`
 
-### 14. Reordering and alerts · needs a decision
+### 14. Reordering and alerts · in-progress
 Reorder settings, nightly reorder list, one click drafts, low stock alerts.
 **Done when:** products below their reorder point are listed, alerted once, and drafted in one click (spec 0014).
 **Blocks fit:** ✅; list as good as spec 0007.
-- [ ] Design it (spec): drafted as [0014](../specs/0014-reordering-alerts.md) (Proposed), confirm it: `/architect reordering and alerts`
+- [ ] Design it (spec): [0014](../specs/0014-reordering-alerts.md), built to the draft; confirm it: `/architect reordering and alerts`
+- [ ] Build it: `/develop reordering and alerts`
+  - [x] Reorder settings, reorder list with Check now, alert once per drop, one click POs and transfers, low stock card
+  - [ ] Nightly reorder workflow and alert emails (waits on the workflow sign in decision)
+- [ ] Verify it: `/check verify reordering and alerts`
+Spec [0014](../specs/0014-reordering-alerts.md) · code in `src/features/reorder/`, `blocks/workflows/`
 
-### 15. Reports and dashboards · needs a decision
+### 15. Reports and dashboards · in-progress
 Core 20 reports, filters, exports, saved reports; background reports and dashboard later.
 **Done when:** the core 20 reports match the data and hide cost from users without access (spec 0015).
 **Blocks fit:** ⚠️ no server sums; nightly summaries.
-- [ ] Design it (spec): drafted as [0015](../specs/0015-reports-dashboards.md) (Proposed), confirm it: `/architect reports and dashboards`
+- [ ] Design it (spec): [0015](../specs/0015-reports-dashboards.md), built to the draft; confirm it: `/architect reports and dashboards`
+- [ ] Build it: `/develop reports and dashboards`
+  - [x] Core 20 reports with filters, group by, columns, CSV, print to PDF, saved reports, cost hidden by role
+  - [ ] Background reports, nightly summaries and dashboard widgets (P1)
+- [ ] Verify it: `/check verify reports and dashboards`
+Spec [0015](../specs/0015-reports-dashboards.md) · code in `src/features/reports/`
 
 ### 16. Documents and email · needs a decision
 Invoice, quote, PO, pick list, packing slip PDFs and emailing them from templates.

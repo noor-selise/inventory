@@ -6,7 +6,10 @@
 //   2. compare and set the InventoryBalance on its `version`,
 //   3. mark the movement `posted`.
 // A movement left `pending` is settled by repairPending() using the balance's
-// appliedKeys. No app imports, so Node scripts can run this module too.
+// appliedKeys. When a document fails partway, the lines already posted are
+// undone and both sides are marked `reversed`, so they drop out of the ledger
+// sums and a retry posts them again under a fresh key. No app imports, so Node
+// scripts can run this module too.
 
 type GraphqlClient = {
   data: { graphql(request: { query: string; variables?: Record<string, unknown> }): Promise<unknown> }
@@ -19,8 +22,11 @@ export type SourceType =
   | "transfer_receive"
   | "transfer_reversal"
   | "purchase_receive"
+  | "po_unstock"
+  | "purchase_reversal"
   | "sales_pick"
   | "sales_restock"
+  | "sales_reversal"
   | "mo_pick"
   | "mo_put"
   | "rollback"
@@ -81,7 +87,7 @@ export type Movement = {
   sourceNumber: string | null
   sourceLineId: string | null
   effectiveAt: string
-  status: "pending" | "posted" | "failed"
+  status: "pending" | "posted" | "failed" | "reversed"
   postingKey: string
   note: string | null
   CreatedDate?: string
@@ -232,36 +238,40 @@ export function createPosting(client: GraphqlClient) {
     if (!Number.isFinite(line.qtyDelta) || line.qtyDelta === 0) {
       throw new PostingError("server_error", "A stock line needs a quantity other than zero.", line)
     }
-    const postingKey = postingKeyFor(source, line.lineId)
+    const baseKey = postingKeyFor(source, line.lineId)
     const effectiveAt = source.effectiveAt ?? new Date().toISOString()
 
-    let movementId: string
-    try {
-      movementId = await insert(client, "InventoryMovement", {
-        ...balanceKey(line),
-        qtyDelta: line.qtyDelta,
-        enteredQty: line.enteredQty ?? null,
-        enteredUom: line.enteredUom ?? null,
-        unitCost: line.unitCost ?? null,
-        sourceType: source.sourceType,
-        sourceId: source.sourceId,
-        sourceNumber: source.sourceNumber ?? null,
-        sourceLineId: line.lineId,
-        effectiveAt,
-        status: "pending",
-        postingKey,
-        note: source.note ?? null,
-      })
-    } catch (error) {
-      if (!(error instanceof Error && isDuplicate(error.message))) throw error
-      // A retry of a posting that already started.
-      const existing = await findMovement(postingKey)
-      if (!existing) throw error
-      if (existing.status === "posted") return existing.ItemId
-      if (existing.status === "failed") {
-        throw new PostingError("server_error", `This line already failed to post (${postingKey}).`, line)
+    // A key whose movement failed or was reversed never changed stock, so a
+    // retry moves on to the next generation of the key (base, base#2, ...).
+    let postingKey = baseKey
+    let movementId = ""
+    for (let generation = 1; !movementId; generation++) {
+      postingKey = generation === 1 ? baseKey : `${baseKey}#${generation}`
+      try {
+        movementId = await insert(client, "InventoryMovement", {
+          ...balanceKey(line),
+          qtyDelta: line.qtyDelta,
+          enteredQty: line.enteredQty ?? null,
+          enteredUom: line.enteredUom ?? null,
+          unitCost: line.unitCost ?? null,
+          sourceType: source.sourceType,
+          sourceId: source.sourceId,
+          sourceNumber: source.sourceNumber ?? null,
+          sourceLineId: line.lineId,
+          effectiveAt,
+          status: "pending",
+          postingKey,
+          note: source.note ?? null,
+        })
+      } catch (error) {
+        if (!(error instanceof Error && isDuplicate(error.message))) throw error
+        // A retry of a posting that already started.
+        const existing = await findMovement(postingKey)
+        if (!existing) throw error
+        if (existing.status === "posted") return existing.ItemId
+        if (existing.status === "pending") movementId = existing.ItemId
+        if (generation >= MAX_ATTEMPTS) throw new PostingError("server_error", `This line failed to post too many times (${baseKey}).`, line)
       }
-      movementId = existing.ItemId
     }
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
@@ -319,24 +329,30 @@ export function createPosting(client: GraphqlClient) {
    * are reversed, so the document lands all or nothing in effect.
    */
   async function postDocument(lines: PostingLine[], source: PostingSource, options: PostingOptions = {}) {
-    const posted: PostingLine[] = []
+    const posted: { line: PostingLine; movementId: string }[] = []
     try {
       for (const line of lines) {
-        await postLine(line, source, options)
-        posted.push(line)
+        posted.push({ line, movementId: await postLine(line, source, options) })
       }
     } catch (error) {
-      for (const line of posted.reverse()) {
-        await postLine(
-          {
-            ...line,
-            lineId: `${source.sourceType}:${line.lineId}`,
-            qtyDelta: -line.qtyDelta,
-            enteredQty: line.enteredQty == null ? null : -line.enteredQty,
-          },
-          { ...source, sourceType: "rollback", sourceId: source.sourceId, note: `Undo of ${source.sourceType}` },
-          { allowNegative: true }
-        ).catch(() => undefined)
+      for (const { line, movementId } of posted.reverse()) {
+        try {
+          const undoId = await postLine(
+            {
+              ...line,
+              lineId: `${source.sourceType}:${movementId}`,
+              qtyDelta: -line.qtyDelta,
+              enteredQty: line.enteredQty == null ? null : -line.enteredQty,
+            },
+            { ...source, sourceType: "rollback", sourceId: source.sourceId, note: `Undo of ${source.sourceType}` },
+            { allowNegative: true }
+          )
+          // The pair nets to zero on the balance; take both out of the ledger sums.
+          await setStatus(undoId, "reversed")
+          await setStatus(movementId, "reversed")
+        } catch {
+          // Left posted: the pair still nets to zero, and repair can find it.
+        }
       }
       throw error
     }
@@ -373,6 +389,33 @@ export function createPosting(client: GraphqlClient) {
     return lines.length
   }
 
+  /**
+   * Undoes posted movements one by one and marks each pair `reversed`, so they
+   * drop out of the ledger sums and a later cancel does not reverse them again.
+   */
+  async function undoMovements(movements: Movement[], sourceType: SourceType, note: string) {
+    for (const movement of movements) {
+      const undoId = await postLine(
+        {
+          lineId: `undo:${movement.ItemId}`,
+          productId: movement.productId,
+          locationId: movement.locationId,
+          sublocationId: movement.sublocationId,
+          lotId: movement.lotId,
+          serial: movement.serial,
+          qtyDelta: -movement.qtyDelta,
+          enteredQty: movement.enteredQty == null ? null : -movement.enteredQty,
+          enteredUom: movement.enteredUom,
+          unitCost: movement.unitCost,
+        },
+        { sourceType, sourceId: movement.sourceId, sourceNumber: movement.sourceNumber, note },
+        { allowNegative: true }
+      )
+      await setStatus(undoId, "reversed")
+      await setStatus(movement.ItemId, "reversed")
+    }
+  }
+
   /** Settles movements stuck in `pending` (spec 0026 repair rule). */
   async function repairPending(now = Date.now()): Promise<{ posted: number; failed: number }> {
     const cutoff = new Date(now - PENDING_GRACE_MS).toISOString()
@@ -380,7 +423,8 @@ export function createPosting(client: GraphqlClient) {
       client,
       "InventoryMovement",
       MOVEMENT_FIELDS,
-      { status: "pending", CreatedDate: { $lt: cutoff } },
+      // Blocks matches dates only as { $date }; a plain ISO string matches nothing.
+      { status: "pending", CreatedDate: { $lt: { $date: cutoff } } },
       { pageSize: 100 }
     )
     let posted = 0
@@ -436,6 +480,7 @@ export function createPosting(client: GraphqlClient) {
     postLine,
     postDocument,
     reverseSource,
+    undoMovements,
     repairPending,
     applyReceiptCost,
     movementsFor,

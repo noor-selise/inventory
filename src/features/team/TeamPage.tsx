@@ -1,6 +1,6 @@
 import * as React from "react"
 import type { BlocksUser } from "@seliseblocks/client"
-import { Ban, CircleCheck, UserPlus, Users } from "lucide-react"
+import { Ban, CircleCheck, Mail, UserPlus, Users } from "lucide-react"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
@@ -37,6 +37,11 @@ const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foregro
 type Pending =
   | { kind: "role"; user: BlocksUser; role: string }
   | { kind: "deactivate" | "activate"; user: BlocksUser }
+
+/** Invited but has not set a password from the activation email yet. */
+function isInvited(user: BlocksUser) {
+  return user.active === false && user.isVerified === false
+}
 
 function isActive(user: BlocksUser) {
   return user.active !== false
@@ -142,6 +147,7 @@ export function TeamPage() {
               <TableBody>
                 {users.map((user) => {
                   const active = isActive(user)
+                  const invited = isInvited(user)
                   const self = user.itemId === me?.itemId
                   const role = primaryRole(user)
                   return (
@@ -158,7 +164,7 @@ export function TeamPage() {
                           options={roleOptions}
                           value={role}
                           placeholder="No role"
-                          disabled={!active}
+                          disabled={!active && !invited}
                           onChange={(next) => {
                             if (next === role) return
                             if (wouldRemoveLastAdmin(user) && next !== ADMIN_ROLE) {
@@ -174,6 +180,10 @@ export function TeamPage() {
                           <Badge variant="success">
                             <CircleCheck aria-hidden /> Active
                           </Badge>
+                        ) : invited ? (
+                          <Badge variant="neutral">
+                            <Mail aria-hidden /> Invited
+                          </Badge>
                         ) : (
                           <Badge variant="muted">
                             <Ban aria-hidden /> Deactivated
@@ -181,7 +191,9 @@ export function TeamPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {active ? (
+                        {invited ? (
+                          <span className="text-xs text-muted-foreground">Waiting for activation</span>
+                        ) : active ? (
                           <Button
                             size="sm"
                             variant="ghost"

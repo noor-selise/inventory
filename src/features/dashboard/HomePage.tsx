@@ -3,6 +3,7 @@ import { Building2, ChevronRight, Package, Users } from "lucide-react"
 import { useCurrentUser, userDisplayName } from "@/app/providers/CurrentUserProvider"
 import { Link } from "@/app/router/navigation"
 import { PageHeader } from "@/components/app/page"
+import { LowStockAlerts } from "@/features/reorder/LowStockAlerts"
 import { StarterDataCard } from "@/features/settings/StarterDataCard"
 
 const SHORTCUTS = [
@@ -39,6 +40,7 @@ export function HomePage() {
           </Link>
         ))}
       </div>
+      <LowStockAlerts />
       {isAdmin ? <StarterDataCard /> : null}
     </>
   )

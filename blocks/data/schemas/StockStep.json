@@ -1,0 +1,38 @@
+{
+  "schemaName": "StockStep",
+  "collectionName": "StockSteps",
+  "schemaType": 2,
+  "description": "Line or nested value type, stored inside its parent document",
+  "fields": [
+    {
+      "name": "stepId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "kind",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "at",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "by",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "lines",
+      "type": "StockStepLine",
+      "isArray": true
+    }
+  ]
+}

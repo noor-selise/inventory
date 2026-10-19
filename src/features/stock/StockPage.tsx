@@ -150,8 +150,9 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
       available: sum.available + row.available,
       onOrder: sum.onOrder + row.onOrder,
       inTransit: sum.inTransit + row.inTransit,
+      anticipated: sum.anticipated + row.anticipated,
     }),
-    { onHand: 0, picked: 0, reserved: 0, available: 0, onOrder: 0, inTransit: 0 }
+    { onHand: 0, picked: 0, reserved: 0, available: 0, onOrder: 0, inTransit: 0, anticipated: 0 }
   )
 
   // Running balance from the ledger; as of a date it rebuilds past stock (AC-9).
@@ -179,13 +180,13 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
         <EmptyState icon={Boxes} message="Choose a product to see its quantities and history." />
       ) : (
         <>
-          <SectionCard title="Quantities" description="Available = on hand − picked − reserved. Reserved and on order arrive with sales and purchase orders.">
+          <SectionCard title="Quantities" description="Picked stock has already left on hand. Available = on hand − reserved. Anticipated = on hand − reserved + on order.">
             {quantities.error ? <ErrorBanner message={quantities.error} /> : null}
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted hover:bg-muted">
-                    {["Location", "On hand", "Picked", "Reserved", "Available", "On order", "In transit"].map((label, index) => (
+                    {["Location", "On hand", "Picked", "Reserved", "Available", "On order", "In transit", "Anticipated"].map((label, index) => (
                       <TableHead key={label} className={cn(headClass, index > 0 && "text-right")}>
                         {label}
                       </TableHead>
@@ -196,7 +197,7 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
                   {(quantities.data ?? []).map((row) => (
                     <TableRow key={row.locationId} className="h-11">
                       <TableCell>{lookups.locationName(row.locationId)}</TableCell>
-                      {[row.onHand, row.picked, row.reserved, row.available, row.onOrder, row.inTransit].map((value, index) => (
+                      {[row.onHand, row.picked, row.reserved, row.available, row.onOrder, row.inTransit, row.anticipated].map((value, index) => (
                         <TableCell key={index} className={cn("text-right num", value < 0 && "text-destructive-text")}>
                           {formatNumber(value)}
                         </TableCell>
@@ -205,7 +206,7 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
                   ))}
                   <TableRow className="h-11 font-semibold">
                     <TableCell>All locations</TableCell>
-                    {[totals.onHand, totals.picked, totals.reserved, totals.available, totals.onOrder, totals.inTransit].map((value, index) => (
+                    {[totals.onHand, totals.picked, totals.reserved, totals.available, totals.onOrder, totals.inTransit, totals.anticipated].map((value, index) => (
                       <TableCell key={index} className="text-right num">
                         {formatNumber(value)}
                       </TableCell>

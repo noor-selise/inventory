@@ -25,12 +25,24 @@ const dryRun = process.argv.includes("--dry-run")
 const SCALARS = new Set(["String", "Int", "Float", "Boolean", "DateTime", "ID", "GeoJson"])
 
 function blocks(args, cwd = root) {
-  const out = execFileSync("blocks", [...args, "--project", project, "--json"], {
-    cwd,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, BLOCKS_STRICT_FLAGS: "1" },
-  })
+  let out
+  // Blocks sometimes drops a connection (502, 503, 504). Every step here is
+  // safe to repeat, so wait a little and try again.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      out = execFileSync("blocks", [...args, "--project", project, "--json"], {
+        cwd,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, BLOCKS_STRICT_FLAGS: "1" },
+      })
+      break
+    } catch (error) {
+      if (attempt >= 4 || !/\b50[234]\b/.test(String(error.stderr ?? ""))) throw error
+      console.log(`  temporary Blocks error, trying again (${attempt})`)
+      execFileSync("sleep", [String(attempt * 3)])
+    }
+  }
   try {
     return JSON.parse(out)
   } catch {

@@ -1,0 +1,48 @@
+{
+  "schemaName": "PartyBalance",
+  "collectionName": "PartyBalances",
+  "schemaType": 1,
+  "description": "Open balance and store credit per customer or vendor and currency, kept by workflows (spec 0013)",
+  "fields": [
+    {
+      "name": "party",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "partyId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "currencyCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "invoiced",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "paid",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "openBalance",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "storeCredit",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "rebuiltAt",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}
