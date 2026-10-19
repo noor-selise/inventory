@@ -43,7 +43,7 @@ A runnable React + TypeScript project with Tailwind CSS and shadcn/ui set up, ev
 **Done when:** the dev server boots, the production build and typecheck pass, and shadcn's CLI can add a component into the project.
 - [x] Decide the stack (spec): `/architect stack & scaffold`
 - [x] Scaffold from the decision: `/develop stack & scaffold`
-- [ ] Verify it: `/check verify stack & scaffold`
+- [x] Verify it: `/check verify stack & scaffold` (2026-10-20: dev server answers, typecheck and build pass, shadcn add works)
 Spec [0001](../specs/0001-stack-scaffold.md) · code in `./` (`src/`, `package.json`, `vite.config.ts`)
 
 ### 2. Design system integration · in-progress · assumed decision (spec 0025)
@@ -73,7 +73,7 @@ Company profile, currencies and rates, document numbering, payment terms, taxing
 **Done when:** every lookup list is editable and new documents get unique running numbers (spec 0004).
 **Blocks fit:** ✅; numbering needs a retry loop.
 - [x] Design it (spec): [0004](../specs/0004-company-settings-lookups.md)
-- [ ] Build it: `/develop company settings and lookups`
+- [x] Build it: `/develop company settings and lookups`
   - [x] Schemas live in Blocks
   - [x] Company, currencies and rates, numbering (compare and set), lists and taxes screens
 - [ ] Verify it: `/check verify company settings and lookups`
@@ -144,7 +144,7 @@ Quote to order, pick, pack, ship, returns, back orders, quick actions, derived s
 **Done when:** an order goes quote to fulfilled with partial shipments and correct statuses (spec 0011).
 **Blocks fit:** ✅ documents; ⚠️ fulfillment waits on D1.
 - [ ] Design it (spec): [0011](../specs/0011-sales-orders-fulfillment.md), built to the draft; confirm it: `/architect sales orders and fulfillment`
-- [ ] Build it: `/develop sales orders and fulfillment`
+- [x] Build it: `/develop sales orders and fulfillment`
   - [x] Quote to order, pick, pack, ship, returns and restock, back orders, quick actions, derived statuses, profit, cancel
   - [x] Credit limit gate with confirm, sales rep restriction, fulfillment queue by priority, picking sessions (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify sales orders and fulfillment`
@@ -155,7 +155,7 @@ Quote to PO, approval limits, partial receiving with lots and serials, returns, 
 **Done when:** a PO is received in parts and landed cost feeds product cost (spec 0012).
 **Blocks fit:** ✅ documents; ⚠️ receiving waits on D1.
 - [ ] Design it (spec): [0012](../specs/0012-purchasing-receiving.md), built to the draft; confirm it: `/architect purchasing and receiving`
-- [ ] Build it: `/develop purchasing and receiving`
+- [x] Build it: `/develop purchasing and receiving`
   - [x] Quote to PO, partial receiving with bins, lots and serials, returns, landed cost into average cost
   - [x] Approval limits, last vendor and vendor price list update (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify purchasing and receiving`
@@ -166,9 +166,9 @@ Customer and vendor payments split across orders, credits, balances per currency
 **Done when:** a payment saves with its splits at once and balances update (spec 0013).
 **Blocks fit:** ✅; balances can lag seconds.
 - [ ] Design it (spec): [0013](../specs/0013-payments-balances.md), built to the draft; confirm it: `/architect payments and balances`
-- [ ] Build it: `/develop payments and balances`
+- [x] Build it: `/develop payments and balances`
   - [x] Payments split over orders in one save, saved twice records once, voids, store credit, balances per currency, aging
-  - [ ] Server side balance workflow (kept in the app for now; waits on Blocks confirming workflow sign in)
+  - [x] Order paid amounts and balances updated in the app after each payment, with Recompute (you chose the app over a workflow; a server workflow can come once Blocks confirms workflow sign in)
 - [ ] Verify it: `/check verify payments and balances`
 Spec [0013](../specs/0013-payments-balances.md) · code in `src/features/payments/`, `blocks/workflows/`
 
@@ -177,7 +177,7 @@ Reorder settings, nightly reorder list, one click drafts, low stock alerts.
 **Done when:** products below their reorder point are listed, alerted once, and drafted in one click (spec 0014).
 **Blocks fit:** ✅; list as good as spec 0007.
 - [ ] Design it (spec): [0014](../specs/0014-reordering-alerts.md), built to the draft; confirm it: `/architect reordering and alerts`
-- [ ] Build it: `/develop reordering and alerts`
+- [x] Build it: `/develop reordering and alerts`
   - [x] Reorder settings, reorder list with Check now, alert once per drop, one click POs and transfers, low stock card
   - [x] Once a day reorder check in the app, alert email (template `low-stock-alert`), suggested reorder point (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify reordering and alerts`
@@ -188,7 +188,7 @@ Core 20 reports, filters, exports, saved reports; background reports and dashboa
 **Done when:** the core 20 reports match the data and hide cost from users without access (spec 0015).
 **Blocks fit:** ⚠️ no server sums; nightly summaries.
 - [ ] Design it (spec): [0015](../specs/0015-reports-dashboards.md), built to the draft; confirm it: `/architect reports and dashboards`
-- [ ] Build it: `/develop reports and dashboards`
+- [x] Build it: `/develop reports and dashboards`
   - [x] Core 20 reports with filters, group by, columns, CSV, print to PDF, saved reports, cost hidden by role
   - [x] Background reports with status and CSV in storage, dashboard widgets per person (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify reports and dashboards`
@@ -228,7 +228,8 @@ Lots with expiry, serials, first expiry first out, expiry alerts, forward and ba
 - [x] Design it (spec): [0009](../specs/0009-lots-serials-traceability.md)
 - [ ] Build it: `/develop lots, serials and traceability`
   - [x] Lots with expiry, lot and serial capture on stock documents, earliest expiry first, trace screen
-  - [ ] Expiry alert workflow; capture on receiving and picking (with specs 0011, 0012)
+  - [x] Lot and serial capture on receiving and picking (built with features 11 and 12)
+  - [ ] Expiry alert (no workflow yet)
 - [ ] Verify it: `/check verify lots, serials and traceability`
 Spec [0009](../specs/0009-lots-serials-traceability.md) · code in `src/features/stock/LotsPage.tsx`, `src/features/stock/api.ts`
 
