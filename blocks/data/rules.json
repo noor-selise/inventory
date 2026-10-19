@@ -833,6 +833,38 @@
       "fieldNames": []
     },
     {
+      "schemaName": "ReportJob",
+      "schemaId": "877026e6-be26-424d-bee7-a06e7382f598",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ReportJob",
+      "schemaId": "877026e6-be26-424d-bee7-a06e7382f598",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ReportJob",
+      "schemaId": "877026e6-be26-424d-bee7-a06e7382f598",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "ReportJob",
+      "schemaId": "877026e6-be26-424d-bee7-a06e7382f598",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
       "schemaName": "SalesOrder",
       "schemaId": "21d928dc-2b94-4571-ad54-1d1cfd9db60d",
       "operation": 0,
@@ -1083,6 +1115,38 @@
     {
       "schemaName": "TaxingScheme",
       "schemaId": "e8bbf0b7-cbbf-40fe-86a7-6dafd5e95c1d",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TeamMemberProfile",
+      "schemaId": "15a928bb-5e44-426b-add7-7af5b5e04372",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TeamMemberProfile",
+      "schemaId": "15a928bb-5e44-426b-add7-7af5b5e04372",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TeamMemberProfile",
+      "schemaId": "15a928bb-5e44-426b-add7-7af5b5e04372",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "TeamMemberProfile",
+      "schemaId": "15a928bb-5e44-426b-add7-7af5b5e04372",
       "operation": 3,
       "policyType": 0,
       "accessLevel": 1,

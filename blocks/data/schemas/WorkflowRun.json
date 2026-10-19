@@ -28,6 +28,11 @@
       "name": "ranAt",
       "type": "DateTime",
       "isArray": false
+    },
+    {
+      "name": "runKey",
+      "type": "String",
+      "isArray": false
     }
   ]
 }

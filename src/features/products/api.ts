@@ -41,6 +41,8 @@ export type Product = Entity & {
   isActive?: boolean | null
   /** Written only by stock posting (spec 0007, 0026). */
   averageCost?: number | null
+  /** The vendor of the latest purchase receipt (spec 0012 AC-7). */
+  lastVendorId?: string | null
 }
 
 export type ProductBarcode = Entity & {
@@ -74,7 +76,7 @@ export const PRODUCT_FIELDS = [
 ] as const satisfies readonly (keyof Product)[]
 
 export const categories = collection<Category>("Category", ["name", "parentId", "isDefault"])
-export const products = collection<Product>("Product", [...PRODUCT_FIELDS, "averageCost"])
+export const products = collection<Product>("Product", [...PRODUCT_FIELDS, "averageCost", "lastVendorId"])
 export const productBarcodes = collection<ProductBarcode>("ProductBarcode", ["barcode", "productId"])
 
 export type VendorItem = Entity & {

@@ -25,6 +25,7 @@ export function PartnerList<T extends Named>({
   canEdit,
   columns,
   renderDialog,
+  scope,
 }: {
   title: string
   description: string
@@ -33,6 +34,8 @@ export function PartnerList<T extends Named>({
   canEdit: boolean
   columns: { label: string; render: (row: T) => React.ReactNode; className?: string }[]
   renderDialog: (props: { record: T | undefined; open: boolean; onOpenChange: (open: boolean) => void; onSaved: () => void }) => React.ReactNode
+  /** Always applied, for example a sales rep's own customers. */
+  scope?: Record<string, unknown>
 }) {
   const [query, setQuery] = React.useState("")
   const [term, setTerm] = React.useState("")
@@ -46,12 +49,13 @@ export function PartnerList<T extends Named>({
   }, [query])
 
   const { data, error, loading, reload } = useResource(() => {
-    const filters: Record<string, unknown>[] = []
+    const filters: Record<string, unknown>[] = scope ? [scope] : []
     if (term) filters.push({ name: { $regex: `^${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, $options: "i" } })
     if (!showInactive) filters.push({ isActive: { $ne: false } })
     const filter = filters.length > 1 ? { $and: filters } : filters[0]
     return source.list({ filter, sort: { name: 1 }, pageSize: 200 })
-  }, [source, term, showInactive])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, term, showInactive, JSON.stringify(scope ?? null)])
   const rows = data?.items ?? []
 
   function openRecord(record?: T) {

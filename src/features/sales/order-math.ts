@@ -100,18 +100,25 @@ function purchaseLineDone(line: PurchaseLine) {
   return ordered < 0 ? received <= ordered + 1e-9 : received >= ordered - 1e-9
 }
 
-export function purchaseInventoryStatus(order: Pick<PurchaseOrder, "isQuote" | "isCancelled" | "lines">): InventoryStatus {
+/** Waiting for approval (spec 0012 AC-3). A PO with stock already received counts as approved. */
+function awaitingApproval(order: Pick<PurchaseOrder, "approvedBy" | "lines">) {
+  return !order.approvedBy && !(order.lines ?? []).some((line) => progress(line.receivedQty) !== 0)
+}
+
+export function purchaseInventoryStatus(order: Pick<PurchaseOrder, "isQuote" | "isCancelled" | "approvedBy" | "lines">): InventoryStatus {
   if (order.isCancelled) return "cancelled"
   if (order.isQuote) return "quote"
+  if (awaitingApproval(order)) return "unapproved"
   const lines = order.lines ?? []
   if (lines.length && lines.every(purchaseLineDone)) return "fulfilled"
   if (lines.some((line) => progress(line.receivedQty) !== 0)) return "started"
   return "unfulfilled"
 }
 
-export function purchasePaymentStatus(order: Pick<PurchaseOrder, "isQuote" | "isCancelled" | "total" | "amountPaid">): PaymentStatus {
+export function purchasePaymentStatus(order: Pick<PurchaseOrder, "isQuote" | "isCancelled" | "approvedBy" | "lines" | "total" | "amountPaid">): PaymentStatus {
   if (order.isCancelled) return "cancelled"
   if (order.isQuote) return "quote"
+  if (order.lines && awaitingApproval(order) && !Number(order.amountPaid ?? 0)) return "unapproved"
   const total = Number(order.total ?? 0)
   const paid = Number(order.amountPaid ?? 0)
   if (paid > total + EPSILON) return "owing"

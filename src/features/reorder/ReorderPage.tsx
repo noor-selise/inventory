@@ -19,10 +19,11 @@ import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDateTime } from "@/components/app/audit"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { REORDER_METHODS, reorderSettings, reorderSuggestions, runReorderCheck, type ReorderSetting, type ReorderSuggestion } from "./api"
+import { REORDER_METHODS, reorderSettings, reorderSuggestions, runReorderCheck, sendLowStockAlerts, suggestedPoints, type ReorderSetting, type ReorderSuggestion } from "./api"
 
 // Reorder points, the reorder list and one click drafts (spec 0014). The list
-// is rebuilt nightly; "Check now" does the same work right away.
+// is rebuilt once a day by the first person signed in (spec 0027); "Check now"
+// does the same work right away. Both send low stock alerts for new breaches.
 
 export function ReorderPage() {
   const { hasRole, user } = useCurrentUser()
@@ -31,23 +32,37 @@ export function ReorderPage() {
   const stockLookups = useStockLookups()
   const list = useResource(() => reorderSuggestions.list({ pageSize: 2000 }), [])
   const settings = useResource(() => reorderSettings.list({ pageSize: 5000 }), [])
+  const suggested = useResource(async () => (settings.data ? suggestedPoints(settings.data.items) : undefined), [settings.data])
   const [checking, setChecking] = React.useState(false)
   const [chosen, setChosen] = React.useState<string[]>([])
   const [drafting, setDrafting] = React.useState(false)
+  // RecordList keeps its own rows; a new key reloads it after a point is applied here.
+  const [listVersion, setListVersion] = React.useState(0)
   const data = lookups.data
 
   async function check() {
     setChecking(true)
     try {
       const outcome = await runReorderCheck()
-      const fresh = outcome.alerts.filter((alert) => alert.alerting).length
-      toast.success(`${outcome.suggestions.length} below their reorder point${fresh ? `, ${fresh} new alert${fresh === 1 ? "" : "s"}` : ""}`)
+      const alerts = await sendLowStockAlerts(outcome)
+      toast.success(`${outcome.suggestions.length} below their reorder point${alerts.count ? `, ${alerts.count} new alert${alerts.count === 1 ? "" : "s"} (in app ${alerts.inApp}, email ${alerts.email})` : ""}`)
       void list.reload()
       void settings.reload()
     } catch (caught) {
       toast.error(errorMessage(caught))
     } finally {
       setChecking(false)
+    }
+  }
+
+  async function applyPoint(setting: ReorderSetting, point: number) {
+    try {
+      await reorderSettings.update(setting.ItemId, { reorderPoint: point })
+      toast.success(`Reorder point set to ${formatNumber(point)}`)
+      setListVersion((value) => value + 1)
+      void settings.reload()
+    } catch (caught) {
+      toast.error(errorMessage(caught))
     }
   }
 
@@ -166,6 +181,7 @@ export function ReorderPage() {
         <TabsContent value="settings">
           {data ? (
             <RecordList<ReorderSetting>
+              key={listVersion}
               collection={reorderSettings}
               noun="Reorder point"
               canEdit={canEdit}
@@ -176,6 +192,7 @@ export function ReorderPage() {
                 { name: "locationId", label: "Location", type: "select", required: true, options: locationOptions },
                 { name: "reorderPoint", label: "Reorder point", type: "number", required: true, min: 0, helper: "Reorder when anticipated stock falls below this." },
                 { name: "reorderQty", label: "Reorder quantity", type: "number", min: 0, helper: "How much to order each time." },
+                { name: "safetyStock", label: "Safety stock", type: "number", min: 0, helper: "Extra units on top of lead time demand, used for the suggested point." },
                 { name: "method", label: "How", type: "select", required: true, options: REORDER_METHODS.map((method) => ({ value: method.value, label: method.label })) },
                 { name: "vendorId", label: "Vendor", type: "select", options: vendorOptions, allowNone: true, visible: (values) => values.method === "purchase" },
                 { name: "sourceLocationId", label: "Move from", type: "select", options: locationOptions, allowNone: true, visible: (values) => values.method === "transfer" },
@@ -192,6 +209,31 @@ export function ReorderPage() {
                 { label: "Location", render: (row) => data.locationName(row.locationId) },
                 { label: "Point", render: (row) => formatNumber(row.reorderPoint), numeric: true },
                 { label: "Quantity", render: (row) => formatNumber(row.reorderQty ?? 0), numeric: true },
+                {
+                  label: "Suggested point",
+                  render: (row) => {
+                    const hint = suggested.data?.get(row.ItemId)
+                    if (!hint) return null
+                    const title = `${formatNumber(hint.sold)} sold in 90 days (${formatNumber(Math.round(hint.rate * 100) / 100)} a day) × ${formatNumber(hint.lead)} days lead time + ${formatNumber(row.safetyStock ?? 0)} safety stock`
+                    return (
+                      <span className="inline-flex items-center gap-2" title={title}>
+                        <span className="num">{formatNumber(hint.point)}</span>
+                        {canEdit && hint.point !== Number(row.reorderPoint) ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void applyPoint(row, hint.point)
+                            }}
+                          >
+                            Use
+                          </Button>
+                        ) : null}
+                      </span>
+                    )
+                  },
+                },
                 { label: "How", render: (row) => REORDER_METHODS.find((method) => method.value === row.method)?.label },
                 { label: "Alert", render: (row) => (row.isAlerting ? <Badge variant="warning">Alerted</Badge> : null) },
               ]}

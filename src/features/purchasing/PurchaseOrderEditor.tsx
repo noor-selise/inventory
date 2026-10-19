@@ -66,7 +66,7 @@ export function PurchaseOrderEditor({
   onClose: () => void
   onSaved: (order: PurchaseOrder) => void
 }) {
-  const { user } = useCurrentUser()
+  const { user, profile, isAdmin } = useCurrentUser()
   const by = user?.email ?? "unknown"
   const defaultLocation = lookups.locations.find((location) => location.isDefault)?.ItemId ?? ""
   const defaultTax = lookups.taxSchemes.find((scheme) => scheme.isDefault)?.ItemId ?? ""
@@ -183,7 +183,7 @@ export function PurchaseOrderEditor({
     setSaving(true)
     setError(undefined)
     try {
-      const saved = order ? await updatePurchaseOrder(order.ItemId, draft, lookups, by) : await createPurchaseOrder(draft, lookups, by)
+      const saved = order ? await updatePurchaseOrder(order.ItemId, draft, lookups, by, { by, profile, isAdmin }) : await createPurchaseOrder(draft, lookups, by, { by, profile, isAdmin })
       toast.success(`${saved.number} saved`)
       onSaved(saved)
     } catch (caught) {

@@ -96,7 +96,12 @@ function toFormValues(fields: FieldDef[], record: Record<string, unknown>): Form
   return values
 }
 
-function toPayload(fields: FieldDef[], values: FormValues): Record<string, unknown> {
+/**
+ * Form values to a record. On an edit, an emptied text or choice field is sent
+ * as "" because Blocks ignores null in an update and the old value would stay.
+ * Emptied numbers and dates cannot be cleared that way and stay as they were.
+ */
+function toPayload(fields: FieldDef[], values: FormValues, editing = false): Record<string, unknown> {
   const payload: Record<string, unknown> = {}
   for (const field of fields) {
     if (field.visible && !field.visible(values)) continue
@@ -106,7 +111,7 @@ function toPayload(fields: FieldDef[], values: FormValues): Record<string, unkno
       payload[field.name] = raw === "" ? null : Number(raw)
     } else if (field.type === "date") {
       payload[field.name] = raw ? new Date(`${String(raw)}T00:00:00Z`).toISOString() : null
-    } else payload[field.name] = String(raw ?? "").trim() || null
+    } else payload[field.name] = String(raw ?? "").trim() || (editing ? "" : null)
   }
   return payload
 }
@@ -189,7 +194,7 @@ export function RecordList<T extends Entity>({
     setSaving(true)
     setSaveError(undefined)
     try {
-      const raw = toPayload(fields, values)
+      const raw = toPayload(fields, values, Boolean(current))
       const payload = transform ? transform(raw) : raw
       if (defaultField && payload[defaultField] === true) {
         // Not atomic on Blocks (spec 0004, §5.6): clear the old default first.

@@ -19,6 +19,21 @@ export type OrderChange<T> = {
 }
 
 const ATTEMPTS = 5
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}T/
+
+/**
+ * Blocks ignores null in an update, so a field cleared in a form would keep its
+ * old value. Where the stored value is text, send "" instead. Dates reject ""
+ * and numbers have no empty form, so those cannot be cleared and keep null.
+ */
+function clearable<T extends OrderBase>(order: T, patch: Partial<T>): Partial<T> {
+  const result: Record<string, unknown> = { ...patch }
+  for (const [key, value] of Object.entries(patch)) {
+    const stored = (order as Record<string, unknown>)[key]
+    if (value === null && typeof stored === "string" && stored !== "" && !ISO_DATE.test(stored)) result[key] = ""
+  }
+  return result as Partial<T>
+}
 
 export async function mutateOrder<T extends OrderBase>(
   store: Collection<T>,
@@ -31,7 +46,7 @@ export async function mutateOrder<T extends OrderBase>(
     const { patch, event } = await change(order)
     const revision = order.revision ?? null
     const history = event ? [...(order.history ?? []), { at: new Date().toISOString(), ...event }] : undefined
-    const payload = { ...patch, ...(history ? { history } : {}), revision: (revision ?? 0) + 1 } as Partial<T>
+    const payload = { ...clearable(order, patch), ...(history ? { history } : {}), revision: (revision ?? 0) + 1 } as Partial<T>
     const changed = await store.updateWhere({ ItemId: orderId, revision }, payload as Omit<Partial<T>, keyof Entity>)
     if (changed === 1) return { ...order, ...payload }
     await new Promise((resolve) => setTimeout(resolve, Math.random() * 150 * (attempt + 1)))

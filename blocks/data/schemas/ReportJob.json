@@ -1,0 +1,63 @@
+{
+  "schemaName": "ReportJob",
+  "collectionName": "ReportJobs",
+  "schemaType": 1,
+  "description": "A report run in the background with its status and CSV file (spec 0015 AC-5)",
+  "fields": [
+    {
+      "name": "reportKey",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "title",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "filters",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "fileId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "fileName",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "rowCount",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "error",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "ownerId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "startedAt",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "finishedAt",
+      "type": "DateTime",
+      "isArray": false
+    }
+  ]
+}

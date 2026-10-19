@@ -218,6 +218,16 @@
       "name": "stockSteps",
       "type": "StockStep",
       "isArray": true
+    },
+    {
+      "name": "pickingLockedBy",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "pickingLockedAt",
+      "type": "DateTime",
+      "isArray": false
     }
   ]
 }

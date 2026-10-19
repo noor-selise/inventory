@@ -123,6 +123,11 @@
       "name": "costVersion",
       "type": "Int",
       "isArray": false
+    },
+    {
+      "name": "lastVendorId",
+      "type": "ID",
+      "isArray": false
     }
   ]
 }

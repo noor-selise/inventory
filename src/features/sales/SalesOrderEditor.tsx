@@ -55,8 +55,10 @@ export function SalesOrderEditor({
   onClose: () => void
   onSaved: (order: SalesOrder) => void
 }) {
-  const { user } = useCurrentUser()
+  const { user, profile } = useCurrentUser()
   const by = user?.email ?? "unknown"
+  // A rep limited to their own customers always sells as themselves (spec 0011 AC-8).
+  const ownOnly = profile?.ownCustomersOnly ? String(user?.itemId ?? "") : null
   const defaultLocation = lookups.locations.find((location) => location.isDefault)?.ItemId ?? lookups.locations[0]?.ItemId ?? ""
   const defaultScheme = lookups.schemes.find((scheme) => scheme.isDefault)?.ItemId ?? ""
   const defaultTax = lookups.taxSchemes.find((scheme) => scheme.isDefault)?.ItemId ?? ""
@@ -69,7 +71,7 @@ export function SalesOrderEditor({
   const [pricingSchemeId, setScheme] = React.useState(order?.pricingSchemeId ?? defaultScheme)
   const [taxingSchemeId, setTaxScheme] = React.useState(order?.taxingSchemeId ?? defaultTax)
   const [paymentTermId, setTerm] = React.useState(order?.paymentTermId ?? "")
-  const [salesRepUserId, setRep] = React.useState(order?.salesRepUserId ?? "")
+  const [salesRepUserId, setRep] = React.useState(order?.salesRepUserId ?? ownOnly ?? "")
   const [customerPoNumber, setPo] = React.useState(order?.customerPoNumber ?? "")
   const [freight, setFreight] = React.useState(order?.freight ? String(order.freight) : "")
   const [remarks, setRemarks] = React.useState(order?.remarks ?? "")
@@ -86,7 +88,7 @@ export function SalesOrderEditor({
     if (picked.pricingSchemeId) setScheme(picked.pricingSchemeId)
     if (picked.taxingSchemeId) setTaxScheme(picked.taxingSchemeId)
     if (picked.paymentTermId) setTerm(picked.paymentTermId)
-    if (picked.salesRepUserId) setRep(picked.salesRepUserId)
+    if (picked.salesRepUserId && !ownOnly) setRep(picked.salesRepUserId)
     const code = picked.currencyCode || lookups.homeCurrency
     setCurrency(code)
     setRate(String(lookups.rateFor(code, toIso(orderDate) ?? undefined)))
@@ -207,7 +209,10 @@ export function SalesOrderEditor({
   }
 
   const options = {
-    customers: lookups.customers.filter((row) => row.isActive !== false || row.ItemId === customerId).map((row) => ({ value: row.ItemId, label: row.name })),
+    customers: lookups.customers
+      .filter((row) => row.isActive !== false || row.ItemId === customerId)
+      .filter((row) => !ownOnly || row.salesRepUserId === ownOnly || row.ItemId === customerId)
+      .map((row) => ({ value: row.ItemId, label: row.name })),
     locations: lookups.locations.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: row.name })),
     currencies: lookups.currencies.map((code) => ({ value: code, label: code })),
     schemes: lookups.schemes.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: `${row.name} (${row.currencyCode})` })),
@@ -252,7 +257,7 @@ export function SalesOrderEditor({
               disabled={currencyCode === lookups.homeCurrency}
               helper={`${currencyCode} per 1 ${lookups.homeCurrency}`}
             />
-            <SelectField id="so-rep" label="Sales rep" options={lookups.users} value={salesRepUserId} onChange={setRep} allowNone />
+            <SelectField id="so-rep" label="Sales rep" options={lookups.users} value={salesRepUserId} onChange={setRep} allowNone disabled={Boolean(ownOnly)} />
             <TextField id="so-po" label="Customer PO number" value={customerPoNumber} onChange={setPo} />
             <TextField id="so-ship-date" label="Requested ship date" type="date" value={shipDate} onChange={setShipDate} />
             <TextField id="so-freight" label="Freight" type="number" step="any" value={freight} onChange={setFreight} />

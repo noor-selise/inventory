@@ -1,0 +1,38 @@
+{
+  "schemaName": "TeamMemberProfile",
+  "collectionName": "TeamMemberProfiles",
+  "schemaType": 1,
+  "description": "Per person settings Blocks users do not hold: approval limit, location limits, own customers only, dashboard widgets (specs 0003, 0027)",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "poApprovalLimit",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "allowedLocationIds",
+      "type": "ID",
+      "isArray": true
+    },
+    {
+      "name": "isStockroomUser",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "ownCustomersOnly",
+      "type": "Boolean",
+      "isArray": false
+    },
+    {
+      "name": "dashboardWidgets",
+      "type": "String",
+      "isArray": true
+    }
+  ]
+}

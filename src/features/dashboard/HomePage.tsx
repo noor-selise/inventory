@@ -4,6 +4,7 @@ import { useCurrentUser, userDisplayName } from "@/app/providers/CurrentUserProv
 import { Link } from "@/app/router/navigation"
 import { PageHeader } from "@/components/app/page"
 import { LowStockAlerts } from "@/features/reorder/LowStockAlerts"
+import { DashboardWidgets } from "./DashboardWidgets"
 import { StarterDataCard } from "@/features/settings/StarterDataCard"
 
 const SHORTCUTS = [
@@ -22,6 +23,7 @@ export function HomePage() {
         title={name ? `Welcome, ${name.split(" ")[0]}` : "Welcome"}
         description="Start with your company settings, then add your products."
       />
+      <DashboardWidgets />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {SHORTCUTS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
           <Link

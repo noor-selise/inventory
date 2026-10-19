@@ -21,13 +21,17 @@ import { usePartnerLookups } from "./useLookups"
 const CUSTOMER_EDITORS = ["admin", "manager", "sales"]
 
 export function CustomersPage() {
-  const canEdit = useCurrentUser().hasRole(...CUSTOMER_EDITORS)
+  const { hasRole, profile, user } = useCurrentUser()
+  const canEdit = hasRole(...CUSTOMER_EDITORS)
+  // A rep limited to their own customers sees only those (spec 0011 AC-8, spec 0027).
+  const scope = profile?.ownCustomersOnly ? { salesRepUserId: String(user?.itemId ?? "none") } : undefined
   return (
     <PartnerList<Customer>
       title="Customers"
       description="The people and companies you sell to, with the price list, terms and tax their orders start with."
       noun="Customer"
       source={customers}
+      scope={scope}
       canEdit={canEdit}
       columns={[
         { label: "City", className: "hidden md:table-cell", render: (row) => row.billingAddress?.city },
@@ -78,7 +82,7 @@ function toForm(record?: Customer): Form {
     currencyCode: record?.currencyCode ?? "",
     defaultDiscountPct: record?.defaultDiscountPct == null ? "" : String(record.defaultDiscountPct),
     salesRepUserId: record?.salesRepUserId ?? "",
-    creditLimit: record?.creditLimit == null ? "" : String(record.creditLimit),
+    creditLimit: !record?.creditLimit ? "" : String(record.creditLimit),
     remarks: record?.remarks ?? "",
   }
 }
@@ -145,7 +149,8 @@ function CustomerDialog({
       currencyCode: form.currencyCode || null,
       defaultDiscountPct: form.defaultDiscountPct === "" ? null : Number(form.defaultDiscountPct),
       salesRepUserId: form.salesRepUserId || null,
-      creditLimit: form.creditLimit === "" ? null : Number(form.creditLimit),
+      // 0 means no limit: Blocks ignores null in an update, so an emptied limit could never clear.
+      creditLimit: form.creditLimit === "" ? 0 : Number(form.creditLimit),
       remarks: form.remarks.trim() || null,
     }
     try {

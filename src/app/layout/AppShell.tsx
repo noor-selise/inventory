@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/sheet"
 import { roleName } from "@/features/team/roles"
 import { cn } from "@/lib/utils"
+import { useDailyReorderCheck } from "@/features/reorder/useDailyReorderCheck"
 
 type NavItem = {
   to: string
@@ -205,6 +206,7 @@ function UserMenu() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = React.useState(false)
+  useDailyReorderCheck()
 
   return (
     <div className="flex min-h-svh bg-background">

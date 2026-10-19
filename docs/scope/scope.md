@@ -146,7 +146,7 @@ Quote to order, pick, pack, ship, returns, back orders, quick actions, derived s
 - [ ] Design it (spec): [0011](../specs/0011-sales-orders-fulfillment.md), built to the draft; confirm it: `/architect sales orders and fulfillment`
 - [ ] Build it: `/develop sales orders and fulfillment`
   - [x] Quote to order, pick, pack, ship, returns and restock, back orders, quick actions, derived statuses, profit, cancel
-  - [ ] Credit limit gate, sales rep restriction, picking sessions (P1)
+  - [x] Credit limit gate with confirm, sales rep restriction, fulfillment queue by priority, picking sessions (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify sales orders and fulfillment`
 Spec [0011](../specs/0011-sales-orders-fulfillment.md) · code in `src/features/sales/`, `scripts/checks/orders-live.mjs`
 
@@ -157,7 +157,7 @@ Quote to PO, approval limits, partial receiving with lots and serials, returns, 
 - [ ] Design it (spec): [0012](../specs/0012-purchasing-receiving.md), built to the draft; confirm it: `/architect purchasing and receiving`
 - [ ] Build it: `/develop purchasing and receiving`
   - [x] Quote to PO, partial receiving with bins, lots and serials, returns, landed cost into average cost
-  - [ ] Approval limits (P1)
+  - [x] Approval limits, last vendor and vendor price list update (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify purchasing and receiving`
 Spec [0012](../specs/0012-purchasing-receiving.md) · code in `src/features/purchasing/`
 
@@ -168,7 +168,7 @@ Customer and vendor payments split across orders, credits, balances per currency
 - [ ] Design it (spec): [0013](../specs/0013-payments-balances.md), built to the draft; confirm it: `/architect payments and balances`
 - [ ] Build it: `/develop payments and balances`
   - [x] Payments split over orders in one save, saved twice records once, voids, store credit, balances per currency, aging
-  - [ ] Server side balance workflow (waits on the workflow sign in decision)
+  - [ ] Server side balance workflow (kept in the app for now; waits on Blocks confirming workflow sign in)
 - [ ] Verify it: `/check verify payments and balances`
 Spec [0013](../specs/0013-payments-balances.md) · code in `src/features/payments/`, `blocks/workflows/`
 
@@ -179,7 +179,7 @@ Reorder settings, nightly reorder list, one click drafts, low stock alerts.
 - [ ] Design it (spec): [0014](../specs/0014-reordering-alerts.md), built to the draft; confirm it: `/architect reordering and alerts`
 - [ ] Build it: `/develop reordering and alerts`
   - [x] Reorder settings, reorder list with Check now, alert once per drop, one click POs and transfers, low stock card
-  - [ ] Nightly reorder workflow and alert emails (waits on the workflow sign in decision)
+  - [x] Once a day reorder check in the app, alert email (template `low-stock-alert`), suggested reorder point (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify reordering and alerts`
 Spec [0014](../specs/0014-reordering-alerts.md) · code in `src/features/reorder/`, `blocks/workflows/`
 
@@ -190,7 +190,7 @@ Core 20 reports, filters, exports, saved reports; background reports and dashboa
 - [ ] Design it (spec): [0015](../specs/0015-reports-dashboards.md), built to the draft; confirm it: `/architect reports and dashboards`
 - [ ] Build it: `/develop reports and dashboards`
   - [x] Core 20 reports with filters, group by, columns, CSV, print to PDF, saved reports, cost hidden by role
-  - [ ] Background reports, nightly summaries and dashboard widgets (P1)
+  - [x] Background reports with status and CSV in storage, dashboard widgets per person (P1, assumed decision spec 0027)
 - [ ] Verify it: `/check verify reports and dashboards`
 Spec [0015](../specs/0015-reports-dashboards.md) · code in `src/features/reports/`
 

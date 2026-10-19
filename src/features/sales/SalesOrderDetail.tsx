@@ -22,7 +22,9 @@ import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import {
+  CONFIRMERS,
   cancelSalesOrder,
+  confirmSalesOrder,
   convertSalesOrder,
   finishSalesStep,
   fulfillAll,
@@ -34,8 +36,12 @@ import {
   restockLines,
   setServiceDone,
   shipAll,
+  pickingLockHolder,
   shipPackages,
+  startPicking,
+  stopPicking,
   suggestPicks,
+  type PickingLineReport,
   type PickRequest,
 } from "./actions"
 import { salesOrders, type SalesOrder } from "./api"
@@ -61,8 +67,9 @@ export function SalesOrderDetail({
   onEdit: (order: SalesOrder) => void
   onChanged: () => void
 }) {
-  const { hasRole, user } = useCurrentUser()
+  const { hasRole, user, profile } = useCurrentUser()
   const by = user?.email ?? "unknown"
+  const canConfirm = hasRole(...CONFIRMERS)
   const canEdit = hasRole(...SALES_EDITORS)
   const canFulfill = hasRole(...FULFILLERS)
   const canSeeCost = hasRole(...COST_VIEWERS)
@@ -72,6 +79,7 @@ export function SalesOrderDetail({
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string>()
   const [invoiceDate, setInvoiceDate] = React.useState(new Date().toISOString().slice(0, 10))
+  const [session, setSession] = React.useState<PickingLineReport[]>()
 
   const order = loaded.data
   async function run(action: () => Promise<unknown>, success: string) {
@@ -110,7 +118,24 @@ export function SalesOrderDetail({
     )
   }
 
+  // Sales rep restriction (spec 0011 AC-8): app side, see spec 0027.
+  if (profile?.ownCustomersOnly && order.salesRepUserId !== user?.itemId) {
+    return (
+      <Dialog open onOpenChange={(value) => !value && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Not your order</DialogTitle>
+            <DialogDescription>You can open only orders where you are the sales rep.</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   const open = !order.isQuote && !order.isCancelled
+  const held = Boolean(order.needsConfirmation && !order.confirmedBy)
+  const lockHolder = pickingLockHolder(order)
+  const lockedByOther = Boolean(lockHolder && lockHolder !== by)
   const remaining = order.lines.map((line) => ({ line, ...salesLineRemaining(line), product: lookups.productOf(line.productId) }))
   const anyToPick = remaining.some((row) => row.toPick > 0 && row.product?.itemType !== "service")
   const anyToPack = remaining.some((row) => row.toPack > 0)
@@ -147,6 +172,64 @@ export function SalesOrderDetail({
           </div>
         ) : null}
 
+        {held && open ? (
+          <div className="flex flex-col gap-2 rounded-md border border-warning bg-warning/10 p-3 text-sm sm:flex-row sm:items-center">
+            <span className="flex-1">
+              This order takes {lookups.customerOf(order.customerId)?.name} over their credit limit of {formatMoney(Number(lookups.customerOf(order.customerId)?.creditLimit ?? 0), order.currencyCode)}. It waits for someone with the Confirm right before it can be picked, shipped or invoiced.
+            </span>
+            {canConfirm ? (
+              <Button size="sm" disabled={busy} onClick={() => void run(() => confirmSalesOrder(order, lookups, by), "Order confirmed")}>
+                Confirm order
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {lockHolder && open ? (
+          <div className="flex flex-col gap-2 rounded-md border bg-muted p-3 text-sm sm:flex-row sm:items-center">
+            <span className="flex-1">
+              {lockedByOther ? `${lockHolder} is picking this order. You can pick once they stop, or after the lock goes stale.` : "You are picking this order. Others cannot pick it until you stop."}
+            </span>
+            {!lockedByOther && canFulfill ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    await stopPicking(order, by)
+                    setSession(undefined)
+                  }, "Picking stopped")
+                }
+              >
+                Stop picking
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {session?.length ? (
+          <div className="rounded-md border p-3 text-sm">
+            <p className="mb-2 font-semibold">Picking session</p>
+            <ul className="flex flex-col gap-1">
+              {session.map((row) => {
+                const name = lookups.productOf(order.lines.find((line) => line.lineId === row.lineId)?.productId)?.name
+                const text =
+                  row.status === "ready"
+                    ? `${formatNumber(row.ready)} ready to pick`
+                    : row.status === "short"
+                      ? `${formatNumber(row.ready)} ready, ${formatNumber(row.missing)} short`
+                      : row.status === "expired_only"
+                        ? `only expired lots (${formatNumber(row.missing)} needed)`
+                        : `out of stock (${formatNumber(row.missing)} needed)`
+                return (
+                  <li key={row.lineId} className={cn(row.status !== "ready" && "text-destructive")}>
+                    {name}: {text}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap gap-2">
           {canEdit && !order.isCancelled && order.inventoryStatus !== "fulfilled" ? (
             <Button variant="secondary" onClick={() => onEdit(order)} disabled={busy}>
@@ -158,7 +241,21 @@ export function SalesOrderDetail({
               {order.isQuote ? "Convert to order" : "Back to quote"}
             </Button>
           ) : null}
-          {open && canFulfill && anyToPick ? (
+          {open && canFulfill && anyToPick && !held && !lockHolder ? (
+            <Button
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  const result = await startPicking(order, lookups, by)
+                  setSession(result.lines)
+                }, "Picking started")
+              }
+            >
+              Start picking
+            </Button>
+          ) : null}
+          {open && canFulfill && anyToPick && !held && !lockedByOther ? (
             <Button disabled={busy} onClick={() => setDialog("pick")}>
               Pick
             </Button>

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChartColumn, Download, Printer, Save, Trash2 } from "lucide-react"
+import { ChartColumn, Clock, Download, Printer, Save, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
@@ -15,10 +15,13 @@ import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { REPORTS, type ReportColumn, type ReportFilters, type ReportRow } from "./definitions"
+import { BackgroundJobs } from "./BackgroundJobs"
+import { startBackgroundReport, toCsv } from "./jobs"
 
-// Reports (spec 0015 AC-1 to AC-4): pick a report, filter, group, choose
-// columns, export CSV or print to PDF, and save the setup for the team. Cost
-// columns never show, print or export for users without cost access.
+// Reports (spec 0015 AC-1 to AC-5): pick a report, filter, group, choose
+// columns, export CSV or print to PDF, save the setup for the team, or run a
+// long one in the background. Cost columns never show, print or export for
+// users without cost access.
 
 type SavedReport = Entity & { name: string; reportKey: string; filters: string; columns: string[]; isShared: boolean; ownerId: string }
 const savedReports = collection<SavedReport>("SavedReport", ["name", "reportKey", "filters", "columns", "isShared", "ownerId"])
@@ -47,6 +50,7 @@ export function ReportsPage() {
   const [error, setError] = React.useState<string>()
   const [saveName, setSaveName] = React.useState("")
   const [share, setShare] = React.useState(true)
+  const [jobsVersion, setJobsVersion] = React.useState(0)
   const data = lookups.data
   const currency = data?.homeCurrency ?? "USD"
 
@@ -91,10 +95,20 @@ export function ReportsPage() {
   const displayColumns = groupBy ? [allowed.find((column) => column.key === groupBy)!, ...columns.filter((column) => column.key !== groupBy && (column.type === "number" || column.type === "money"))] : columns
   const totals = Object.fromEntries(displayColumns.filter((column) => column.type === "number" || column.type === "money").map((column) => [column.key, shown.reduce((sum, row) => sum + Number(row[column.key] ?? 0), 0)]))
 
+  async function runInBackground() {
+    if (!data || !user) return
+    try {
+      const { done } = await startBackgroundReport({ report, filters, columns, lookups: data, ownerId: String(user.itemId ?? user.email ?? "") })
+      toast.success(`${report.title} is running in the background. Keep this tab open until it finishes.`)
+      setJobsVersion((value) => value + 1)
+      void done.then(() => setJobsVersion((value) => value + 1))
+    } catch (caught) {
+      toast.error(errorMessage(caught))
+    }
+  }
+
   function exportCsv() {
-    const escape = (value: string) => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value)
-    const lines = [displayColumns.map((column) => escape(column.label)).join(","), ...shown.map((row) => displayColumns.map((column) => escape(row[column.key] == null ? "" : String(row[column.key]))).join(","))]
-    const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }))
+    const url = URL.createObjectURL(new Blob([toCsv(shown, displayColumns)], { type: "text/csv" }))
     const link = document.createElement("a")
     link.href = url
     link.download = `${report.key}-${new Date().toISOString().slice(0, 10)}.csv`
@@ -208,6 +222,9 @@ export function ReportsPage() {
               <Button variant="secondary" onClick={printPdf} disabled={!rows?.length}>
                 <Printer aria-hidden /> Print or PDF
               </Button>
+              <Button variant="ghost" onClick={() => void runInBackground()} disabled={!data}>
+                <Clock aria-hidden /> Run in background
+              </Button>
             </div>
             <div className="mt-4 flex flex-wrap items-end gap-3 border-t pt-4">
               <TextField id="report-save-name" label="Save this setup as" value={saveName} onChange={setSaveName} className="max-w-xs" />
@@ -218,6 +235,7 @@ export function ReportsPage() {
             </div>
           </SectionCard>
           {error ? <ErrorBanner message={error} /> : null}
+          <BackgroundJobs version={jobsVersion} />
           <SectionCard className="p-0 md:p-0">
             {running ? (
               <div className="p-4">

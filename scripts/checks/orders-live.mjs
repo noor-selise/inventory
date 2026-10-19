@@ -181,6 +181,11 @@ try {
     lookups,
     by
   )
+  // A PO waits for approval before receiving (spec 0012 AC-3); an admin with no limit set may approve anything.
+  assert.equal(po.inventoryStatus, "unapproved")
+  await assert.rejects(purchasing.receiveLines(po, [{ lineId: po.lines[0].lineId, qty: 1, binCode: "A-01" }], lookups, by), /waits for approval/)
+  po = await purchasing.approvePurchaseOrder(po, { by, isAdmin: true })
+  assert.equal(po.inventoryStatus, "unfulfilled")
   const onOrderBefore = (await qty(hammer.ItemId)).onOrder
   const hammerCostBefore = (await products.get(hammer.ItemId)).averageCost
   const hammerQtyBefore = (await stock.posting.balances({ productId: hammer.ItemId }, { pageSize: 500 })).items.reduce((sum, row) => sum + row.onHand, 0)

@@ -54,6 +54,10 @@
     { "schema": "DailySalesSummary", "fields": "day" },
     { "schema": "DailyStockSummary", "fields": "summaryKey", "unique": true },
     { "schema": "DailyStockSummary", "fields": "day" },
-    { "schema": "WorkflowRun", "fields": "workflow,ranAt:desc" }
+    { "schema": "WorkflowRun", "fields": "workflow,ranAt:desc" },
+    { "schema": "WorkflowRun", "fields": "runKey", "unique": true },
+
+    { "schema": "TeamMemberProfile", "fields": "userId", "unique": true },
+    { "schema": "ReportJob", "fields": "ownerId,startedAt:desc" }
   ]
 }

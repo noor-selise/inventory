@@ -3,6 +3,7 @@ import type { BlocksUser } from "@seliseblocks/client"
 
 import { useAuth } from "@/app/providers/AuthProvider"
 import { blocksClient } from "@/lib/blocks/client"
+import { profileFor, type TeamMemberProfile } from "@/features/team/profile"
 import { ADMIN_ROLE, roleSlugs } from "@/features/team/roles"
 
 type CurrentUserValue = {
@@ -10,6 +11,8 @@ type CurrentUserValue = {
   roles: string[]
   isAdmin: boolean
   hasRole: (...slugs: string[]) => boolean
+  /** Per person settings (spec 0027); undefined until loaded or when none exist. */
+  profile: TeamMemberProfile | undefined
   reload: () => Promise<void>
 }
 
@@ -22,27 +25,34 @@ const CurrentUserContext = React.createContext<CurrentUserValue | undefined>(
 export function CurrentUserProvider({ children }: { children: React.ReactNode }) {
   const { status } = useAuth()
   const [user, setUser] = React.useState<BlocksUser>()
+  const [profile, setProfile] = React.useState<TeamMemberProfile>()
 
   const reload = React.useCallback(async () => {
     try {
       const response = await blocksClient.iam.me()
       setUser(response.data)
+      const userId = response.data?.itemId
+      setProfile(userId ? await profileFor(String(userId)).catch(() => undefined) : undefined)
     } catch {
       setUser(undefined)
+      setProfile(undefined)
     }
   }, [])
 
   React.useEffect(() => {
     if (status === "authenticated") void reload()
-    if (status === "unauthenticated") setUser(undefined)
+    if (status === "unauthenticated") {
+      setUser(undefined)
+      setProfile(undefined)
+    }
   }, [status, reload])
 
   const value = React.useMemo(() => {
     const roles = roleSlugs(user?.roles)
     const hasRole = (...slugs: string[]) =>
       slugs.some((slug) => roles.includes(slug))
-    return { user, roles, isAdmin: hasRole(ADMIN_ROLE), hasRole, reload }
-  }, [user, reload])
+    return { user, roles, isAdmin: hasRole(ADMIN_ROLE), hasRole, profile, reload }
+  }, [user, profile, reload])
 
   return (
     <CurrentUserContext.Provider value={value}>

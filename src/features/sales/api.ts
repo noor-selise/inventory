@@ -119,6 +119,9 @@ export type SalesOrder = OrderBase & {
   priority?: number | null
   needsConfirmation?: boolean | null
   confirmedBy?: string | null
+  /** Picking session lock (spec 0011 AC-11): who and since when. */
+  pickingLockedBy?: string | null
+  pickingLockedAt?: string | null
   invoicedOn?: string | null
   shipRemarks?: string | null
   cogs?: number | null
@@ -172,6 +175,8 @@ export const salesOrders = collection<SalesOrder>("SalesOrder", [
   "priority",
   "needsConfirmation",
   "confirmedBy",
+  "pickingLockedBy",
+  "pickingLockedAt",
   "invoicedOn",
   "shipRemarks",
   "cogs",

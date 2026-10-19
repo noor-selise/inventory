@@ -1,10 +1,10 @@
 import * as React from "react"
 import type { BlocksUser } from "@seliseblocks/client"
-import { Ban, CircleCheck, Mail, UserPlus, Users } from "lucide-react"
+import { Ban, CircleCheck, Mail, SlidersHorizontal, UserPlus, Users } from "lucide-react"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
-import { SelectField, TextField } from "@/components/app/form"
+import { CheckboxField, SelectField, TextField } from "@/components/app/form"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,10 +26,14 @@ import {
 } from "@/components/ui/table"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { blocksClient } from "@/lib/blocks/client"
+import { formatNumber } from "@/lib/format"
+import { NO_LIMIT, approvalLimit, saveProfile, teamProfiles, type TeamMemberProfile } from "./profile"
 import { ADMIN_ROLE, ROLE_BUNDLES, roleName, roleSlugs } from "./roles"
 
 // Invite, change role, deactivate and reactivate team members through
 // blocksClient.iam.users (spec 0003 AC-3). Every change is confirmed first.
+// Approval limits and the sales rep restriction live in TeamMemberProfile
+// (spec 0003 data model, spec 0027).
 
 const roleOptions = ROLE_BUNDLES.map((role) => ({ value: role.slug, label: role.name }))
 const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
@@ -70,6 +74,9 @@ export function TeamPage() {
     return response.data ?? []
   }, [])
   const users = data ?? []
+  const profiles = useResource(() => teamProfiles.list({ pageSize: 500 }), [])
+  const profileOf = (userId?: string) => profiles.data?.items.find((row) => row.userId === userId)
+  const [editing, setEditing] = React.useState<BlocksUser>()
   const [inviteOpen, setInviteOpen] = React.useState(false)
   const [pending, setPending] = React.useState<Pending>()
   const [busy, setBusy] = React.useState(false)
@@ -139,6 +146,7 @@ export function TeamPage() {
                   <TableHead className={headClass}>Name</TableHead>
                   <TableHead className={headClass}>Role</TableHead>
                   <TableHead className={headClass}>Status</TableHead>
+                  <TableHead className={headClass}>Limits</TableHead>
                   <TableHead className={headClass}>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -190,7 +198,13 @@ export function TeamPage() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-xs text-muted-foreground">
+                        <ProfileSummary profile={profileOf(user.itemId)} />
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap">
+                        <Button size="sm" variant="ghost" aria-label={`Settings for ${displayName(user)}`} onClick={() => setEditing(user)}>
+                          <SlidersHorizontal aria-hidden />
+                        </Button>
                         {invited ? (
                           <span className="text-xs text-muted-foreground">Waiting for activation</span>
                         ) : active ? (
@@ -223,6 +237,18 @@ export function TeamPage() {
           </div>
         )}
       </SectionCard>
+
+      {editing ? (
+        <ProfileDialog
+          user={editing}
+          profile={profileOf(editing.itemId)}
+          onClose={() => setEditing(undefined)}
+          onSaved={() => {
+            setEditing(undefined)
+            void profiles.reload()
+          }}
+        />
+      ) : null}
 
       <InviteDialog
         open={inviteOpen}
@@ -379,6 +405,76 @@ function InviteDialog({
             </Button>
             <Button type="submit" disabled={saving} className="min-w-24">
               {saving ? "Sending…" : "Send invite"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ProfileSummary({ profile }: { profile?: TeamMemberProfile }) {
+  const parts = [
+    approvalLimit(profile) != null ? `Approves POs up to ${formatNumber(approvalLimit(profile)!)}` : null,
+    profile?.ownCustomersOnly ? "Own customers only" : null,
+  ].filter(Boolean)
+  return <>{parts.length ? parts.join(" · ") : "None"}</>
+}
+
+/** Approval limit and sales rep restriction for one person (spec 0012 AC-3, spec 0011 AC-8). */
+function ProfileDialog({ user, profile, onClose, onSaved }: { user: BlocksUser; profile?: TeamMemberProfile; onClose: () => void; onSaved: () => void }) {
+  const [limit, setLimit] = React.useState(approvalLimit(profile) != null ? String(approvalLimit(profile)) : "")
+  const [ownOnly, setOwnOnly] = React.useState(profile?.ownCustomersOnly === true)
+  const [saving, setSaving] = React.useState(false)
+  const limitError = limit.trim() && !(Number(limit) >= 0) ? "Enter zero or more, or leave it empty." : undefined
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault()
+    if (limitError || !user.itemId) return
+    setSaving(true)
+    try {
+      await saveProfile(String(user.itemId), { poApprovalLimit: limit.trim() ? Number(limit) : NO_LIMIT, ownCustomersOnly: ownOnly })
+      toast.success(`Saved settings for ${displayName(user)}`)
+      onSaved()
+    } catch (caught) {
+      toast.error(errorMessage(caught))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Settings for {displayName(user)}</DialogTitle>
+          <DialogDescription>Checked by the app when this person works on orders.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={save} className="flex flex-col gap-4">
+          <TextField
+            id="profile-limit"
+            label="PO approval limit (home currency)"
+            type="number"
+            min={0}
+            step="0.01"
+            value={limit}
+            onChange={setLimit}
+            error={limitError}
+            helper="They can approve purchase orders up to this total. Empty means they cannot approve, except admins, who then have no ceiling."
+          />
+          <CheckboxField
+            id="profile-own"
+            label="Only their own customers and orders"
+            checked={ownOnly}
+            onChange={setOwnOnly}
+            helper="For sales reps: they see customers and sales orders where they are the sales rep."
+          />
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
         </form>

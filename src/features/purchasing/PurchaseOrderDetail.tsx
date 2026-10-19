@@ -19,7 +19,18 @@ import { postingMessage } from "@/features/stock/AdjustmentsPage"
 import { useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { cancelPurchaseOrder, convertPurchaseOrder, finishPurchaseStep, receiveLines, type ReceiveRequest } from "./actions"
+import { canApprove } from "@/features/team/profile"
+import { toHome } from "@/features/sales/order-math"
+import {
+  applyVendorPrices,
+  approvePurchaseOrder,
+  cancelPurchaseOrder,
+  convertPurchaseOrder,
+  finishPurchaseStep,
+  receiveLines,
+  vendorPriceChanges,
+  type ReceiveRequest,
+} from "./actions"
 import { purchaseOrders, type PurchaseOrder } from "./api"
 
 // One purchase order: lines with what is received, receiving with bins, lots
@@ -38,8 +49,9 @@ export function PurchaseOrderDetail({
   onEdit: (order: PurchaseOrder) => void
   onChanged: () => void
 }) {
-  const { hasRole, user } = useCurrentUser()
+  const { hasRole, user, profile, isAdmin } = useCurrentUser()
   const by = user?.email ?? "unknown"
+  const approver = { by, profile, isAdmin }
   const canEdit = hasRole(...PURCHASE_EDITORS)
   const canReceive = hasRole(...RECEIVERS)
   const canSeeCost = hasRole(...COST_VIEWERS)
@@ -48,6 +60,8 @@ export function PurchaseOrderDetail({
   const [dialog, setDialog] = React.useState<"receive" | "return" | "pay" | "cancel" | null>(null)
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string>()
+  // The price list lives in the screen's lookups, so hide the prompt once applied here.
+  const [pricesApplied, setPricesApplied] = React.useState(false)
   const order = loaded.data
 
   async function run(action: () => Promise<unknown>, success: string) {
@@ -89,6 +103,11 @@ export function PurchaseOrderDetail({
   const total = Number(order.total ?? 0)
   const due = total - Number(order.amountPaid ?? 0)
   const landed = landedUnitCosts(order, (id) => lookups.productOf(id))
+  const unapproved = order.inventoryStatus === "unapproved"
+  const totalHome = toHome(total, order.exchangeRate)
+  const mayApprove = canApprove(profile, totalHome, isAdmin)
+  // Offer the price list update once stock has come in from this PO (spec 0012 AC-7).
+  const priceChanges = canEdit && !pricesApplied && order.lines.some((line) => Number(line.receivedQty ?? 0) > 0) ? vendorPriceChanges(order, lookups.vendorItems, lookups.homeCurrency) : []
 
   return (
     <Dialog open onOpenChange={(value) => !value && !busy && onClose()}>
@@ -113,6 +132,34 @@ export function PurchaseOrderDetail({
             </Button>
           </div>
         ) : null}
+        {unapproved && open ? (
+          <div className="flex flex-col gap-2 rounded-md border border-warning bg-warning/10 p-3 text-sm sm:flex-row sm:items-center">
+            <span className="flex-1">
+              Waiting for approval by someone whose limit covers {formatMoney(totalHome, lookups.homeCurrency)}. It can be received once approved.
+            </span>
+            {mayApprove ? (
+              <Button size="sm" disabled={busy} onClick={() => void run(() => approvePurchaseOrder(order, approver), "Approved")}>
+                Approve
+              </Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">Your approval limit does not cover this order.</span>
+            )}
+          </div>
+        ) : null}
+        {priceChanges.length ? (
+          <div className="flex flex-col gap-2 rounded-md border p-3 text-sm sm:flex-row sm:items-center">
+            <span className="flex-1">
+              Prices here differ from {lookups.vendorOf(order.vendorId)?.name}'s price list:{" "}
+              {priceChanges.map((change) => `${lookups.productOf(change.productId)?.name} ${change.oldCost == null ? "new" : formatMoney(change.oldCost, change.currencyCode)} → ${formatMoney(change.newCost, change.currencyCode)}`).join(", ")}. Update the price list?
+            </span>
+            <Button size="sm" variant="secondary" disabled={busy} onClick={() => void run(async () => {
+                  await applyVendorPrices(order, priceChanges)
+                  setPricesApplied(true)
+                }, "Vendor price list updated")}>
+              Update price list
+            </Button>
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-2">
           {canEdit && !order.isCancelled ? (
             <Button variant="secondary" onClick={() => onEdit(order)} disabled={busy}>
@@ -120,16 +167,16 @@ export function PurchaseOrderDetail({
             </Button>
           ) : null}
           {canEdit && !order.isCancelled ? (
-            <Button variant="secondary" disabled={busy} onClick={() => void run(() => convertPurchaseOrder(order, by), order.isQuote ? "Converted to an order" : "Back to a quote")}>
+            <Button variant="secondary" disabled={busy} onClick={() => void run(() => convertPurchaseOrder(order, by, approver), order.isQuote ? "Converted to an order" : "Back to a quote")}>
               {order.isQuote ? "Convert to order" : "Back to quote"}
             </Button>
           ) : null}
-          {open && canReceive && toReceive ? (
+          {open && canReceive && toReceive && !unapproved ? (
             <Button disabled={busy} onClick={() => setDialog("receive")}>
               Receive
             </Button>
           ) : null}
-          {open && canReceive && toReturn ? (
+          {open && canReceive && toReturn && !unapproved ? (
             <Button disabled={busy} onClick={() => setDialog("return")}>
               Return to vendor
             </Button>

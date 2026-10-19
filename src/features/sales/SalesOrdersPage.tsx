@@ -11,6 +11,7 @@ import { useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { salesOrders, type SalesOrder } from "./api"
+import { FulfillmentQueue } from "./FulfillmentQueue"
 import { SALES_EDITORS, useOrderLookups } from "./lookups"
 import { InventoryBadge, PaymentBadge, headClass } from "./OrderBits"
 import { SalesOrderDetail } from "./SalesOrderDetail"
@@ -24,12 +25,16 @@ const VIEWS = {
   fulfilled: { label: "Fulfilled", test: (order: SalesOrder) => order.inventoryStatus === "fulfilled" },
   cancelled: { label: "Cancelled", test: (order: SalesOrder) => Boolean(order.isCancelled) },
   all: { label: "All", test: () => true },
+  queue: { label: "Fulfillment queue", test: () => true },
 } as const
 
 export function SalesOrdersPage() {
-  const canEdit = useCurrentUser().hasRole(...SALES_EDITORS)
+  const { hasRole, profile, user } = useCurrentUser()
+  const canEdit = hasRole(...SALES_EDITORS)
   const lookups = useOrderLookups()
-  const list = useResource(() => salesOrders.list({ sort: { CreatedDate: -1 }, pageSize: 300 }), [])
+  // A rep limited to their own customers sees only orders where they are the rep (spec 0011 AC-8).
+  const ownOnly = profile?.ownCustomersOnly ? String(user?.itemId ?? "none") : null
+  const list = useResource(() => salesOrders.list({ filter: ownOnly ? { salesRepUserId: ownOnly } : undefined, sort: { CreatedDate: -1 }, pageSize: 300 }), [ownOnly])
   const [view, setView] = React.useState<keyof typeof VIEWS>("open")
   const [editing, setEditing] = React.useState<{ order?: SalesOrder; isQuote: boolean }>()
   const [viewing, setViewing] = React.useState<string>()
@@ -69,46 +74,50 @@ export function SalesOrdersPage() {
           ))}
         </TabsList>
       </Tabs>
-      <SectionCard className="p-0 md:p-0">
-        {(list.loading && !list.data) || !data ? (
-          <div className="p-4">
-            <LoadingRows />
-          </div>
-        ) : rows.length === 0 ? (
-          <EmptyState icon={ShoppingCart} message="Nothing here yet." />
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted hover:bg-muted">
-                  <TableHead className={headClass}>Number</TableHead>
-                  <TableHead className={headClass}>Customer</TableHead>
-                  <TableHead className={cn(headClass, "hidden md:table-cell")}>Date</TableHead>
-                  <TableHead className={cn(headClass, "text-right")}>Total</TableHead>
-                  <TableHead className={headClass}>Inventory</TableHead>
-                  <TableHead className={cn(headClass, "hidden sm:table-cell")}>Payment</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((order) => (
-                  <TableRow key={order.ItemId} className="h-11 cursor-pointer" onClick={() => setViewing(order.ItemId)}>
-                    <TableCell className="font-mono text-[13px]">{order.number}</TableCell>
-                    <TableCell>{data.customerOf(order.customerId)?.name}</TableCell>
-                    <TableCell className="hidden text-sm md:table-cell">{formatDate(order.orderDate)}</TableCell>
-                    <TableCell className="text-right num">{formatMoney(Number(order.total ?? 0), order.currencyCode)}</TableCell>
-                    <TableCell>
-                      <InventoryBadge status={order.inventoryStatus} />
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <PaymentBadge status={order.paymentStatus} />
-                    </TableCell>
+      {view === "queue" && data && list.data ? (
+        <FulfillmentQueue orders={list.data.items} lookups={data} onOpen={setViewing} onChanged={() => void list.reload()} />
+      ) : (
+        <SectionCard className="p-0 md:p-0">
+          {(list.loading && !list.data) || !data ? (
+            <div className="p-4">
+              <LoadingRows />
+            </div>
+          ) : rows.length === 0 ? (
+            <EmptyState icon={ShoppingCart} message="Nothing here yet." />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-muted">
+                    <TableHead className={headClass}>Number</TableHead>
+                    <TableHead className={headClass}>Customer</TableHead>
+                    <TableHead className={cn(headClass, "hidden md:table-cell")}>Date</TableHead>
+                    <TableHead className={cn(headClass, "text-right")}>Total</TableHead>
+                    <TableHead className={headClass}>Inventory</TableHead>
+                    <TableHead className={cn(headClass, "hidden sm:table-cell")}>Payment</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </SectionCard>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((order) => (
+                    <TableRow key={order.ItemId} className="h-11 cursor-pointer" onClick={() => setViewing(order.ItemId)}>
+                      <TableCell className="font-mono text-[13px]">{order.number}</TableCell>
+                      <TableCell>{data.customerOf(order.customerId)?.name}</TableCell>
+                      <TableCell className="hidden text-sm md:table-cell">{formatDate(order.orderDate)}</TableCell>
+                      <TableCell className="text-right num">{formatMoney(Number(order.total ?? 0), order.currencyCode)}</TableCell>
+                      <TableCell>
+                        <InventoryBadge status={order.inventoryStatus} />
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <PaymentBadge status={order.paymentStatus} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </SectionCard>
+      )}
       {editing && data ? (
         <SalesOrderEditor
           lookups={data}

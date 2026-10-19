@@ -1,3 +1,5 @@
+import { customers } from "@/features/partners/api"
+import { partyBalances } from "@/features/payments/api"
 import { computeTax } from "@/features/pricing/pricing"
 import { products, type Product } from "@/features/products/api"
 import { withNextNumber } from "@/features/settings/numbering"
@@ -51,6 +53,56 @@ export function dueDateFor(orderDate: string, term?: PaymentTerm) {
   return date.toISOString()
 }
 
+// Credit limit gate (spec 0011 AC-9, PRD SO-9, SO-10): an order that pushes
+// the customer's outstanding balance over their limit waits for someone with
+// the Confirm right (spec 0027: admin and manager). App side only (L4).
+
+/** Roles holding the Confirm right (spec 0027). */
+export const CONFIRMERS = ["admin", "manager"]
+
+type CreditInput = Pick<SalesOrder, "customerId" | "currencyCode" | "total" | "amountPaid" | "invoicedOn"> & { ItemId?: string }
+
+/** The customer's open balance in the order currency plus what this order still adds, against their credit limit. */
+export async function creditCheck(order: CreditInput) {
+  const customer = await customers.get(order.customerId)
+  const limit = Number(customer?.creditLimit ?? 0)
+  if (!customer || !(limit > 0)) return { over: false, limit: null, exposure: 0 }
+  const balance = (await partyBalances.list({ filter: { party: "customer", partyId: order.customerId, currencyCode: order.currencyCode }, pageSize: 1 })).items[0]
+  // An invoiced order is already inside the open balance; an uninvoiced one adds what is still unpaid.
+  const adds = order.invoicedOn ? 0 : Math.max(0, Number(order.total ?? 0) - Number(order.amountPaid ?? 0))
+  const exposure = round2(Number(balance?.openBalance ?? 0) + adds)
+  return { over: exposure > limit + 0.005, limit, exposure }
+}
+
+/** The hold fields for a saved order: held when over the limit, unless already confirmed at this total or more. */
+async function holdFields(order: CreditInput & Pick<SalesOrder, "isQuote" | "confirmedBy">, previousTotal?: number | null) {
+  if (order.isQuote) return { needsConfirmation: false }
+  const { over } = await creditCheck(order)
+  if (!over) return { needsConfirmation: false }
+  const grew = previousTotal != null && Number(order.total ?? 0) > Number(previousTotal) + 0.005
+  // Blocks ignores null in an update, so an empty string clears the confirmation.
+  return { needsConfirmation: true, confirmedBy: grew ? "" : (order.confirmedBy ?? null) }
+}
+
+function assertReleased(order: SalesOrder) {
+  if (order.needsConfirmation && !order.confirmedBy) throw new Error("This order is over the customer's credit limit and waits for confirmation.")
+}
+
+// Picking session (spec 0011 AC-11, PRD SO-5): start picking locks the order
+// to one person for a while; others cannot pick until it stops or goes stale.
+
+export const PICKING_LOCK_MINUTES = 30
+
+export function pickingLockHolder(order: Pick<SalesOrder, "pickingLockedBy" | "pickingLockedAt">, now = Date.now()) {
+  if (!order.pickingLockedBy || !order.pickingLockedAt) return null
+  return now - new Date(order.pickingLockedAt).getTime() < PICKING_LOCK_MINUTES * 60_000 ? order.pickingLockedBy : null
+}
+
+function assertNotLocked(order: SalesOrder, by: string) {
+  const holder = pickingLockHolder(order)
+  if (holder && holder !== by) throw new Error(`${holder} is picking this order right now.`)
+}
+
 function checkLines(lines: SalesLine[], previous: SalesLine[] | undefined, context: SalesContext) {
   if (!lines.length) throw new Error("Add at least one line.")
   for (const line of lines) {
@@ -89,6 +141,7 @@ export async function createSalesOrder(draft: SalesDraft, context: SalesContext,
     history: [{ at: new Date().toISOString(), by, action: draft.isQuote ? "quote created" : "order created", details: null }],
   }
   delete base.tax
+  Object.assign(base, await holdFields({ ...draft, ...totals, amountPaid: 0, confirmedBy: null }))
   const derived = deriveSales({ ...(base as unknown as SalesOrder) }, context)
   const { number, result: itemId } = await withNextNumber(draft.isQuote ? "sales_quote" : "sales_order", (value) =>
     salesOrders.create({ ...base, ...derived, number: value } as Omit<SalesOrder, "ItemId">)
@@ -98,7 +151,7 @@ export async function createSalesOrder(draft: SalesDraft, context: SalesContext,
 
 /** Saves header and line changes. Lines with progress keep their product and cannot drop below it. */
 export async function updateSalesOrder(orderId: string, draft: SalesDraft, context: SalesContext, by: string) {
-  return mutateOrder(salesOrders, orderId, (order) => {
+  return mutateOrder(salesOrders, orderId, async (order) => {
     if (order.isCancelled) throw new Error("A cancelled order cannot be edited.")
     if (order.inventoryStatus === "fulfilled") throw new Error("A fulfilled order cannot be edited.")
     const lines = draft.lines.map((line) => {
@@ -109,8 +162,10 @@ export async function updateSalesOrder(orderId: string, draft: SalesDraft, conte
     })
     checkLines(lines, order.lines, context)
     const { tax: _tax, ...totals } = salesTotals({ ...draft, lines }, context)
-    const next = { ...order, ...draft, lines, ...totals }
-    return { patch: { ...draft, lines, ...totals, ...deriveSales(next, context) }, event: { by, action: "edited", details: null } }
+    const merged = { ...order, ...draft, lines, ...totals }
+    const hold = await holdFields(merged, order.total)
+    const next = { ...merged, ...hold }
+    return { patch: { ...draft, lines, ...totals, ...hold, ...deriveSales(next, context) }, event: { by, action: "edited", details: null } }
   })
 }
 
@@ -127,14 +182,62 @@ export async function convertSalesOrder(order: SalesOrder, context: SalesContext
     })
   }
   const { number } = await withNextNumber("sales_order", async (value) => {
-    await mutateOrder(salesOrders, order.ItemId, (current) => {
+    await mutateOrder(salesOrders, order.ItemId, async (current) => {
       if (!current.isQuote) throw new Error("This quote was already converted.")
-      const next = { ...current, isQuote: false, number: value }
-      return { patch: { isQuote: false, number: value, orderDate: new Date().toISOString(), ...deriveSales(next, context) }, event: { by, action: "converted to order", details: `Quote ${current.number}` } }
+      const hold = await holdFields({ ...current, isQuote: false })
+      const next = { ...current, ...hold, isQuote: false, number: value }
+      return { patch: { isQuote: false, number: value, orderDate: new Date().toISOString(), ...hold, ...deriveSales(next, context) }, event: { by, action: "converted to order", details: `Quote ${current.number}` } }
     })
     return value
   })
   return { ...order, isQuote: false, number }
+}
+
+/** Releases an order held over the credit limit (spec 0011 AC-9). Callers check the Confirm right. */
+export async function confirmSalesOrder(order: SalesOrder, context: SalesContext, by: string) {
+  return mutateOrder(salesOrders, order.ItemId, (current) => {
+    if (!current.needsConfirmation || current.confirmedBy) return { patch: {} }
+    const next = { ...current, confirmedBy: by }
+    return { patch: { confirmedBy: by, ...deriveSales(next, context) }, event: { by, action: "confirmed", details: "Over the credit limit" } }
+  })
+}
+
+export type PickingLineReport = { lineId: string; status: "ready" | "short" | "out_of_stock" | "expired_only"; ready: number; missing: number }
+
+/**
+ * Starts a picking session: locks the order to this person and reports, per
+ * line, what can be picked now and why the rest cannot (spec 0011 AC-11).
+ * Stock for open order lines is already held as reserved (spec 0007), so the
+ * report is what this person can take from the shelf.
+ */
+export async function startPicking(order: SalesOrder, context: SalesContext, by: string) {
+  const locked = await mutateOrder(salesOrders, order.ItemId, (current) => {
+    if (current.isCancelled || current.isQuote) throw new Error("Only open orders can be picked.")
+    assertReleased(current)
+    assertNotLocked(current, by)
+    const now = new Date().toISOString()
+    return { patch: { pickingLockedBy: by, pickingLockedAt: now }, event: current.pickingLockedBy === by ? null : { by, action: "picking started", details: null } }
+  })
+  const { picks, short } = await suggestPicks(locked, context)
+  const lines: PickingLineReport[] = locked.lines
+    .filter((line) => salesLineRemaining(line).toPick > 0 && context.productOf(line.productId)?.itemType !== "service")
+    .map((line) => {
+      const ready = picks.filter((pick) => pick.lineId === line.lineId).reduce((sum, pick) => sum + pick.qty, 0)
+      const gap = short.find((item) => item.lineId === line.lineId)
+      const status = !gap ? "ready" : ready > 0 ? "short" : gap.reason
+      return { lineId: line.lineId, status, ready, missing: gap?.missing ?? 0 }
+    })
+  return { order: locked, picks, lines }
+}
+
+/** Ends the session so others can pick. Anyone may clear a stale lock. */
+export async function stopPicking(order: SalesOrder, by: string) {
+  return mutateOrder(salesOrders, order.ItemId, (current) => {
+    if (!current.pickingLockedBy) return { patch: {} }
+    assertNotLocked(current, by)
+    // Blocks ignores null in an update; an empty holder ends the lock.
+    return { patch: { pickingLockedBy: "" }, event: { by, action: "picking stopped", details: null } }
+  })
 }
 
 // Stock steps.
@@ -176,6 +279,8 @@ export async function pickLines(order: SalesOrder, requests: PickRequest[], cont
     ...base,
     plan: (current, stepId) => {
       if (current.isCancelled || current.isQuote) throw new Error("Only open orders can be picked.")
+      assertReleased(current)
+      assertNotLocked(current, by)
       const totals = new Map<string, number>()
       const lines: StockStepLine[] = []
       const postingLines: PostingLine[] = []
@@ -220,9 +325,11 @@ export async function pickLines(order: SalesOrder, requests: PickRequest[], cont
  * lots never), else the bins holding the most. Short lines pick what there is
  * and stay on back order (spec 0011 AC-3, spec 0009 AC-4).
  */
-export async function suggestPicks(order: SalesOrder, context: SalesContext): Promise<{ picks: PickRequest[]; short: { lineId: string; missing: number }[] }> {
+export type ShortLine = { lineId: string; missing: number; reason: "out_of_stock" | "expired_only" }
+
+export async function suggestPicks(order: SalesOrder, context: SalesContext): Promise<{ picks: PickRequest[]; short: ShortLine[] }> {
   const picks: PickRequest[] = []
-  const short: { lineId: string; missing: number }[] = []
+  const short: ShortLine[] = []
   const { items: balances } = await posting.balances({ locationId: order.locationId, onHand: { $gt: 0 } }, { pageSize: 5000 })
   const lotIds = [...new Set(balances.map((balance) => balance.lotId).filter(Boolean) as string[])]
   const lotRows = lotIds.length ? (await lots.list({ filter: { ItemId: { $in: lotIds } }, pageSize: lotIds.length })).items : []
@@ -237,8 +344,8 @@ export async function suggestPicks(order: SalesOrder, context: SalesContext): Pr
       picks.push({ lineId: line.lineId, qty: left })
       continue
     }
-    const candidates = balances
-      .filter((balance) => balance.productId === product.ItemId)
+    const held = balances.filter((balance) => balance.productId === product.ItemId)
+    const candidates = held
       .filter((balance) => !balance.lotId || !expiry(balance.lotId) || expiry(balance.lotId)! >= now)
       .sort((a, b) => (product.trackLots ? (expiry(a.lotId) ?? "9999").localeCompare(expiry(b.lotId) ?? "9999") : b.onHand - a.onHand))
     for (const balance of candidates) {
@@ -250,7 +357,7 @@ export async function suggestPicks(order: SalesOrder, context: SalesContext): Pr
       picks.push({ lineId: line.lineId, qty: take, sublocationId: balance.sublocationId, lotId: balance.lotId, serial: balance.serial })
       left -= take
     }
-    if (left > 1e-9) short.push({ lineId: line.lineId, missing: left })
+    if (left > 1e-9) short.push({ lineId: line.lineId, missing: left, reason: held.length && !candidates.length ? "expired_only" : "out_of_stock" })
   }
   return { picks, short }
 }
@@ -320,6 +427,7 @@ export async function packLines(order: SalesOrder, requests: { lineId: string; q
   const wanted = requests.filter((request) => request.qty > 0)
   if (!wanted.length) throw new Error("Enter a quantity to pack.")
   return mutateOrder(salesOrders, order.ItemId, (current) => {
+    assertReleased(current)
     const packages = current.packages ?? []
     const number = `${current.number}-${packages.length + 1}`
     const lines = current.lines.map((line) => {
@@ -342,6 +450,7 @@ export async function shipPackages(
 ) {
   if (!input.packageNumbers.length) throw new Error("Choose at least one package to ship.")
   return mutateOrder(salesOrders, order.ItemId, (current) => {
+    assertReleased(current)
     const shipmentId = crypto.randomUUID()
     const chosen = (current.packages ?? []).filter((pack) => input.packageNumbers.includes(pack.number))
     if (chosen.length !== input.packageNumbers.length || chosen.some((pack) => pack.shipmentId)) throw new Error("A chosen package is already shipped. Reload the order.")
@@ -370,6 +479,7 @@ export async function setServiceDone(order: SalesOrder, lineIds: string[], done:
 export async function invoiceOrder(order: SalesOrder, invoicedOn: string, context: SalesContext, by: string) {
   return mutateOrder(salesOrders, order.ItemId, (current) => {
     if (current.isQuote || current.isCancelled) throw new Error("Only open orders can be invoiced.")
+    assertReleased(current)
     const next = { ...current, invoicedOn }
     return { patch: { invoicedOn, ...deriveSales(next, context) }, event: { by, action: "invoiced", details: null } }
   })
@@ -422,10 +532,57 @@ export async function cancelSalesOrder(order: SalesOrder, context: SalesContext,
     if (latest.isCancelled) return { patch: {} }
     if ((latest.stockSteps ?? []).some((step) => step.status === "posting")) throw new Error("A stock step is still posting. Finish it first.")
     const next = { ...latest, isCancelled: true }
-    return { patch: { isCancelled: true, cancelledAt: new Date().toISOString(), ...deriveSales(next, context) }, event: { by, action: "cancelled", details: null } }
+    return { patch: { isCancelled: true, cancelledAt: new Date().toISOString(), pickingLockedBy: "", ...deriveSales(next, context) }, event: { by, action: "cancelled", details: null } }
   })
   await posting.reverseSource("sales_pick", current.ItemId, "sales_reversal")
   await posting.reverseSource("sales_restock", current.ItemId, "sales_reversal")
   await voidAllocationsFor("sales", current.ItemId, by)
   return current
+}
+
+// Fulfillment queue (spec 0011 AC-10, PRD SO-11).
+
+/** Saves a new queue priority; higher goes first. */
+export async function setPriority(order: SalesOrder, priority: number, by: string) {
+  return mutateOrder(salesOrders, order.ItemId, (current) =>
+    Number(current.priority ?? 0) === priority ? { patch: {} } : { patch: { priority }, event: { by, action: "priority changed", details: String(priority) } }
+  )
+}
+
+export type QueueRow = { order: SalesOrder; canShipNow: boolean; held: boolean; short: { productId: string; missing: number }[] }
+
+/**
+ * Orders the open orders by priority (then oldest first) and hands each one
+ * the stock on hand at its location in that order, so the highest priority
+ * gets stock first. An order can ship now when every line left to pick is
+ * covered. Expired lots do not count.
+ */
+export function buildQueue(
+  orders: SalesOrder[],
+  balances: { productId: string; locationId: string; lotId?: string | null; onHand: number }[],
+  context: Pick<SalesContext, "productOf">,
+  expiredLot: (lotId: string) => boolean
+): QueueRow[] {
+  const sorted = [...orders].sort((a, b) => Number(b.priority ?? 0) - Number(a.priority ?? 0) || String(a.orderDate ?? "").localeCompare(String(b.orderDate ?? "")))
+  const free = new Map<string, number>()
+  for (const balance of balances) {
+    if (balance.lotId && expiredLot(balance.lotId)) continue
+    const key = `${balance.productId}|${balance.locationId}`
+    free.set(key, (free.get(key) ?? 0) + Math.max(0, Number(balance.onHand)))
+  }
+  return sorted.map((order) => {
+    const held = Boolean(order.needsConfirmation && !order.confirmedBy)
+    const short: QueueRow["short"] = []
+    for (const line of order.lines) {
+      if (context.productOf(line.productId)?.itemType !== "stocked") continue
+      const need = salesLineRemaining(line).toPick
+      if (need <= 0) continue
+      const key = `${line.productId}|${order.locationId}`
+      const have = free.get(key) ?? 0
+      const take = held ? 0 : Math.min(have, need)
+      free.set(key, have - take)
+      if (need - take > 1e-9) short.push({ productId: line.productId, missing: need - take })
+    }
+    return { order, held, canShipNow: !held && short.length === 0, short }
+  })
 }

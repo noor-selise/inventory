@@ -53,6 +53,11 @@
       "name": "lastAlertedAt",
       "type": "DateTime",
       "isArray": false
+    },
+    {
+      "name": "safetyStock",
+      "type": "Float",
+      "isArray": false
     }
   ]
 }
