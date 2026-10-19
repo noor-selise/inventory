@@ -1,0 +1,9 @@
+node_modules
+dist
+.cert
+.git
+.cursor
+*.md
+!README.md
+.env
+.env.*
