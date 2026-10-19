@@ -150,6 +150,37 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 38%, transparent) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--muted-foreground) 38%, transparent);
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--muted-foreground) 58%, transparent);
+  }
+  /* Sidebar and sheets: hide the thumb until hover so the rail stays clean. */
+  [data-scroll="quiet"] {
+    scrollbar-color: transparent transparent;
+  }
+  [data-scroll="quiet"]:hover,
+  [data-scroll="quiet"]:focus-within {
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 38%, transparent) transparent;
+  }
+  [data-scroll="quiet"]::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  [data-scroll="quiet"]:hover::-webkit-scrollbar-thumb,
+  [data-scroll="quiet"]:focus-within::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--muted-foreground) 38%, transparent);
   }
   html {
     @apply font-sans;
@@ -169,6 +200,16 @@
     word-spacing: 0.45em;
     text-transform: uppercase;
     color: var(--muted-foreground);
+  }
+  /* Native number spinners clash with Green Deck; quantities are typed, not stepped. */
+  input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
   }
   @media (prefers-reduced-motion: reduce) {
     *,

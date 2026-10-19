@@ -158,7 +158,7 @@ export function OrderLinesEditor({ mode, lines, onChange, lookups, currency, tax
                     {error ? <p className="mt-1 text-xs text-destructive-text">{error}</p> : note ? <p className="mt-1 text-xs text-muted-foreground">{note}</p> : null}
                   </td>
                   <td className="px-2 py-2">
-                    <Input aria-label={`Line ${index + 1} quantity`} type="number" step="any" className="text-right num" value={line.qty} onChange={(event) => update(line.key, { qty: event.target.value })} disabled={disabled} />
+                    <Input aria-label={`Line ${index + 1} quantity`} type="number" step="any" allowNegative className="text-right num" value={line.qty} onChange={(event) => update(line.key, { qty: event.target.value })} disabled={disabled} />
                     {line.done > 0 ? <p className="mt-1 text-right text-xs text-muted-foreground">{line.done} done</p> : null}
                   </td>
                   <td className="px-2 py-2">

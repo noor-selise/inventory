@@ -94,7 +94,7 @@ export function FilterChips<T extends string>({ options, value, onChange, label 
 export function BulkActionBar({ count, noun, onClear, children }: { count: number; noun: string; onClear: () => void; children: React.ReactNode }) {
   if (!count) return null
   return (
-    <div role="region" aria-label="Selected rows" className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4 lg:left-60 motion-safe:animate-in motion-safe:slide-in-from-bottom-4">
+    <div role="region" aria-label="Selected rows" className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4 md:left-16 lg:left-60 motion-safe:animate-in motion-safe:slide-in-from-bottom-4">
       <div className="mx-auto flex h-16 max-w-4xl items-center gap-3 rounded-lg border bg-popover px-4 shadow-xl">
         <Button size="icon-sm" variant="ghost" aria-label="Clear selection" onClick={onClear}>
           <X aria-hidden />

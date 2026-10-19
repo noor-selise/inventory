@@ -20,8 +20,12 @@ export default defineConfig(({ mode }) => {
         }
       : undefined
 
+  const { version } = JSON.parse(fs.readFileSync("package.json", "utf8")) as { version: string }
+
   return {
     plugins: [react(), tailwindcss()],
+    // Shown in the app footer.
+    define: { __APP_VERSION__: JSON.stringify(version) },
     resolve: {
       alias: {
         "@": resolve(import.meta.dirname, "./src"),
