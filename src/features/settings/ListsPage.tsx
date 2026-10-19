@@ -129,7 +129,7 @@ export function ListsPage() {
       <PageHeader title="Lists and taxes" description="The choices that appear on orders, payments and stock documents." />
       <Tabs defaultValue="terms">
         <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-          <TabsList>
+          <TabsList aria-label="Lookup lists">
             <TabsTrigger value="terms">Payment terms</TabsTrigger>
             <TabsTrigger value="taxes">Taxing schemes</TabsTrigger>
             <TabsTrigger value="tax-codes">Tax codes</TabsTrigger>

@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { formatDateTime } from "@/components/app/audit"
 import { SelectField, TextField } from "@/components/app/form"
+import { DateField } from "@/components/app/date-picker"
 import { ErrorBanner, LoadingRows } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -318,7 +319,7 @@ export function SalesOrderDetail({
         </div>
 
         <Tabs defaultValue="lines">
-          <TabsList>
+          <TabsList aria-label="Order sections">
             <TabsTrigger value="lines">Lines</TabsTrigger>
             <TabsTrigger value="fulfillment">Fulfillment</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
@@ -388,7 +389,7 @@ export function SalesOrderDetail({
                 {order.remarks ? <p className="mt-2 text-foreground">{order.remarks}</p> : null}
                 {open && canEdit && !order.invoicedOn ? (
                   <div className="mt-3 flex items-end gap-2">
-                    <TextField id="invoice-date" label="Invoice date" type="date" value={invoiceDate} onChange={setInvoiceDate} />
+                    <DateField id="invoice-date" label="Invoice date" value={invoiceDate} onChange={setInvoiceDate} />
                     <Button variant="secondary" disabled={busy} onClick={() => void run(() => invoiceOrder(order, new Date(`${invoiceDate}T12:00:00Z`).toISOString(), lookups, by), "Invoiced")}>
                       Mark invoiced
                     </Button>
@@ -717,7 +718,7 @@ function ShipDialog({
           ))}
           <SelectField id="ship-carrier" label="Carrier" options={lookups.carriers.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: row.name }))} value={carrierId} onChange={setCarrier} allowNone />
           <TextField id="ship-tracking" label="Tracking number" value={tracking} onChange={setTracking} mono />
-          <TextField id="ship-date" label="Ship date" type="date" value={date} onChange={setDate} />
+          <DateField id="ship-date" label="Ship date" value={date} onChange={setDate} />
         </div>
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={onClose} disabled={busy}>

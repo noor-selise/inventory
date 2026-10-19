@@ -21,7 +21,7 @@ import { useStockLookups, type StockLookups } from "./lookups"
 // Transfers between locations: Open → In transit → Completed (spec 0008 AC-2).
 // Approval (AC-3, optional) is not built.
 
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 export function TransfersPage() {
   const canEdit = useCurrentUser().hasRole(...STOCK_EDITORS)

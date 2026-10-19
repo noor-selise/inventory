@@ -8,6 +8,7 @@ import { ErrorBanner, LoadingRows } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/app/date-picker"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PaymentDialog } from "@/features/payments/PaymentDialog"
@@ -193,7 +194,7 @@ export function PurchaseOrderDetail({
           ) : null}
         </div>
         <Tabs defaultValue="lines">
-          <TabsList>
+          <TabsList aria-label="Order sections">
             <TabsTrigger value="lines">Lines</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
@@ -393,7 +394,7 @@ function ReceiveDialog({ order, lookups, returns, busy, onClose, onReceive }: { 
                       {stocked && product?.trackLots ? (
                         <>
                           <Input aria-label="Lot number" placeholder="Lot" className="h-8 w-32 font-mono" value={row.lotNumber} onChange={(event) => set(row.key, { lotNumber: event.target.value })} />
-                          {!returns ? <Input aria-label="Lot expiry" type="date" className="h-8 w-40" value={row.lotExpiresOn} onChange={(event) => set(row.key, { lotExpiresOn: event.target.value })} /> : null}
+                          {!returns ? <DatePicker id={`expiry-${row.key}`} aria-label="Lot expiry" className="w-40" value={row.lotExpiresOn} onChange={(lotExpiresOn) => set(row.key, { lotExpiresOn })} clearable placeholder="Expiry" /> : null}
                         </>
                       ) : null}
                       {stocked && product?.trackSerials ? <Input aria-label="Serial" placeholder="Serial" className="h-8 w-40 font-mono" value={row.serial} onChange={(event) => set(row.key, { serial: event.target.value })} /> : null}

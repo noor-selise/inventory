@@ -26,7 +26,7 @@ import { useStockLookups, type StockLookups } from "./lookups"
 
 /** Reviewers see expected quantities while counting; counters count blind. */
 const REVIEWERS = ["admin", "manager"]
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 export function CountsPage() {
   const { hasRole, user } = useCurrentUser()
@@ -302,7 +302,7 @@ function CountDetail({
         {error ? <ErrorBanner message={error} /> : null}
         <Tabs defaultValue={count.status === "in_review" || finished ? "review" : count.sheets[0]?.sheetId}>
           <div className="-mx-1 overflow-x-auto px-1">
-            <TabsList>
+            <TabsList aria-label="Count sheets">
               {count.sheets.map((sheet) => (
                 <TabsTrigger key={sheet.sheetId} value={sheet.sheetId}>
                   {sheet.name}

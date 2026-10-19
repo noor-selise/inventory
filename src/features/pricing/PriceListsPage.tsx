@@ -25,7 +25,7 @@ import { computeTax, resolvePrice } from "./pricing.ts"
 // that runs the shared price and tax module (AC-5, AC-6).
 
 const PRICE_EDITORS = ["admin", "manager"]
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 export function PriceListsPage() {
   const canEdit = useCurrentUser().hasRole(...PRICE_EDITORS)

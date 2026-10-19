@@ -30,7 +30,7 @@ import { normalizeBarcode } from "./barcode"
 import { ProductDialog } from "./ProductDialog"
 
 const PAGE_SIZE = 25
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")

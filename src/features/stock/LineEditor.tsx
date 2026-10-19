@@ -2,6 +2,7 @@ import { Plus, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/app/date-picker"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -197,7 +198,7 @@ export function LineEditor({
                   {product.trackExpiry && line.direction === "in" && mode === "adjustment" && !productLots.some((lot) => lot.lotNumber === line.lotNumber.trim()) ? (
                     <div className="flex flex-col gap-1.5 md:col-span-3">
                       <Label htmlFor={id("expiry")}>Expires on (new lot)</Label>
-                      <Input id={id("expiry")} type="date" className={fieldClass} value={line.lotExpiresOn} onChange={(event) => update(line.key, { lotExpiresOn: event.target.value })} disabled={disabled} />
+                      <DatePicker id={id("expiry")} className={fieldClass} value={line.lotExpiresOn} onChange={(lotExpiresOn) => update(line.key, { lotExpiresOn })} disabled={disabled} clearable placeholder="Expiry" />
                       <p className="text-xs text-muted-foreground">
                         {product.shelfLifeDays ? `Empty uses today + ${product.shelfLifeDays} days shelf life.` : "Optional."}
                       </p>

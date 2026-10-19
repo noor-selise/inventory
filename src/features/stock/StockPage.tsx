@@ -2,7 +2,8 @@ import * as React from "react"
 import { Boxes, History, Search } from "lucide-react"
 
 import { formatDateTime, useUserName } from "@/components/app/audit"
-import { SelectField, TextField } from "@/components/app/form"
+import { SelectField } from "@/components/app/form"
+import { DateField } from "@/components/app/date-picker"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -17,7 +18,7 @@ import type { Movement } from "./posting.ts"
 
 // Current stock and its history (spec 0007 AC-1, AC-2, AC-6, AC-9).
 
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 export function StockPage() {
   const lookups = useStockLookups()
@@ -36,7 +37,7 @@ export function StockPage() {
         <LoadingRows rows={6} />
       ) : (
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
+          <TabsList aria-label="Stock views">
             <TabsTrigger value="on-hand">On hand</TabsTrigger>
             <TabsTrigger value="product">By product</TabsTrigger>
           </TabsList>
@@ -219,7 +220,7 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
           <SectionCard
             title="History"
             description="Every posted change, newest first. Pick a date to see what was on hand at the end of that day, across all locations."
-            actions={<TextField id="stock-as-of" label="As of" type="date" value={asOf} onChange={setAsOf} className="w-44" />}
+            actions={<DateField id="stock-as-of" label="As of" value={asOf} onChange={setAsOf} className="w-44" />}
           >
             {history.error ? <ErrorBanner message={history.error} /> : null}
             {historyRows.length === 0 ? (

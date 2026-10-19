@@ -160,6 +160,16 @@
   .num {
     font-variant-numeric: tabular-nums;
   }
+  /* Overline labels (DESIGN.md §3). Extra word spacing keeps multi word headers readable. */
+  .label-overline {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    word-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

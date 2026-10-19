@@ -103,7 +103,7 @@ export function DashboardWidgets() {
             const { big, small, to } = value(key)
             return (
               <Link key={key} to={to ?? "/"} className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent md:p-6 dark:border-transparent">
-                <span className="block text-xs font-bold tracking-[0.1em] text-muted-foreground uppercase">{DASHBOARD_WIDGETS.find((widget) => widget.value === key)?.label}</span>
+                <span className="block label-overline">{DASHBOARD_WIDGETS.find((widget) => widget.value === key)?.label}</span>
                 <span className="mt-1 block text-2xl font-semibold num">{big}</span>
                 <span className="block text-xs text-muted-foreground">{small}</span>
               </Link>

@@ -3,6 +3,7 @@ import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { SelectField, TextAreaField, TextField } from "@/components/app/form"
+import { DateField } from "@/components/app/date-picker"
 import { ErrorBanner } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -233,7 +234,7 @@ export function SalesOrderEditor({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <SelectField id="so-customer" label="Customer" required options={options.customers} value={customerId} onChange={chooseCustomer} disabled={Boolean(order)} />
             <SelectField id="so-location" label="Ship from" required options={options.locations} value={locationId} onChange={setLocationId} />
-            <TextField id="so-date" label="Order date" type="date" required value={orderDate} onChange={setOrderDate} />
+            <DateField id="so-date" label="Order date" required value={orderDate} onChange={setOrderDate} />
             <SelectField id="so-scheme" label="Price list" options={options.schemes} value={pricingSchemeId} onChange={setScheme} allowNone />
             <SelectField id="so-tax" label="Taxing scheme" options={options.taxes} value={taxingSchemeId} onChange={setTaxScheme} allowNone />
             <SelectField id="so-term" label="Payment terms" options={options.terms} value={paymentTermId} onChange={setTerm} allowNone />
@@ -259,7 +260,7 @@ export function SalesOrderEditor({
             />
             <SelectField id="so-rep" label="Sales rep" options={lookups.users} value={salesRepUserId} onChange={setRep} allowNone disabled={Boolean(ownOnly)} />
             <TextField id="so-po" label="Customer PO number" value={customerPoNumber} onChange={setPo} />
-            <TextField id="so-ship-date" label="Requested ship date" type="date" value={shipDate} onChange={setShipDate} />
+            <DateField id="so-ship-date" label="Requested ship date" value={shipDate} onChange={setShipDate} />
             <TextField id="so-freight" label="Freight" type="number" step="any" value={freight} onChange={setFreight} />
           </div>
           {customer ? (

@@ -1,7 +1,8 @@
 import * as React from "react"
-import { FileText, Plus, Truck } from "lucide-react"
+import { CircleAlert, FileText, PackageCheck, Plus, Truck, Wallet } from "lucide-react"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
+import { KpiCard, KpiRow, RecordCard } from "@/components/app/data"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -10,7 +11,8 @@ import { PURCHASE_EDITORS, useOrderLookups } from "@/features/sales/lookups"
 import { InventoryBadge, PaymentBadge, headClass } from "@/features/sales/OrderBits"
 import { repairIfDue } from "@/features/stock/api"
 import { useResource } from "@/hooks/use-resource"
-import { formatDate, formatMoney } from "@/lib/format"
+import { formatDate, formatMoney, formatNumber } from "@/lib/format"
+import { toHome } from "@/features/sales/order-math"
 import { cn } from "@/lib/utils"
 import { purchaseOrders, type PurchaseOrder } from "./api"
 import { PurchaseOrderDetail } from "./PurchaseOrderDetail"
@@ -60,8 +62,9 @@ export function PurchaseOrdersPage() {
       />
       {list.error ? <ErrorBanner message={list.error} onRetry={list.reload} /> : null}
       {lookups.error ? <ErrorBanner message={lookups.error} onRetry={lookups.reload} /> : null}
+      {list.data ? <PurchaseKpis orders={list.data.items} home={data?.homeCurrency ?? "USD"} view={view} onView={setView} /> : null}
       <Tabs value={view} onValueChange={(value) => setView(value as keyof typeof VIEWS)} className="mb-4">
-        <TabsList>
+        <TabsList className="mb-4" aria-label="Order views">
           {Object.entries(VIEWS).map(([key, entry]) => (
             <TabsTrigger key={key} value={key}>
               {entry.label}
@@ -75,9 +78,41 @@ export function PurchaseOrdersPage() {
             <LoadingRows />
           </div>
         ) : rows.length === 0 ? (
-          <EmptyState icon={Truck} message="Nothing here yet." />
+          <EmptyState
+            icon={Truck}
+            message={(list.data?.items ?? []).length ? "Nothing in this view." : "No purchase orders yet."}
+            action={
+              canEdit && !(list.data?.items ?? []).length ? (
+                <Button onClick={() => setEditing({ isQuote: false })}>
+                  <Plus aria-hidden /> New order
+                </Button>
+              ) : null
+            }
+          />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <ul className="md:hidden" aria-label="Purchase orders">
+              {rows.map((order) => (
+                <RecordCard
+                  key={order.ItemId}
+                  onClick={() => setViewing(order.ItemId)}
+                  title={
+                    <>
+                      <span className="font-mono text-[13px]">{order.number}</span> · {data.vendorOf(order.vendorId)?.name}
+                    </>
+                  }
+                  value={formatMoney(Number(order.total ?? 0), order.currencyCode)}
+                  badges={
+                    <>
+                      <InventoryBadge status={order.inventoryStatus} />
+                      <PaymentBadge status={order.paymentStatus} />
+                    </>
+                  }
+                  meta={formatDate(order.orderDate)}
+                />
+              ))}
+            </ul>
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted hover:bg-muted">
@@ -91,7 +126,13 @@ export function PurchaseOrdersPage() {
               </TableHeader>
               <TableBody>
                 {rows.map((order) => (
-                  <TableRow key={order.ItemId} className="h-11 cursor-pointer" onClick={() => setViewing(order.ItemId)}>
+                  <TableRow
+                    key={order.ItemId}
+                    tabIndex={0}
+                    className="h-11 cursor-pointer focus-visible:bg-accent focus-visible:outline-none"
+                    onClick={() => setViewing(order.ItemId)}
+                    onKeyDown={(event) => event.key === "Enter" && setViewing(order.ItemId)}
+                  >
                     <TableCell className="font-mono text-[13px]">{order.number}</TableCell>
                     <TableCell>{data.vendorOf(order.vendorId)?.name}</TableCell>
                     <TableCell className="hidden text-sm md:table-cell">{formatDate(order.orderDate)}</TableCell>
@@ -107,6 +148,7 @@ export function PurchaseOrdersPage() {
               </TableBody>
             </Table>
           </div>
+          </>
         )}
       </SectionCard>
       {editing && data ? (
@@ -132,5 +174,23 @@ export function PurchaseOrdersPage() {
         />
       ) : null}
     </>
+  )
+}
+
+/** Open orders, approvals, receiving and what you owe vendors (DESIGN.md §6.4). Cards switch the view. */
+function PurchaseKpis({ orders, home, view, onView }: { orders: PurchaseOrder[]; home: string; view: keyof typeof VIEWS; onView: (view: keyof typeof VIEWS) => void }) {
+  const live = orders.filter((order) => !order.isQuote && !order.isCancelled)
+  const open = live.filter((order) => order.inventoryStatus !== "fulfilled")
+  const value = open.reduce((sum, order) => sum + toHome(Number(order.total ?? 0), order.exchangeRate), 0)
+  const unapproved = live.filter((order) => order.inventoryStatus === "unapproved").length
+  const receiving = live.filter((order) => order.inventoryStatus === "started").length
+  const owed = live.reduce((sum, order) => sum + Math.max(0, toHome(Number(order.total ?? 0) - Number(order.amountPaid ?? 0), order.exchangeRate)), 0)
+  return (
+    <KpiRow>
+      <KpiCard label="Open orders" value={formatNumber(open.length)} hint={`${formatMoney(value, home)} on order`} icon={Truck} active={view === "open"} onClick={() => onView("open")} />
+      <KpiCard label="Waiting for approval" value={formatNumber(unapproved)} hint="Need someone's limit to cover them" icon={CircleAlert} tone={unapproved ? "warning" : "default"} />
+      <KpiCard label="Being received" value={formatNumber(receiving)} hint="Part received" icon={PackageCheck} tone={receiving ? "info" : "default"} />
+      <KpiCard label="You owe vendors" value={formatMoney(owed, home)} hint="Not yet paid, home currency" icon={Wallet} tone={owed > 0.005 ? "warning" : "default"} />
+    </KpiRow>
   )
 }

@@ -7,7 +7,7 @@ import { formatDateTime } from "@/components/app/audit"
 
 // Small pieces the sales, purchasing and payment screens share.
 
-export const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+export const headClass = "h-9 label-overline"
 
 type Variant = "success" | "info" | "neutral" | "warning" | "destructive" | "muted"
 

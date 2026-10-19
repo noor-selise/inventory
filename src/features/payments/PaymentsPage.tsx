@@ -1,9 +1,11 @@
 import * as React from "react"
-import { Plus, RefreshCw, Wallet } from "lucide-react"
+import { ArrowDownLeft, ArrowUpRight, Ban, Plus, RefreshCw, Users, Wallet } from "lucide-react"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
+import { KpiCard, KpiRow, RecordCard } from "@/components/app/data"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,6 +23,23 @@ import { PaymentDialog } from "./PaymentDialog"
 // Payments, balances per currency and aging (spec 0013 AC-1, AC-4, AC-5).
 
 const DAY = 86_400_000
+
+/** Money in and out this month and open balances, in home currency (DESIGN.md §6.4). */
+function PaymentKpis({ rows, balances, home }: { rows: Payment[]; balances: { party: Party; currencyCode: string; openBalance: number }[]; home: string }) {
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+  const thisMonth = rows.filter((row) => !row.isVoided && row.paidOn >= monthStart && row.currencyCode === home)
+  const received = thisMonth.filter((row) => row.party === "customer").reduce((sum, row) => sum + Number(row.amount), 0)
+  const paid = thisMonth.filter((row) => row.party === "vendor").reduce((sum, row) => sum + Number(row.amount), 0)
+  const open = (party: Party) => balances.filter((row) => row.party === party && row.currencyCode === home).reduce((sum, row) => sum + Math.max(0, Number(row.openBalance)), 0)
+  return (
+    <KpiRow>
+      <KpiCard label="Received this month" value={formatMoney(received, home)} icon={ArrowDownLeft} tone="success" hint="From customers" />
+      <KpiCard label="Paid this month" value={formatMoney(paid, home)} icon={ArrowUpRight} tone="info" hint="To vendors" />
+      <KpiCard label="Customers owe you" value={formatMoney(open("customer"), home)} icon={Users} tone={open("customer") > 0.005 ? "warning" : "default"} hint={`Open balances in ${home}`} />
+      <KpiCard label="You owe vendors" value={formatMoney(open("vendor"), home)} icon={Wallet} tone={open("vendor") > 0.005 ? "warning" : "default"} hint={`Open balances in ${home}`} />
+    </KpiRow>
+  )
+}
 
 export function PaymentsPage() {
   const { hasRole, user } = useCurrentUser()
@@ -60,8 +79,9 @@ export function PaymentsPage() {
         }
       />
       {list.error ? <ErrorBanner message={list.error} onRetry={list.reload} /> : null}
+      {list.data && balances.data && data ? <PaymentKpis rows={list.data.items} balances={balances.data.items} home={data.homeCurrency} /> : null}
       <Tabs defaultValue="payments">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4" aria-label="Payment views">
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="customers">Customer balances</TabsTrigger>
           <TabsTrigger value="vendors">Vendor balances</TabsTrigger>
@@ -73,9 +93,46 @@ export function PaymentsPage() {
                 <LoadingRows />
               </div>
             ) : (list.data?.items ?? []).length === 0 ? (
-              <EmptyState icon={Wallet} message="No payments yet." />
+              <EmptyState
+                icon={Wallet}
+                message="No payments yet."
+                action={
+                  canEdit ? (
+                    <Button onClick={() => setCreating(true)}>
+                      <Plus aria-hidden /> Record payment
+                    </Button>
+                  ) : null
+                }
+              />
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <ul className="md:hidden" aria-label="Payments">
+                {(list.data?.items ?? []).map((payment) => (
+                  <RecordCard
+                    key={payment.ItemId}
+                    title={
+                      <span className={cn(payment.isVoided && "text-muted-foreground line-through")}>
+                        <span className="font-mono text-[13px]">{payment.number}</span> · {payment.party === "customer" ? data.customerOf(payment.partyId)?.name : data.vendorOf(payment.partyId)?.name}
+                      </span>
+                    }
+                    value={formatMoney(payment.amount, payment.currencyCode)}
+                    badges={
+                      <>
+                        <Badge variant={payment.party === "customer" ? "success" : "info"}>
+                          {payment.party === "customer" ? <ArrowDownLeft aria-hidden /> : <ArrowUpRight aria-hidden />} {payment.party === "customer" ? "Received" : "Paid out"}
+                        </Badge>
+                        {payment.isVoided ? (
+                          <Badge variant="muted">
+                            <Ban aria-hidden /> Voided
+                          </Badge>
+                        ) : null}
+                      </>
+                    }
+                    meta={`${formatDate(payment.paidOn)} · ${PAYMENT_TYPES.find((type) => type.value === payment.type)?.label ?? ""}`}
+                  />
+                ))}
+              </ul>
+              <div className="hidden overflow-x-auto md:block">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted hover:bg-muted">
@@ -109,6 +166,7 @@ export function PaymentsPage() {
                   </TableBody>
                 </Table>
               </div>
+              </>
             )}
           </SectionCard>
         </TabsContent>

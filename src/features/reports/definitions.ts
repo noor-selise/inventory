@@ -19,7 +19,8 @@ export type ColumnType = "text" | "number" | "money" | "date"
 export type ReportColumn = { key: string; label: string; type: ColumnType; /** Hidden from users without cost access (AC-4). */ cost?: boolean }
 export type ReportFilters = { from?: string; to?: string; locationId?: string; productId?: string; partyId?: string }
 export type ReportRow = Record<string, string | number | null>
-export type FilterKind = "date" | "location" | "product" | "customer" | "vendor"
+/** "date" is a from and to range; "asOf" is one end date, kept in `to`. */
+export type FilterKind = "date" | "asOf" | "location" | "product" | "customer" | "vendor"
 
 export type ReportDefinition = {
   key: string
@@ -444,8 +445,8 @@ export const REPORTS: ReportDefinition[] = [
     key: "stock-as-of",
     title: "Stock as of a date",
     group: "Inventory",
-    description: "On hand per product and location at the end of the 'to' date, rebuilt from the ledger.",
-    filters: ["date", "location", "product"],
+    description: "On hand per product and location at the end of the chosen day, rebuilt from the ledger.",
+    filters: ["asOf", "location", "product"],
     columns: [
       { key: "product", label: "Product", type: "text" },
       { key: "location", label: "Location", type: "text" },

@@ -1,10 +1,13 @@
 import * as React from "react"
-import { BellRing, ListChecks, RefreshCw } from "lucide-react"
+import { BellRing, CircleAlert, Factory, ListChecks, PackageX, RefreshCw, ShoppingCart, TriangleAlert, Truck } from "lucide-react"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
-import { RecordList } from "@/components/app/record-list"
+import { formatDateTime } from "@/components/app/audit"
+import { BulkActionBar, FilterChips, KpiCard, KpiRow, RecordCard, StockMeter } from "@/components/app/data"
+import { SelectField } from "@/components/app/form"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { RecordList } from "@/components/app/record-list"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -16,7 +19,6 @@ import { headClass } from "@/features/sales/OrderBits"
 import { createTransfer } from "@/features/stock/actions"
 import { useStockLookups } from "@/features/stock/lookups"
 import { errorMessage, useResource } from "@/hooks/use-resource"
-import { formatDateTime } from "@/components/app/audit"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { REORDER_METHODS, reorderSettings, reorderSuggestions, runReorderCheck, sendLowStockAlerts, suggestedPoints, type ReorderSetting, type ReorderSuggestion } from "./api"
@@ -24,6 +26,33 @@ import { REORDER_METHODS, reorderSettings, reorderSuggestions, runReorderCheck, 
 // Reorder points, the reorder list and one click drafts (spec 0014). The list
 // is rebuilt once a day by the first person signed in (spec 0027); "Check now"
 // does the same work right away. Both send low stock alerts for new breaches.
+
+type MethodFilter = "all" | "purchase" | "transfer" | "manufacture"
+type Focus = "all" | "out" | "alerted"
+
+const METHOD_ICON = { purchase: ShoppingCart, transfer: Truck, manufacture: Factory } as const
+
+/** Status per DESIGN.md §2.3: out of stock is destructive, below the point is low stock. */
+function StockStatus({ row, alerted }: { row: ReorderSuggestion; alerted?: boolean }) {
+  return (
+    <span className="flex flex-wrap gap-1.5">
+      {row.anticipated <= 0 ? (
+        <Badge variant="destructive">
+          <CircleAlert aria-hidden /> Out of stock
+        </Badge>
+      ) : (
+        <Badge variant="warning">
+          <TriangleAlert aria-hidden /> Low stock
+        </Badge>
+      )}
+      {alerted ? (
+        <Badge variant="neutral">
+          <BellRing aria-hidden /> Alerted
+        </Badge>
+      ) : null}
+    </span>
+  )
+}
 
 export function ReorderPage() {
   const { hasRole, user } = useCurrentUser()
@@ -36,6 +65,9 @@ export function ReorderPage() {
   const [checking, setChecking] = React.useState(false)
   const [chosen, setChosen] = React.useState<string[]>([])
   const [drafting, setDrafting] = React.useState(false)
+  const [method, setMethod] = React.useState<MethodFilter>("all")
+  const [focus, setFocus] = React.useState<Focus>("all")
+  const [locationId, setLocationId] = React.useState("")
   // RecordList keeps its own rows; a new key reloads it after a point is applied here.
   const [listVersion, setListVersion] = React.useState(0)
   const data = lookups.data
@@ -45,7 +77,7 @@ export function ReorderPage() {
     try {
       const outcome = await runReorderCheck()
       const alerts = await sendLowStockAlerts(outcome)
-      toast.success(`${outcome.suggestions.length} below their reorder point${alerts.count ? `, ${alerts.count} new alert${alerts.count === 1 ? "" : "s"} (in app ${alerts.inApp}, email ${alerts.email})` : ""}`)
+      toast.success(`${outcome.suggestions.length} below their reorder point${alerts.count ? `, ${alerts.count} new alert${alerts.count === 1 ? "" : "s"} (email ${alerts.email})` : ""}`)
       void list.reload()
       void settings.reload()
     } catch (caught) {
@@ -68,7 +100,7 @@ export function ReorderPage() {
 
   async function draft() {
     if (!data || !stockLookups.data) return
-    const rows = (list.data?.items ?? []).filter((row) => chosen.includes(row.ItemId))
+    const rows = all.filter((row) => chosen.includes(row.ItemId))
     setDrafting(true)
     try {
       const made = await createDrafts(rows, data, stockLookups.data, user?.email ?? "unknown")
@@ -82,101 +114,168 @@ export function ReorderPage() {
     }
   }
 
-  const rows = list.data?.items ?? []
-  const computedAt = rows.reduce((latest, row) => (row.computedAt > latest ? row.computedAt : latest), "")
+  const all = list.data?.items ?? []
+  const settingOf = (row: ReorderSuggestion) => settings.data?.items.find((item) => item.productId === row.productId && item.locationId === row.locationId)
+  const rows = all
+    .filter((row) => method === "all" || row.method === method)
+    .filter((row) => !locationId || row.locationId === locationId)
+    .filter((row) => (focus === "out" ? row.anticipated <= 0 : focus === "alerted" ? settingOf(row)?.isAlerting : true))
+    .sort((a, b) => a.anticipated / Math.max(a.reorderPoint, 1) - b.anticipated / Math.max(b.reorderPoint, 1))
+  const computedAt = all.reduce((latest, row) => (row.computedAt > latest ? row.computedAt : latest), "")
+  const vendorsToOrder = new Set(all.filter((row) => row.method === "purchase").map((row) => row.vendorId ?? "none")).size
+  const transferRoutes = new Set(all.filter((row) => row.method === "transfer").map((row) => `${row.sourceLocationId}|${row.locationId}`)).size
+  const outCount = all.filter((row) => row.anticipated <= 0).length
+  const alertedCount = all.filter((row) => settingOf(row)?.isAlerting).length
+  const draftable = rows.filter((row) => row.method !== "manufacture")
   const productOptions = (data?.products ?? []).filter((product) => product.itemType === "stocked").map((product) => ({ value: product.ItemId, label: `${product.name} (${product.sku})` }))
   const locationOptions = (data?.locations ?? []).map((location) => ({ value: location.ItemId, label: location.name }))
   const vendorOptions = (data?.vendors ?? []).map((vendor) => ({ value: vendor.ItemId, label: vendor.name }))
+  const unit = (productId: string) => data?.productOf(productId)?.standardUom ?? ""
+  const how = (row: ReorderSuggestion) =>
+    `${REORDER_METHODS.find((item) => item.value === row.method)?.label ?? ""}${row.vendorId ? ` · ${data?.vendorOf(row.vendorId)?.name ?? ""}` : row.sourceLocationId ? ` · from ${data?.locationName(row.sourceLocationId)}` : ""}`
+  const toggle = (id: string, on: boolean) => setChosen((current) => (on ? [...new Set([...current, id])] : current.filter((item) => item !== id)))
+  const allChosen = draftable.length > 0 && draftable.every((row) => chosen.includes(row.ItemId))
 
   return (
     <>
       <PageHeader
         title="Reordering"
-        description="Products whose anticipated quantity (on hand − reserved + on order) is below their reorder point, and one click to order or move them."
+        description="What to order or move before you run out. Anticipated stock is on hand, minus reserved, plus on order."
         actions={
           canEdit ? (
             <Button variant="secondary" onClick={() => void check()} disabled={checking}>
-              <RefreshCw aria-hidden /> {checking ? "Checking…" : "Check now"}
+              <RefreshCw aria-hidden className={cn(checking && "animate-spin")} /> {checking ? "Checking…" : "Check now"}
             </Button>
           ) : null
         }
       />
       {list.error ? <ErrorBanner message={list.error} onRetry={list.reload} /> : null}
+      <KpiRow>
+        <KpiCard label="Below reorder point" value={formatNumber(all.length)} icon={TriangleAlert} tone={all.length ? "warning" : "default"} hint={computedAt ? `Checked ${formatDateTime(computedAt)}` : "Not checked yet"} active={focus === "all"} onClick={() => setFocus("all")} />
+        <KpiCard label="Out of stock" value={formatNumber(outCount)} icon={PackageX} tone={outCount ? "destructive" : "default"} hint="Nothing left to sell" active={focus === "out"} onClick={() => setFocus(focus === "out" ? "all" : "out")} />
+        <KpiCard label="Alerted" value={formatNumber(alertedCount)} icon={BellRing} hint="Until restocked" active={focus === "alerted"} onClick={() => setFocus(focus === "alerted" ? "all" : "alerted")} />
+        <KpiCard label="Drafts to make" value={formatNumber(vendorsToOrder + transferRoutes)} icon={ShoppingCart} hint={`${vendorsToOrder} purchase · ${transferRoutes} transfer`} />
+      </KpiRow>
       <Tabs defaultValue="list">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4" aria-label="Reorder views">
           <TabsTrigger value="list">Reorder list</TabsTrigger>
           <TabsTrigger value="settings">Reorder points</TabsTrigger>
         </TabsList>
         <TabsContent value="list">
-          <SectionCard
-            className="p-0 md:p-0"
-            title="Below reorder point"
-            description={computedAt ? `Checked ${formatDateTime(computedAt)}.` : "Not checked yet. Press Check now."}
-            actions={
-              canEdit ? (
-                <Button size="sm" onClick={() => void draft()} disabled={!chosen.length || drafting}>
-                  {drafting ? "Creating…" : `Create drafts (${chosen.length})`}
-                </Button>
-              ) : null
-            }
-          >
+          <SectionCard className="p-0 md:p-0">
+            <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-end md:justify-between">
+              <FilterChips<MethodFilter>
+                label="How to restock"
+                value={method}
+                onChange={setMethod}
+                options={[
+                  { value: "all", label: "All", count: all.length },
+                  { value: "purchase", label: "Purchase", count: all.filter((row) => row.method === "purchase").length },
+                  { value: "transfer", label: "Transfer", count: all.filter((row) => row.method === "transfer").length },
+                  { value: "manufacture", label: "Manufacture", count: all.filter((row) => row.method === "manufacture").length },
+                ]}
+              />
+              <SelectField id="reorder-location" label="Location" options={locationOptions} value={locationId} onChange={setLocationId} allowNone placeholder="All locations" className="md:w-56" />
+            </div>
             {(list.loading && !list.data) || !data ? (
               <div className="p-4">
                 <LoadingRows />
               </div>
             ) : rows.length === 0 ? (
-              <EmptyState icon={ListChecks} message="Nothing to reorder." />
+              <EmptyState
+                icon={ListChecks}
+                message={all.length ? "Nothing matches these filters." : "Everything is above its reorder point."}
+                action={
+                  canEdit && !all.length ? (
+                    <Button variant="secondary" onClick={() => void check()} disabled={checking}>
+                      <RefreshCw aria-hidden /> Check now
+                    </Button>
+                  ) : null
+                }
+              />
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted hover:bg-muted">
-                      <TableHead className="w-10">
-                        <Checkbox aria-label="Choose all" checked={chosen.length === rows.length} onCheckedChange={(value) => setChosen(value === true ? rows.map((row) => row.ItemId) : [])} />
-                      </TableHead>
-                      <TableHead className={headClass}>Product</TableHead>
-                      <TableHead className={headClass}>Location</TableHead>
-                      <TableHead className={cn(headClass, "text-right")}>Anticipated</TableHead>
-                      <TableHead className={cn(headClass, "text-right")}>Point</TableHead>
-                      <TableHead className={cn(headClass, "text-right")}>Suggested</TableHead>
-                      <TableHead className={headClass}>How</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rows.map((row) => {
-                      const setting = settings.data?.items.find((item) => item.productId === row.productId && item.locationId === row.locationId)
-                      return (
-                        <TableRow key={row.ItemId} className="h-11">
-                          <TableCell>
-                            <Checkbox aria-label="Choose" checked={chosen.includes(row.ItemId)} onCheckedChange={(value) => setChosen((current) => (value === true ? [...current, row.ItemId] : current.filter((id) => id !== row.ItemId)))} />
-                          </TableCell>
-                          <TableCell>
-                            {data.productOf(row.productId)?.name}
-                            {setting?.isAlerting ? (
-                              <Badge variant="warning" className="ml-2">
-                                <BellRing aria-hidden /> Alerted
-                              </Badge>
-                            ) : null}
-                          </TableCell>
-                          <TableCell>{data.locationName(row.locationId)}</TableCell>
-                          <TableCell className="text-right num">{formatNumber(row.anticipated)}</TableCell>
-                          <TableCell className="text-right num">{formatNumber(row.reorderPoint)}</TableCell>
-                          <TableCell className="text-right num font-semibold">{formatNumber(row.suggestedQty)}</TableCell>
-                          <TableCell className="text-sm">
-                            {REORDER_METHODS.find((method) => method.value === row.method)?.label}
-                            {row.vendorId ? ` · ${data.vendorOf(row.vendorId)?.name}` : row.sourceLocationId ? ` · from ${data.locationName(row.sourceLocationId)}` : ""}
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <>
+                <ul className="md:hidden" aria-label="Below reorder point">
+                  {rows.map((row) => {
+                    const selectable = canEdit && row.method !== "manufacture"
+                    return (
+                      <RecordCard
+                        key={row.ItemId}
+                        selected={chosen.includes(row.ItemId)}
+                        leading={selectable ? <Checkbox className="mt-1" aria-label={`Choose ${data.productOf(row.productId)?.name}`} checked={chosen.includes(row.ItemId)} onCheckedChange={(value) => toggle(row.ItemId, value === true)} /> : null}
+                        title={data.productOf(row.productId)?.name}
+                        value={`+${formatNumber(row.suggestedQty)} ${unit(row.productId)}`}
+                        badges={<StockStatus row={row} alerted={settingOf(row)?.isAlerting ?? false} />}
+                        meta={`${data.locationName(row.locationId)} · ${formatNumber(row.anticipated)} of ${formatNumber(row.reorderPoint)} · ${how(row)}`}
+                      />
+                    )
+                  })}
+                </ul>
+                <div className="hidden overflow-x-auto md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted hover:bg-muted">
+                        <TableHead className="w-10">
+                          {canEdit ? <Checkbox aria-label="Choose all" checked={allChosen} onCheckedChange={(value) => setChosen(value === true ? draftable.map((row) => row.ItemId) : [])} /> : null}
+                        </TableHead>
+                        <TableHead className={headClass}>Product</TableHead>
+                        <TableHead className={headClass}>Location</TableHead>
+                        <TableHead className={headClass}>Stock vs point</TableHead>
+                        <TableHead className={cn(headClass, "text-right")}>Suggested</TableHead>
+                        <TableHead className={cn(headClass, "hidden lg:table-cell")}>How</TableHead>
+                        <TableHead className={headClass}>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rows.map((row) => {
+                        const product = data.productOf(row.productId)
+                        const picked = chosen.includes(row.ItemId)
+                        const Icon = METHOD_ICON[row.method as keyof typeof METHOD_ICON] ?? ShoppingCart
+                        return (
+                          <TableRow key={row.ItemId} data-state={picked ? "selected" : undefined} className={cn("h-14", picked && "bg-primary/10 shadow-[inset_2px_0_0_var(--primary)] hover:bg-primary/10")}>
+                            <TableCell>
+                              {canEdit && row.method !== "manufacture" ? (
+                                <Checkbox aria-label={`Choose ${product?.name}`} checked={picked} onCheckedChange={(value) => toggle(row.ItemId, value === true)} />
+                              ) : null}
+                            </TableCell>
+                            <TableCell>
+                              <span className="block font-medium">{product?.name}</span>
+                              <span className="block font-mono text-xs text-muted-foreground">{product?.sku}</span>
+                            </TableCell>
+                            <TableCell className="text-sm">{data.locationName(row.locationId)}</TableCell>
+                            <TableCell>
+                              <StockMeter value={row.anticipated} target={row.reorderPoint} unit={unit(row.productId)} />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="font-semibold num">{formatNumber(row.suggestedQty)}</span> <span className="text-xs text-muted-foreground">{unit(row.productId)}</span>
+                            </TableCell>
+                            <TableCell className="hidden text-sm lg:table-cell">
+                              <span className="flex items-center gap-2">
+                                <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                                <span className="truncate">{how(row)}</span>
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <StockStatus row={row} alerted={settingOf(row)?.isAlerting ?? false} />
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </SectionCard>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 text-xs text-muted-foreground">
             Purchase lines become one purchase order per vendor, transfers one transfer per source location. Manufacture orders arrive with the manufacturing feature (spec 0020).
           </p>
+          {chosen.length ? <div className="h-20" aria-hidden /> : null}
+          <BulkActionBar count={chosen.length} noun="product" onClear={() => setChosen([])}>
+            <Button onClick={() => void draft()} disabled={drafting}>
+              {drafting ? "Creating…" : "Create drafts"}
+            </Button>
+          </BulkActionBar>
         </TabsContent>
         <TabsContent value="settings">
           {data ? (

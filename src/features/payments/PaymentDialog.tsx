@@ -3,6 +3,7 @@ import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { SelectField, TextAreaField, TextField } from "@/components/app/form"
+import { DateField } from "@/components/app/date-picker"
 import { ErrorBanner, LoadingRows } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -149,7 +150,7 @@ export function PaymentDialog({
             <SelectField id="pay-type" label="Type" options={PAYMENT_TYPES.map((row) => ({ value: row.value, label: row.label }))} value={type} onChange={(value) => { setType(value as PaymentType); setSplit({}) }} />
             <SelectField id="pay-currency" label="Currency" options={lookups.currencies.map((code) => ({ value: code, label: code }))} value={currencyCode} onChange={(value) => { setCurrency(value); setSplit({}) }} disabled={Boolean(initialCurrency)} />
             {!noMoney ? <TextField id="pay-amount" label="Amount" type="number" step="any" required value={amount} onChange={setAmount} /> : null}
-            <TextField id="pay-date" label="Date" type="date" value={paidOn} onChange={setPaidOn} />
+            <DateField id="pay-date" label="Date" value={paidOn} onChange={setPaidOn} />
             {!noMoney ? (
               <SelectField id="pay-method" label="Method" options={lookups.methods.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: row.name }))} value={methodId} onChange={setMethod} allowNone />
             ) : null}

@@ -9,6 +9,7 @@ import {
   TextField,
   type Option,
 } from "@/components/app/form"
+import { DateField } from "@/components/app/date-picker"
 import { EmptyState, ErrorBanner, LoadingRows } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -263,7 +264,7 @@ export function RecordList<T extends Entity>({
                   <TableHead
                     key={column.label}
                     className={cn(
-                      "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase",
+                      "h-9 label-overline",
                       column.numeric && "text-right"
                     )}
                   >
@@ -271,7 +272,7 @@ export function RecordList<T extends Entity>({
                   </TableHead>
                 ))}
                 {activeField ? (
-                  <TableHead className="h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
+                  <TableHead className="h-9 label-overline">
                     Status
                   </TableHead>
                 ) : null}
@@ -368,6 +369,21 @@ export function RecordList<T extends Entity>({
                   />
                 )
               }
+              if (field.type === "date") {
+                return (
+                  <DateField
+                    key={field.name}
+                    id={id}
+                    label={field.label}
+                    required={field.required}
+                    helper={field.helper}
+                    error={error}
+                    value={String(values[field.name] ?? "")}
+                    onChange={(value) => setValues({ ...values, [field.name]: value })}
+                    className={span}
+                  />
+                )
+              }
               return (
                 <TextField
                   key={field.name}
@@ -377,7 +393,7 @@ export function RecordList<T extends Entity>({
                   helper={field.helper}
                   error={error}
                   mono={field.mono}
-                  type={field.type === "text" ? "text" : field.type === "date" ? "date" : "number"}
+                  type={field.type === "text" ? "text" : "number"}
                   inputMode={field.type === "integer" ? "numeric" : field.type === "number" ? "decimal" : undefined}
                   step={field.type === "number" ? "any" : undefined}
                   value={String(values[field.name] ?? "")}

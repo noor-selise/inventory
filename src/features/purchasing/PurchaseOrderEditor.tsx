@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { SelectField, TextAreaField, TextField } from "@/components/app/form"
+import { DateField } from "@/components/app/date-picker"
 import { ErrorBanner } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -210,7 +211,7 @@ export function PurchaseOrderEditor({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <SelectField id="po-vendor" label="Vendor" required options={options.vendors} value={vendorId} onChange={chooseVendor} disabled={Boolean(order)} />
             <SelectField id="po-location" label="Receive at" required options={options.locations} value={locationId} onChange={setLocationId} />
-            <TextField id="po-date" label="Order date" type="date" value={orderDate} onChange={setOrderDate} />
+            <DateField id="po-date" label="Order date" value={orderDate} onChange={setOrderDate} />
             <SelectField
               id="po-currency"
               label="Currency"
@@ -226,7 +227,7 @@ export function PurchaseOrderEditor({
             <SelectField id="po-term" label="Payment terms" options={lookups.terms.map((row) => ({ value: row.ItemId, label: row.name }))} value={paymentTermId} onChange={setTerm} allowNone />
             <SelectField id="po-carrier" label="Carrier" options={lookups.carriers.map((row) => ({ value: row.ItemId, label: row.name }))} value={carrierId} onChange={setCarrier} allowNone />
             <TextField id="po-vendor-number" label="Vendor's order number" value={vendorOrderNumber} onChange={setVendorNumber} mono />
-            <TextField id="po-ship-date" label="Requested ship date" type="date" value={shipDate} onChange={setShipDate} />
+            <DateField id="po-ship-date" label="Requested ship date" value={shipDate} onChange={setShipDate} />
           </div>
           {vendor ? <p className="rounded-md bg-muted p-3 text-sm">Vendor address: {formatAddress(order?.vendorAddress ?? vendor.address) || "none"}</p> : null}
           <OrderLinesEditor

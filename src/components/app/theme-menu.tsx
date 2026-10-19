@@ -37,7 +37,7 @@ export function ThemeMenu() {
         >
           {THEME_OPTIONS.map((option) => (
             <DropdownMenuRadioItem key={option.value} value={option.value}>
-              <option.icon className="size-4" /> {option.label}
+              <option.icon className="size-4" aria-hidden /> {option.label}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

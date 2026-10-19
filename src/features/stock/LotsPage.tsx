@@ -18,7 +18,7 @@ import type { Movement } from "./posting.ts"
 // Lots with expiry, and forward and backward trace from the ledger
 // (spec 0009 AC-1, AC-6, AC-7). Expiry emails (AC-5) wait for a schedule workflow.
 
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 const DAY = 86_400_000
 
 export function LotsPage() {

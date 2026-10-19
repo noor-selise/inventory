@@ -131,7 +131,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       {NAV_SECTIONS.map((section) => (
         <div key={section.label || "main"} className="flex flex-col gap-1">
           {section.label ? (
-            <p className="px-3 pb-1 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
+            <p className="px-3 pb-1 label-overline">
               {section.label}
             </p>
           ) : null}
@@ -212,6 +212,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-svh bg-background">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+      >
+        Skip to main content
+      </a>
       <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col gap-6 overflow-y-auto bg-sidebar px-3 py-4 lg:flex">
         <Brand />
         <NavLinks />
@@ -250,7 +256,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 px-4 py-4 md:px-6 md:py-6 lg:px-8">
+        <main id="main" className="min-w-0 flex-1 px-4 py-4 md:px-6 md:py-6 lg:px-8">
           <div className="mx-auto w-full max-w-[1600px]">{children}</div>
         </main>
       </div>

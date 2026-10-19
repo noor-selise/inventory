@@ -1,8 +1,9 @@
 import * as React from "react"
-import { ArrowDown, ArrowUp, ListOrdered } from "lucide-react"
+import { ArrowDown, ArrowUp, CircleAlert, CircleCheck, ListOrdered, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
+import { RecordCard } from "@/components/app/data"
 import { EmptyState, ErrorBanner, LoadingRows, SectionCard } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,7 +12,7 @@ import { lots, posting } from "@/features/stock/api"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { buildQueue, setPriority } from "./actions"
+import { buildQueue, setPriority, type QueueRow } from "./actions"
 import { type SalesOrder } from "./api"
 import { SALES_EDITORS, type OrderLookups } from "./lookups"
 import { InventoryBadge, headClass } from "./OrderBits"
@@ -68,7 +69,24 @@ export function FulfillmentQueue({ orders, lookups, onOpen, onChanged }: { order
       ) : rows.length === 0 ? (
         <EmptyState icon={ListOrdered} message="No open orders." />
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <ul className="md:hidden" aria-label="Fulfillment queue">
+          {rows.map((row, index) => (
+            <RecordCard
+              key={row.order.ItemId}
+              onClick={() => onOpen(row.order.ItemId)}
+              leading={<span className="mt-0.5 w-5 shrink-0 text-right text-sm text-muted-foreground num">{index + 1}</span>}
+              title={
+                <>
+                  <span className="font-mono text-[13px]">{row.order.number}</span> · {lookups.customerOf(row.order.customerId)?.name}
+                </>
+              }
+              badges={<QueueStatus row={row} />}
+              meta={row.short.length ? `Short: ${row.short.map((item) => `${lookups.productOf(item.productId)?.name} ${formatNumber(item.missing)}`).join(", ")}` : formatDate(row.order.orderDate)}
+            />
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto md:block">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted hover:bg-muted">
@@ -93,18 +111,12 @@ export function FulfillmentQueue({ orders, lookups, onOpen, onChanged }: { order
                   <TableCell>{lookups.customerOf(row.order.customerId)?.name}</TableCell>
                   <TableCell className="hidden text-sm md:table-cell">{formatDate(row.order.orderDate)}</TableCell>
                   <TableCell>
-                    {row.held ? (
-                      <Badge variant="warning">Waits for confirmation</Badge>
-                    ) : row.canShipNow ? (
-                      <Badge variant="success">Can ship now</Badge>
-                    ) : (
-                      <span className="flex flex-col gap-0.5">
-                        <Badge variant="neutral">Needs stock</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {row.short.map((item) => `${lookups.productOf(item.productId)?.name} ${formatNumber(item.missing)}`).join(", ")}
-                        </span>
-                      </span>
-                    )}
+                    <span className="flex flex-col gap-0.5">
+                      <QueueStatus row={row} />
+                      {row.short.length && !row.held ? (
+                        <span className="text-xs text-muted-foreground">{row.short.map((item) => `${lookups.productOf(item.productId)?.name} ${formatNumber(item.missing)}`).join(", ")}</span>
+                      ) : null}
+                    </span>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     <InventoryBadge status={row.order.inventoryStatus} />
@@ -124,7 +136,29 @@ export function FulfillmentQueue({ orders, lookups, onOpen, onChanged }: { order
             </TableBody>
           </Table>
         </div>
+        </>
       )}
     </SectionCard>
+  )
+}
+
+/** Status with an icon, never color alone (DESIGN.md §1, §2.3). */
+function QueueStatus({ row }: { row: QueueRow }) {
+  if (row.held)
+    return (
+      <Badge variant="warning">
+        <TriangleAlert aria-hidden /> Waits for confirmation
+      </Badge>
+    )
+  if (row.canShipNow)
+    return (
+      <Badge variant="success">
+        <CircleCheck aria-hidden /> Can ship now
+      </Badge>
+    )
+  return (
+    <Badge variant="destructive">
+      <CircleAlert aria-hidden /> Needs stock
+    </Badge>
   )
 }

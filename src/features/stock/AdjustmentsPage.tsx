@@ -4,7 +4,8 @@ import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { formatDateTime } from "@/components/app/audit"
-import { CheckboxField, SelectField, TextAreaField, TextField } from "@/components/app/form"
+import { CheckboxField, SelectField, TextAreaField } from "@/components/app/form"
+import { DateField } from "@/components/app/date-picker"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ import { PostingError } from "./posting.ts"
 export const STOCK_EDITORS = ["admin", "manager", "warehouse"]
 /** Stands in for the "override negative stock" right until permissions are finer (spec 0026). */
 export const NEGATIVE_OVERRIDE = ["admin", "manager"]
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 export function DocumentStatus({ status }: { status: string }) {
   const map: Record<string, { label: string; variant: "success" | "info" | "neutral" | "warning" | "destructive" | "muted"; icon: React.ComponentType<{ "aria-hidden"?: boolean }> }> = {
@@ -222,7 +223,7 @@ function NewAdjustment({ lookups, canOverride, onClose, onDone }: { lookups: Sto
               value={reasonId}
               onChange={setReasonId}
             />
-            <TextField id="adjustment-date" label="Date" type="date" value={date} onChange={setDate} />
+            <DateField id="adjustment-date" label="Date" value={date} onChange={setDate} />
           </div>
           <LineEditor lines={lines} onChange={setLines} lookups={lookups} locationId={locationId} mode="adjustment" disabled={saving} errors={errors} />
           <TextAreaField id="adjustment-remarks" label="Remarks" value={remarks} onChange={setRemarks} />

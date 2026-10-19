@@ -1,16 +1,18 @@
 import * as React from "react"
-import { FileText, Plus, ShoppingCart } from "lucide-react"
+import { FileText, Plus, Receipt, ShoppingCart, Wallet } from "lucide-react"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
+import { KpiCard, KpiRow, RecordCard } from "@/components/app/data"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { repairIfDue } from "@/features/stock/api"
 import { useResource } from "@/hooks/use-resource"
-import { formatDate, formatMoney } from "@/lib/format"
+import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { salesOrders, type SalesOrder } from "./api"
+import { toHome } from "./order-math"
 import { FulfillmentQueue } from "./FulfillmentQueue"
 import { SALES_EDITORS, useOrderLookups } from "./lookups"
 import { InventoryBadge, PaymentBadge, headClass } from "./OrderBits"
@@ -65,8 +67,9 @@ export function SalesOrdersPage() {
       />
       {list.error ? <ErrorBanner message={list.error} onRetry={list.reload} /> : null}
       {lookups.error ? <ErrorBanner message={lookups.error} onRetry={lookups.reload} /> : null}
+      {list.data ? <SalesKpis orders={list.data.items} home={data?.homeCurrency ?? "USD"} view={view} onView={setView} /> : null}
       <Tabs value={view} onValueChange={(value) => setView(value as keyof typeof VIEWS)} className="mb-4">
-        <TabsList>
+        <TabsList className="mb-4" aria-label="Order views">
           {Object.entries(VIEWS).map(([key, entry]) => (
             <TabsTrigger key={key} value={key}>
               {entry.label}
@@ -83,9 +86,32 @@ export function SalesOrdersPage() {
               <LoadingRows />
             </div>
           ) : rows.length === 0 ? (
-            <EmptyState icon={ShoppingCart} message="Nothing here yet." />
+            <EmptyState
+              icon={ShoppingCart}
+              message={(list.data?.items ?? []).length ? "Nothing in this view." : "No sales orders yet."}
+              action={
+                canEdit && !(list.data?.items ?? []).length ? (
+                  <Button onClick={() => setEditing({ isQuote: false })}>
+                    <Plus aria-hidden /> New order
+                  </Button>
+                ) : null
+              }
+            />
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <ul className="md:hidden" aria-label="Sales orders">
+              {rows.map((order) => (
+                <RecordCard
+                  key={order.ItemId}
+                  onClick={() => setViewing(order.ItemId)}
+                  title={<><span className="font-mono text-[13px]">{order.number}</span> · {data.customerOf(order.customerId)?.name}</>}
+                  value={formatMoney(Number(order.total ?? 0), order.currencyCode)}
+                  badges={<><InventoryBadge status={order.inventoryStatus} /><PaymentBadge status={order.paymentStatus} /></>}
+                  meta={formatDate(order.orderDate)}
+                />
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted hover:bg-muted">
@@ -99,7 +125,13 @@ export function SalesOrdersPage() {
                 </TableHeader>
                 <TableBody>
                   {rows.map((order) => (
-                    <TableRow key={order.ItemId} className="h-11 cursor-pointer" onClick={() => setViewing(order.ItemId)}>
+                    <TableRow
+                      key={order.ItemId}
+                      tabIndex={0}
+                      className="h-11 cursor-pointer focus-visible:bg-accent focus-visible:outline-none"
+                      onClick={() => setViewing(order.ItemId)}
+                      onKeyDown={(event) => event.key === "Enter" && setViewing(order.ItemId)}
+                    >
                       <TableCell className="font-mono text-[13px]">{order.number}</TableCell>
                       <TableCell>{data.customerOf(order.customerId)?.name}</TableCell>
                       <TableCell className="hidden text-sm md:table-cell">{formatDate(order.orderDate)}</TableCell>
@@ -115,6 +147,7 @@ export function SalesOrdersPage() {
                 </TableBody>
               </Table>
             </div>
+            </>
           )}
         </SectionCard>
       )}
@@ -141,5 +174,23 @@ export function SalesOrdersPage() {
         />
       ) : null}
     </>
+  )
+}
+
+/** Open orders, quotes, orders to invoice and what customers owe (DESIGN.md §6.4). Cards switch the view. */
+function SalesKpis({ orders, home, view, onView }: { orders: SalesOrder[]; home: string; view: keyof typeof VIEWS; onView: (view: keyof typeof VIEWS) => void }) {
+  const live = orders.filter((order) => !order.isQuote && !order.isCancelled)
+  const open = live.filter((order) => order.inventoryStatus !== "fulfilled")
+  const value = open.reduce((sum, order) => sum + toHome(Number(order.total ?? 0), order.exchangeRate), 0)
+  const quotes = orders.filter((order) => order.isQuote && !order.isCancelled).length
+  const toInvoice = live.filter((order) => !order.invoicedOn && (order.inventoryStatus === "fulfilled" || order.inventoryStatus === "started")).length
+  const owed = live.filter((order) => order.invoicedOn).reduce((sum, order) => sum + Math.max(0, toHome(Number(order.total ?? 0) - Number(order.amountPaid ?? 0), order.exchangeRate)), 0)
+  return (
+    <KpiRow>
+      <KpiCard label="Open orders" value={formatNumber(open.length)} hint={`${formatMoney(value, home)} to fulfill`} icon={ShoppingCart} active={view === "open"} onClick={() => onView("open")} />
+      <KpiCard label="Quotes" value={formatNumber(quotes)} hint="Waiting to become orders" icon={FileText} active={view === "quotes"} onClick={() => onView("quotes")} />
+      <KpiCard label="To invoice" value={formatNumber(toInvoice)} hint="Shipped or started, not invoiced" icon={Receipt} tone={toInvoice ? "info" : "default"} />
+      <KpiCard label="Customers owe you" value={formatMoney(owed, home)} hint="Invoiced, not yet paid" icon={Wallet} tone={owed > 0.005 ? "warning" : "default"} />
+    </KpiRow>
   )
 }

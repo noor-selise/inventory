@@ -94,7 +94,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 py-12 text-center">
-      <Icon className="size-8 text-muted-foreground" />
+      <Icon className="size-8 text-muted-foreground" aria-hidden />
       <p className="text-sm text-muted-foreground">{message}</p>
       {action}
     </div>

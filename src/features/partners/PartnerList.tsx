@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 // Searchable list for customers and vendors. Search is a server side prefix
 // match on name (the gateway takes $regex filters, spec 0026 probe).
 
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 type Named = Entity & { name: string; isActive?: boolean | null; email?: string | null; phone?: string | null }
 

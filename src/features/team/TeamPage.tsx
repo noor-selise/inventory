@@ -36,7 +36,7 @@ import { ADMIN_ROLE, ROLE_BUNDLES, roleName, roleSlugs } from "./roles"
 // (spec 0003 data model, spec 0027).
 
 const roleOptions = ROLE_BUNDLES.map((role) => ({ value: role.slug, label: role.name }))
-const headClass = "h-9 text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
+const headClass = "h-9 label-overline"
 
 type Pending =
   | { kind: "role"; user: BlocksUser; role: string }
