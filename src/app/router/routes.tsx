@@ -28,6 +28,7 @@ import { CompanyPage } from "@/features/settings/CompanyPage"
 import { CurrenciesPage } from "@/features/settings/CurrenciesPage"
 import { ListsPage } from "@/features/settings/ListsPage"
 import { NumberingPage } from "@/features/settings/NumberingPage"
+import { SecurityPage } from "@/features/team/SecurityPage"
 import { TeamPage } from "@/features/team/TeamPage"
 
 // Signed in pages. Each is wrapped in RequireAuth and the app shell.
@@ -54,6 +55,7 @@ const protectedRoutes: Record<string, React.ComponentType> = {
   "/settings/numbering": NumberingPage,
   "/settings/lists": ListsPage,
   "/settings/team": TeamPage,
+  "/settings/security": SecurityPage,
   "/settings/appearance": AppearancePage,
 }
 

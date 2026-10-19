@@ -137,3 +137,16 @@ export async function logout(): Promise<void> {
     .catch(() => undefined)
   clearLocalTokens()
 }
+
+/**
+ * Moves the session to another organization the person belongs to (spec 0003
+ * AC-2). IAM answers with new tokens for that organization; keep them, or the
+ * next calls would still act in the old one. With the default cookie session
+ * IAM sets the new cookie itself and the body may carry no token.
+ */
+export async function switchOrganization(organizationId: string): Promise<void> {
+  const response = await blocksClient.auth.switchOrganization({ organizationId, refreshToken: cachedRefreshToken })
+  const accessToken = response.access_token ?? response.accessToken
+  if (accessToken) persistTokens(accessToken, response.refresh_token ?? response.refreshToken ?? cachedRefreshToken)
+  else if (response.error) throw new Error(response.error_description || response.error)
+}

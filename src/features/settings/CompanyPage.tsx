@@ -4,6 +4,8 @@ import { toast } from "sonner"
 import { AuditLine } from "@/components/app/audit"
 import { SelectField, TextAreaField, TextField } from "@/components/app/form"
 import { ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { useAuth } from "@/app/providers/AuthProvider"
+import { OrganizationCard } from "@/features/team/OrganizationCard"
 import { Button } from "@/components/ui/button"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { CURRENCY_CODES, TIME_ZONES, formatDate, formatMoney } from "@/lib/format"
@@ -31,6 +33,7 @@ function toForm(company?: Company): Form {
 
 // One Company record per organization (spec 0004 AC-1).
 export function CompanyPage() {
+  const { claims } = useAuth()
   const canEdit = useCanEditSettings()
   const { data, error, loading, reload } = useResource(() => companies.list({ pageSize: 1 }), [])
   const company = data?.items[0]
@@ -69,6 +72,9 @@ export function CompanyPage() {
       setSaving(false)
     }
   }
+
+  // The session's organization, from the token claims IAM returns.
+  const currentOrg = String(claims?.org_id ?? claims?.organizationId ?? claims?.organization_id ?? "") || undefined
 
   return (
     <>
@@ -147,6 +153,9 @@ export function CompanyPage() {
           </form>
         </SectionCard>
       )}
+      <div className="mt-6 max-w-3xl">
+        <OrganizationCard current={currentOrg} />
+      </div>
     </>
   )
 }

@@ -17,6 +17,8 @@ Specs 0011 to 0015 list P1 criteria whose values have no named source: where a r
 - **Blocks storage for background reports**: the app roles were granted `Get Pre-Signed Upload URL` and `Get File` (confirmed by the engineer on 2026-10-20); files are created private to their creator.
 - **Clearing a field**: Blocks ignores `null` in an update. Text fields are cleared with `""`, "no approval limit" is stored as -1, "no credit limit" as 0. Dates cannot be cleared.
 - **Cost View (0015 AC-4)**: roles `admin`, `manager`, `purchasing` until field masking from spec 0003 exists.
+- **Company organization (0003 AC-2)**: multi organization mode is on (enabled by the engineer). The first company stays in Blocks' built in `default` organization, where its users and every existing record already are (a record's `OrganizationId` cannot be changed). Companies that sign up later get their own organization. The app shows the organization from the token's `org_id` claim and switches with `auth.switchOrganization` when a person belongs to more than one.
+- **Two step login (0003 AC-6)**: tenant MFA on with authenticator app and email code, 10 backup codes, not required for everyone; the admin role holds `mfa-configs` and `mutate-mfa-configs` so admins can change the rule in the app.
 - **Manufacture orders (0014 AC-1, AC-3)**: the method can be saved, but drafting MOs waits for manufacturing (spec 0020).
 
 ## Code area

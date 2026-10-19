@@ -1,0 +1,10 @@
+{
+  "schemaName": "CostProbe",
+  "collectionName": "CostProbes",
+  "schemaType": 1,
+  "description": "Temporary: probes column level masking for spec 0003 AC-5. Delete after.",
+  "fields": [
+    { "name": "name", "type": "String", "isArray": false },
+    { "name": "cost", "type": "Float", "isArray": false }
+  ]
+}

@@ -64,9 +64,11 @@ Blocks hosted login, MFA, one company per organization, seven role bundles, cost
 - [ ] Build it: `/develop sign in, team and roles`
   - [x] App side: SDK client, hosted login, callback, guards, local HTTPS, team screen, last changed by
   - [x] Blocks side: OIDC client, OIDC on, seven roles, admin user
-  - [ ] Multi organization mode (one way switch, needs your go ahead), MFA, cost masking
+  - [x] Multi organization mode on; your company stays in Blocks' "default" organization, organization card and switcher on Company settings (assumed decision spec 0027)
+  - [x] Two step login: tenant MFA on (authenticator app, email code, backup codes), Security screen to enroll, company rule for admins
+  - [ ] Cost masking on the server: a column policy masks a field for everyone whatever its rules say (allow or deny, always true or false; sources 0 to 2, operators 0 to 14 accepted). Waits on Blocks for how a rule or DataProtection permission unmasks a field for some roles
 - [ ] Verify it: `/check verify sign in, team and roles`
-Spec [0003](../specs/0003-auth-team-roles.md) · code in `src/lib/blocks/`, `src/app/`, `src/features/auth/`, `src/features/team/`, `scripts/blocks-setup.sh`
+Spec [0003](../specs/0003-auth-team-roles.md) · [0027](../specs/0027-orders-reports-p1-choices.md) (Assumed) · code in `src/lib/blocks/`, `src/app/`, `src/features/auth/`, `src/features/team/`, `scripts/blocks-setup.sh`
 
 ### 4. Company settings and lookups · in-progress
 Company profile, currencies and rates, document numbering, payment terms, taxing schemes, reasons, carriers, payment methods.

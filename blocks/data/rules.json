@@ -129,6 +129,38 @@
       "fieldNames": []
     },
     {
+      "schemaName": "CostProbe",
+      "schemaId": "d73d03f9-4279-496f-b466-0b0c0e853c5b",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "CostProbe",
+      "schemaId": "d73d03f9-4279-496f-b466-0b0c0e853c5b",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "CostProbe",
+      "schemaId": "d73d03f9-4279-496f-b466-0b0c0e853c5b",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "CostProbe",
+      "schemaId": "d73d03f9-4279-496f-b466-0b0c0e853c5b",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
       "schemaName": "Currency",
       "schemaId": "b938fcc5-5e2f-4037-80d7-edf82e6e9d13",
       "operation": 0,
