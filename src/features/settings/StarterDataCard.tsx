@@ -19,13 +19,13 @@ const ACTIONS = {
   settings: {
     title: "Add starter settings?",
     description:
-      "Adds currencies, payment terms, a default “No tax” scheme, adjustment reasons, carriers, payment methods and numbering rules. Anything that already exists is left as it is.",
+      "Adds currencies, payment terms, taxing schemes (with “No tax” as the default if you have none), adjustment reasons, carriers, payment methods and numbering rules. Anything that already exists is left as it is.",
     run: seedStarterSettings,
   },
   catalog: {
     title: "Add sample products?",
     description:
-      "Adds 6 categories and 10 sample products with barcodes. Their SKUs start with SAMPLE- so you can find and deactivate them later.",
+      "Adds 11 categories and 30 sample products with barcodes. Their SKUs start with SAMPLE- so you can find and deactivate them later.",
     run: seedSampleCatalog,
   },
 } as const
