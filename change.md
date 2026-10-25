@@ -4,6 +4,7 @@ All changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Run nginx as non-root in the release image so Blocks deploy matches cluster policy (by noor-selise, 2026-10-25)
 - Push `dev` branch and trigger Blocks release deploy for the dev environment (by noor-selise, 2026-10-20)
 - Hide native number spinners and align input focus rings with DESIGN.md (by noor-selise, 2026-10-20)
 - Let tablets expand or collapse the sidebar like desktop and trim the footer to copyright and version only (by noor-selise, 2026-10-20)

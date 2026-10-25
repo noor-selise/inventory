@@ -22,4 +22,8 @@ RUN pnpm build
 FROM nginx:1.27-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx \
+  && touch /tmp/nginx.pid \
+  && chown nginx:nginx /tmp/nginx.pid
+USER nginx
 EXPOSE 8080
