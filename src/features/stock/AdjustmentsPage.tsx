@@ -17,14 +17,13 @@ import { cn } from "@/lib/utils"
 import { cancelAdjustment, createAdjustment, retryAdjustment } from "./actions"
 import { lots, repairIfDue, stockAdjustments, type StockAdjustment } from "./api"
 import { LineEditor, emptyLine, lineProblem, type LineDraft } from "./LineEditor"
+import { STOCK_EDITORS, STOCK_REVIEWERS } from "@/features/team/roles"
+import { locationFilter, seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { useStockLookups, type StockLookups } from "./lookups"
 import { PostingError } from "./posting.ts"
 
 // Stock adjustments with reasons; saving posts, cancelling reverses (spec 0008 AC-1).
 
-export const STOCK_EDITORS = ["admin", "manager", "warehouse"]
-/** Stands in for the "override negative stock" right until permissions are finer (spec 0026). */
-export const NEGATIVE_OVERRIDE = ["admin", "manager"]
 const headClass = "h-9 label-overline"
 
 export function DocumentStatus({ status }: { status: string }) {
@@ -59,7 +58,8 @@ export function AdjustmentsPage() {
   const { hasRole } = useCurrentUser()
   const canEdit = hasRole(...STOCK_EDITORS)
   const lookups = useStockLookups()
-  const list = useResource(() => stockAdjustments.list({ sort: { CreatedDate: -1 }, pageSize: 200 }), [])
+  const scope = useLocationScope()
+  const list = useResource(() => stockAdjustments.list({ filter: locationFilter(scope, "locationId"), sort: { CreatedDate: -1 }, pageSize: 200 }), [scope.key])
   const [creating, setCreating] = React.useState(false)
   const [viewing, setViewing] = React.useState<StockAdjustment>()
 
@@ -124,7 +124,7 @@ export function AdjustmentsPage() {
       {creating && data ? (
         <NewAdjustment
           lookups={data}
-          canOverride={hasRole(...NEGATIVE_OVERRIDE)}
+          canOverride={hasRole(...STOCK_REVIEWERS)}
           onClose={() => setCreating(false)}
           onDone={() => {
             setCreating(false)
@@ -138,7 +138,7 @@ export function AdjustmentsPage() {
           doc={viewing}
           lookups={data}
           canEdit={canEdit}
-          canOverride={hasRole(...NEGATIVE_OVERRIDE)}
+          canOverride={hasRole(...STOCK_REVIEWERS)}
           onClose={() => setViewing(undefined)}
           onChanged={() => {
             setViewing(undefined)
@@ -151,6 +151,7 @@ export function AdjustmentsPage() {
 }
 
 function NewAdjustment({ lookups, canOverride, onClose, onDone }: { lookups: StockLookups; canOverride: boolean; onClose: () => void; onDone: () => void }) {
+  const scope = useLocationScope()
   const defaultLocation = lookups.locations.find((location) => location.isDefault && location.isActive !== false)?.ItemId ?? ""
   const [locationId, setLocationId] = React.useState(defaultLocation)
   const [reasonId, setReasonId] = React.useState("")
@@ -211,7 +212,7 @@ function NewAdjustment({ lookups, canOverride, onClose, onDone }: { lookups: Sto
               id="adjustment-location"
               label="Location"
               required
-              options={lookups.locations.filter((location) => location.isActive !== false).map((location) => ({ value: location.ItemId, label: location.name }))}
+              options={lookups.locations.filter((location) => location.isActive !== false && seesLocation(scope, location.ItemId)).map((location) => ({ value: location.ItemId, label: location.name }))}
               value={locationId}
               onChange={setLocationId}
             />

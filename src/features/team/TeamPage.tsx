@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { locations } from "@/features/locations/api"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { blocksClient } from "@/lib/blocks/client"
 import { formatNumber } from "@/lib/format"
@@ -417,14 +418,18 @@ function ProfileSummary({ profile }: { profile?: TeamMemberProfile }) {
   const parts = [
     approvalLimit(profile) != null ? `Approves POs up to ${formatNumber(approvalLimit(profile)!)}` : null,
     profile?.ownCustomersOnly ? "Own customers only" : null,
+    profile?.allowedLocationIds?.length ? `${profile.allowedLocationIds.length} location${profile.allowedLocationIds.length === 1 ? "" : "s"} only` : null,
   ].filter(Boolean)
   return <>{parts.length ? parts.join(" · ") : "None"}</>
 }
 
-/** Approval limit and sales rep restriction for one person (spec 0012 AC-3, spec 0011 AC-8). */
+/** Approval limit, sales rep restriction and location limits for one person (spec 0012 AC-3, spec 0011 AC-8, spec 0003 AC-8). */
 function ProfileDialog({ user, profile, onClose, onSaved }: { user: BlocksUser; profile?: TeamMemberProfile; onClose: () => void; onSaved: () => void }) {
   const [limit, setLimit] = React.useState(approvalLimit(profile) != null ? String(approvalLimit(profile)) : "")
   const [ownOnly, setOwnOnly] = React.useState(profile?.ownCustomersOnly === true)
+  const [allowed, setAllowed] = React.useState<string[]>(profile?.allowedLocationIds ?? [])
+  const places = useResource(() => locations.list({ sort: { name: 1 }, pageSize: 500 }), [])
+  const isAdminUser = roleSlugs(user.roles).includes(ADMIN_ROLE)
   const [saving, setSaving] = React.useState(false)
   const limitError = limit.trim() && !(Number(limit) >= 0) ? "Enter zero or more, or leave it empty." : undefined
 
@@ -433,7 +438,7 @@ function ProfileDialog({ user, profile, onClose, onSaved }: { user: BlocksUser; 
     if (limitError || !user.itemId) return
     setSaving(true)
     try {
-      await saveProfile(String(user.itemId), { poApprovalLimit: limit.trim() ? Number(limit) : NO_LIMIT, ownCustomersOnly: ownOnly })
+      await saveProfile(String(user.itemId), { poApprovalLimit: limit.trim() ? Number(limit) : NO_LIMIT, ownCustomersOnly: ownOnly, allowedLocationIds: allowed })
       toast.success(`Saved settings for ${displayName(user)}`)
       onSaved()
     } catch (caught) {
@@ -469,6 +474,28 @@ function ProfileDialog({ user, profile, onClose, onSaved }: { user: BlocksUser; 
             onChange={setOwnOnly}
             helper="For sales reps: they see customers and sales orders where they are the sales rep."
           />
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-1 text-sm font-medium">Locations they work at</legend>
+            <p className="text-xs text-muted-foreground">
+              {isAdminUser ? "Admins always see every location." : "Tick none to let them see every location. Ticked locations limit their stock, documents and reports to those places."}
+            </p>
+            {places.data ? (
+              (places.data.items ?? [])
+                .filter((place) => place.isActive !== false || allowed.includes(place.ItemId))
+                .map((place) => (
+                  <CheckboxField
+                    key={place.ItemId}
+                    id={`profile-location-${place.ItemId}`}
+                    label={place.name}
+                    checked={allowed.includes(place.ItemId)}
+                    disabled={isAdminUser}
+                    onChange={(checked) => setAllowed((current) => (checked ? [...current, place.ItemId] : current.filter((id) => id !== place.ItemId)))}
+                  />
+                ))
+            ) : (
+              <LoadingRows rows={2} />
+            )}
+          </fieldset>
           <DialogFooter className="gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel

@@ -15,6 +15,7 @@ export function seedStarterSettings(): Promise<SeedReport> {
 
 export function seedSampleCatalog(): Promise<SeedReport> {
   return runSeed(store(), {
+    demoRatesAndTaxCodes: true,
     sampleCatalog: true,
     demoLocations: true,
     demoPartnersAndPrices: true,

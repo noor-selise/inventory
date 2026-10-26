@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { errorMessage } from "@/hooks/use-resource"
 import { BlocksDataError } from "@/lib/blocks/data"
 import { formatMoney } from "@/lib/format"
+import { CUSTOMER_EDITORS } from "@/features/team/roles"
 import { customers, type Address, type Contact, type Customer } from "./api"
 import { AddressFields, ContactsEditor, EMAIL_PATTERN, cleanAddress, cleanContacts } from "./fields"
 import { PartnerList } from "./PartnerList"
@@ -18,7 +19,6 @@ import { usePartnerLookups } from "./useLookups"
 
 // Customers with their order defaults (spec 0010 AC-1).
 
-const CUSTOMER_EDITORS = ["admin", "manager", "sales"]
 
 export function CustomersPage() {
   const { hasRole, profile, user } = useCurrentUser()

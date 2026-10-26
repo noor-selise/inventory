@@ -13,7 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PaymentDialog } from "@/features/payments/PaymentDialog"
 import { payments } from "@/features/payments/api"
-import { COST_VIEWERS, PURCHASE_EDITORS, RECEIVERS, type OrderLookups } from "@/features/sales/lookups"
+import { type OrderLookups } from "@/features/sales/lookups"
+import { COST_VIEWERS, PURCHASE_EDITORS, RECEIVERS } from "@/features/team/roles"
 import { discounted, landedUnitCosts } from "@/features/sales/order-math"
 import { HistoryList, InventoryBadge, PaymentBadge, TotalsBlock, headClass } from "@/features/sales/OrderBits"
 import { postingMessage } from "@/features/stock/AdjustmentsPage"
@@ -22,6 +23,7 @@ import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { canApprove } from "@/features/team/profile"
 import { toHome } from "@/features/sales/order-math"
+import { seesLocation, useLocationScope } from "@/features/team/location-scope"
 import {
   applyVendorPrices,
   approvePurchaseOrder,
@@ -56,6 +58,7 @@ export function PurchaseOrderDetail({
   const canEdit = hasRole(...PURCHASE_EDITORS)
   const canReceive = hasRole(...RECEIVERS)
   const canSeeCost = hasRole(...COST_VIEWERS)
+  const scope = useLocationScope()
   const loaded = useResource(() => purchaseOrders.get(orderId), [orderId])
   const paid = useResource(async () => (await payments.list({ filter: { "allocations.orderId": orderId }, pageSize: 200 })).items, [orderId])
   const [dialog, setDialog] = React.useState<"receive" | "return" | "pay" | "cancel" | null>(null)
@@ -91,6 +94,20 @@ export function PurchaseOrderDetail({
             <DialogDescription>One moment.</DialogDescription>
           </DialogHeader>
           {loaded.error ? <ErrorBanner message={loaded.error} onRetry={loaded.reload} /> : <LoadingRows />}
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // Location limits (spec 0003): app side only, like the rep restriction.
+  if (!seesLocation(scope, order.receiveLocationId)) {
+    return (
+      <Dialog open onOpenChange={(value) => !value && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>No access to this location</DialogTitle>
+            <DialogDescription>This purchase order belongs to a location you are not set up for. Ask an owner to add it on the Team screen.</DialogDescription>
+          </DialogHeader>
         </DialogContent>
       </Dialog>
     )

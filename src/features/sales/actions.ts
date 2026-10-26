@@ -57,9 +57,6 @@ export function dueDateFor(orderDate: string, term?: PaymentTerm) {
 // the customer's outstanding balance over their limit waits for someone with
 // the Confirm right (spec 0027: admin and manager). App side only (L4).
 
-/** Roles holding the Confirm right (spec 0027). */
-export const CONFIRMERS = ["admin", "manager"]
-
 type CreditInput = Pick<SalesOrder, "customerId" | "currencyCode" | "total" | "amountPaid" | "invoicedOn"> & { ItemId?: string }
 
 /** The customer's open balance in the order currency plus what this order still adds, against their credit limit. */

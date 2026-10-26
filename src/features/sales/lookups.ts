@@ -121,9 +121,3 @@ export function useOrderLookups() {
   }, [])
 }
 
-export const SALES_EDITORS = ["admin", "manager", "sales"]
-export const FULFILLERS = ["admin", "manager", "sales", "warehouse"]
-export const PURCHASE_EDITORS = ["admin", "manager", "purchasing"]
-export const RECEIVERS = ["admin", "manager", "purchasing", "warehouse"]
-/** Stands in for the Cost View right until field masking exists (spec 0003). */
-export const COST_VIEWERS = ["admin", "manager", "purchasing"]

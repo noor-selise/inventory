@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useResource } from "@/hooks/use-resource"
 import { formatDate, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { locationFilter, useLocationScope } from "@/features/team/location-scope"
 import { posting, type Lot } from "./api"
 import { SOURCE_LABELS, useStockLookups, type StockLookups } from "./lookups"
 import type { Movement } from "./posting.ts"
@@ -26,12 +27,13 @@ export function LotsPage() {
   const [query, setQuery] = React.useState("")
   const [serialQuery, setSerialQuery] = React.useState("")
   const [trace, setTrace] = React.useState<{ title: string; filter: Record<string, unknown> }>()
+  const scope = useLocationScope()
   const stock = useResource(async () => {
-    const { items } = await posting.balances({ lotId: { $ne: null } }, { pageSize: 5000 })
+    const { items } = await posting.balances({ lotId: { $ne: null }, ...locationFilter(scope, "locationId") }, { pageSize: 5000 })
     const totals = new Map<string, number>()
     for (const balance of items) if (balance.lotId) totals.set(balance.lotId, (totals.get(balance.lotId) ?? 0) + balance.onHand)
     return totals
-  }, [])
+  }, [scope.key])
 
   const data = lookups.data
   const needle = query.trim().toLowerCase()
@@ -135,9 +137,10 @@ export function LotsPage() {
 }
 
 function TraceDialog({ title, filter, lookups, onClose }: { title: string; filter: Record<string, unknown>; lookups: StockLookups; onClose: () => void }) {
+  const scope = useLocationScope()
   const { data, error, loading } = useResource(
-    async () => (await posting.movements({ ...filter, status: "posted" }, { sort: { effectiveAt: 1 }, pageSize: 2000 })).items,
-    [JSON.stringify(filter)]
+    async () => (await posting.movements({ ...filter, status: "posted", ...locationFilter(scope, "locationId") }, { sort: { effectiveAt: 1 }, pageSize: 2000 })).items,
+    [JSON.stringify(filter), scope.key]
   )
   const movements = data ?? []
   // Backward: where it came from. Forward: where it went. Moves between our own

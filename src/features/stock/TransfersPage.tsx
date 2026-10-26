@@ -14,7 +14,9 @@ import { formatDate, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { cancelTransfer, createTransfer, receiveTransfer, sendTransfer } from "./actions"
 import { allocateLots, lots, repairIfDue, stockTransfers, type StockTransfer } from "./api"
-import { DocumentStatus, STOCK_EDITORS, postingMessage } from "./AdjustmentsPage"
+import { STOCK_EDITORS } from "@/features/team/roles"
+import { seesAnyLocation, seesLocation, useLocationScope } from "@/features/team/location-scope"
+import { DocumentStatus, postingMessage } from "./AdjustmentsPage"
 import { LineEditor, emptyLine, lineProblem, type LineDraft } from "./LineEditor"
 import { useStockLookups, type StockLookups } from "./lookups"
 
@@ -26,6 +28,7 @@ const headClass = "h-9 label-overline"
 export function TransfersPage() {
   const canEdit = useCurrentUser().hasRole(...STOCK_EDITORS)
   const lookups = useStockLookups()
+  const scope = useLocationScope()
   const list = useResource(() => stockTransfers.list({ sort: { CreatedDate: -1 }, pageSize: 200 }), [])
   const [creating, setCreating] = React.useState(false)
   const [viewing, setViewing] = React.useState<StockTransfer>()
@@ -35,7 +38,8 @@ export function TransfersPage() {
   }, [])
 
   const data = lookups.data
-  const rows = list.data?.items ?? []
+  // Either end allowed (spec 0003 Location limits); one query cannot express the OR.
+  const rows = (list.data?.items ?? []).filter((doc) => seesAnyLocation(scope, doc.fromLocationId, doc.toLocationId))
   return (
     <>
       <PageHeader
@@ -119,8 +123,11 @@ export function TransfersPage() {
 }
 
 function NewTransfer({ lookups, onClose, onDone }: { lookups: StockLookups; onClose: () => void; onDone: (doc: StockTransfer) => void }) {
+  const scope = useLocationScope()
   const active = lookups.locations.filter((location) => location.isActive !== false)
-  const [fromLocationId, setFrom] = React.useState(active.find((location) => location.isDefault)?.ItemId ?? "")
+  // A limited person sends only from an allowed location, to any (spec 0003 Location limits).
+  const sendable = active.filter((location) => seesLocation(scope, location.ItemId))
+  const [fromLocationId, setFrom] = React.useState((sendable.find((location) => location.isDefault) ?? (scope.limited ? sendable[0] : undefined))?.ItemId ?? "")
   const [toLocationId, setTo] = React.useState("")
   const [remarks, setRemarks] = React.useState("")
   const [lines, setLines] = React.useState<LineDraft[]>([{ ...emptyLine(), direction: "out" }])
@@ -180,6 +187,7 @@ function NewTransfer({ lookups, onClose, onDone }: { lookups: StockLookups; onCl
   }
 
   const options = active.map((location) => ({ value: location.ItemId, label: location.name }))
+  const fromOptions = sendable.map((location) => ({ value: location.ItemId, label: location.name }))
   return (
     <Dialog open onOpenChange={(open) => !open && !saving && onClose()}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
@@ -190,7 +198,7 @@ function NewTransfer({ lookups, onClose, onDone }: { lookups: StockLookups; onCl
         <form onSubmit={save} className="flex flex-col gap-4">
           {saveError ? <ErrorBanner message={saveError} /> : null}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <SelectField id="transfer-from" label="From" required options={options} value={fromLocationId} onChange={setFrom} />
+            <SelectField id="transfer-from" label="From" required options={fromOptions} value={fromLocationId} onChange={setFrom} />
             <SelectField id="transfer-to" label="To" required options={options.filter((option) => option.value !== fromLocationId)} value={toLocationId} onChange={setTo} />
           </div>
           <LineEditor lines={lines} onChange={setLines} lookups={lookups} locationId={fromLocationId} toLocationId={toLocationId} mode="transfer" disabled={saving} errors={errors} />

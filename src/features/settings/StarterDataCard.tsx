@@ -25,7 +25,7 @@ const ACTIONS = {
   catalog: {
     title: "Add sample data?",
     description:
-      "Adds 11 categories, 30 sample products with barcodes, 3 locations with bins, 7 customers, 4 vendors, 3 price lists with breaks, opening stock, a month of stock activity (adjustments, transfers, counts), and one demo team member per role on @example.com addresses that never receive mail. Run starter settings first. Sample SKUs start with SAMPLE-.",
+      "Adds exchange rates, tax codes, 11 categories, 30 sample products with barcodes, 3 locations with bins, 7 customers, 4 vendors, 3 price lists with breaks, opening stock, a month of stock activity (adjustments, transfers, counts), and one demo team member per role on @example.com addresses that never receive mail. Run starter settings first. Sample SKUs start with SAMPLE-.",
     run: seedSampleCatalog,
   },
 } as const

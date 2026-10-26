@@ -10,6 +10,7 @@ import { SOURCE_LABELS } from "@/features/stock/lookups"
 import { computeTax } from "@/features/pricing/pricing"
 import { adjustmentReasons } from "@/features/settings/api"
 import { dateFilter } from "@/lib/blocks/data"
+import { locationFilter, locationScope, seesAnyLocation } from "@/features/team/location-scope"
 
 // The core 20 reports (spec 0015 AC-1). Blocks has no server side sums, so
 // each report reads raw rows in pages and adds them up in the browser; fine
@@ -17,7 +18,19 @@ import { dateFilter } from "@/lib/blocks/data"
 
 export type ColumnType = "text" | "number" | "money" | "date"
 export type ReportColumn = { key: string; label: string; type: ColumnType; /** Hidden from users without cost access (AC-4). */ cost?: boolean }
-export type ReportFilters = { from?: string; to?: string; locationId?: string; productId?: string; partyId?: string }
+export type ReportFilters = {
+  from?: string
+  to?: string
+  locationId?: string
+  productId?: string
+  partyId?: string
+  /** Set by the page for a location limited person (spec 0003); never saved with a report. */
+  allowedLocationIds?: string[]
+}
+
+// One location field filter: the chosen location, or every allowed one for a
+// limited person (spec 0003 Location limits).
+const loc = (field: string, filters: ReportFilters) => locationFilter(locationScope({ allowedLocationIds: filters.allowedLocationIds }, false), field, filters.locationId)
 export type ReportRow = Record<string, string | number | null>
 /** "date" is a from and to range; "asOf" is one end date, kept in `to`. */
 export type FilterKind = "date" | "asOf" | "location" | "product" | "customer" | "vendor"
@@ -56,7 +69,7 @@ function range(field: string, filters: ReportFilters) {
 async function soldOrders(filters: ReportFilters, extra: Record<string, unknown> = {}) {
   return all((pageNo) =>
     salesOrders.list({
-      filter: { isQuote: false, isCancelled: { $ne: true }, ...range("orderDate", filters), ...(filters.locationId ? { locationId: filters.locationId } : {}), ...(filters.partyId ? { customerId: filters.partyId } : {}), ...extra },
+      filter: { isQuote: false, isCancelled: { $ne: true }, ...range("orderDate", filters), ...loc("locationId", filters), ...(filters.partyId ? { customerId: filters.partyId } : {}), ...extra },
       pageNo,
       pageSize: PAGE,
     })
@@ -66,7 +79,7 @@ async function soldOrders(filters: ReportFilters, extra: Record<string, unknown>
 async function boughtOrders(filters: ReportFilters, extra: Record<string, unknown> = {}) {
   return all((pageNo) =>
     purchaseOrders.list({
-      filter: { isQuote: false, isCancelled: { $ne: true }, ...range("orderDate", filters), ...(filters.locationId ? { receiveLocationId: filters.locationId } : {}), ...(filters.partyId ? { vendorId: filters.partyId } : {}), ...extra },
+      filter: { isQuote: false, isCancelled: { $ne: true }, ...range("orderDate", filters), ...loc("receiveLocationId", filters), ...(filters.partyId ? { vendorId: filters.partyId } : {}), ...extra },
       pageNo,
       pageSize: PAGE,
     })
@@ -82,7 +95,7 @@ function lineCost(order: SalesOrder, lineId: string) {
 }
 
 async function balanceRows(filters: ReportFilters) {
-  return all((pageNo) => posting.balances({ ...(filters.locationId ? { locationId: filters.locationId } : {}), ...(filters.productId ? { productId: filters.productId } : {}) }, { pageNo, pageSize: PAGE }))
+  return all((pageNo) => posting.balances({ ...loc("locationId", filters), ...(filters.productId ? { productId: filters.productId } : {}) }, { pageNo, pageSize: PAGE }))
 }
 
 export const REPORTS: ReportDefinition[] = [
@@ -428,7 +441,7 @@ export const REPORTS: ReportDefinition[] = [
     load: async (filters, lookups) =>
       (
         await all((pageNo) =>
-          posting.movements({ status: "posted", ...range("effectiveAt", filters), ...(filters.locationId ? { locationId: filters.locationId } : {}), ...(filters.productId ? { productId: filters.productId } : {}) }, { sort: { effectiveAt: -1 }, pageNo, pageSize: PAGE })
+          posting.movements({ status: "posted", ...range("effectiveAt", filters), ...loc("locationId", filters), ...(filters.productId ? { productId: filters.productId } : {}) }, { sort: { effectiveAt: -1 }, pageNo, pageSize: PAGE })
         )
       ).map((movement) => ({
         date: movement.effectiveAt,
@@ -455,7 +468,7 @@ export const REPORTS: ReportDefinition[] = [
     load: async (filters, lookups) => {
       const totals = new Map<string, number>()
       const rows = await all((pageNo) =>
-        posting.movements({ status: "posted", ...(filters.to ? { effectiveAt: { $lte: dateFilter(dayEnd(filters.to)!) } } : {}), ...(filters.locationId ? { locationId: filters.locationId } : {}), ...(filters.productId ? { productId: filters.productId } : {}) }, { pageNo, pageSize: PAGE })
+        posting.movements({ status: "posted", ...(filters.to ? { effectiveAt: { $lte: dateFilter(dayEnd(filters.to)!) } } : {}), ...loc("locationId", filters), ...(filters.productId ? { productId: filters.productId } : {}) }, { pageNo, pageSize: PAGE })
       )
       for (const movement of rows) totals.set(`${movement.productId}|${movement.locationId}`, (totals.get(`${movement.productId}|${movement.locationId}`) ?? 0) + movement.qtyDelta)
       return [...totals]
@@ -483,7 +496,7 @@ export const REPORTS: ReportDefinition[] = [
       { key: "suggested", label: "Suggested", type: "number" },
     ],
     load: async (filters, lookups) =>
-      (await reorderSuggestions.list({ filter: { ...(filters.locationId ? { locationId: filters.locationId } : {}), ...(filters.productId ? { productId: filters.productId } : {}) }, pageSize: 5000 })).items.map((row) => ({
+      (await reorderSuggestions.list({ filter: { ...loc("locationId", filters), ...(filters.productId ? { productId: filters.productId } : {}) }, pageSize: 5000 })).items.map((row) => ({
         product: lookups.productOf(row.productId)?.name ?? "",
         location: lookups.locationName(row.locationId),
         onHand: row.onHand,
@@ -512,7 +525,7 @@ export const REPORTS: ReportDefinition[] = [
     load: async (filters, lookups) => {
       const reasons = new Map<string, string>()
       for (const reason of (await adjustmentReasons.list({ pageSize: 500 })).items) reasons.set(reason.ItemId, reason.name)
-      return (await all((pageNo) => stockAdjustments.list({ filter: { ...range("adjustedAt", filters), ...(filters.locationId ? { locationId: filters.locationId } : {}) }, pageNo, pageSize: PAGE }))).flatMap((doc) =>
+      return (await all((pageNo) => stockAdjustments.list({ filter: { ...range("adjustedAt", filters), ...loc("locationId", filters) }, pageNo, pageSize: PAGE }))).flatMap((doc) =>
         doc.lines
           .filter((line) => !filters.productId || line.productId === filters.productId)
           .map((line) => ({ number: doc.number, date: doc.adjustedAt, location: lookups.locationName(doc.locationId), reason: reasons.get(doc.reasonId) ?? "", status: doc.status, product: lookups.productOf(line.productId)?.name ?? "", qty: line.qtyDelta }))
@@ -536,7 +549,7 @@ export const REPORTS: ReportDefinition[] = [
     ],
     load: async (filters, lookups) =>
       (await all((pageNo) => stockTransfers.list({ filter: { ...range("CreatedDate", filters) }, pageNo, pageSize: PAGE })))
-        .filter((doc) => !filters.locationId || doc.fromLocationId === filters.locationId || doc.toLocationId === filters.locationId)
+        .filter((doc) => (!filters.locationId || doc.fromLocationId === filters.locationId || doc.toLocationId === filters.locationId) && seesAnyLocation(locationScope({ allowedLocationIds: filters.allowedLocationIds }, false), doc.fromLocationId, doc.toLocationId))
         .flatMap((doc) =>
           doc.lines
             .filter((line) => !filters.productId || line.productId === filters.productId)

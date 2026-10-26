@@ -11,6 +11,7 @@ import { formatAddress } from "@/features/partners/api"
 import { resolvePrice } from "@/features/pricing/pricing"
 import { toStandardQty, type Product } from "@/features/products/api"
 import { errorMessage } from "@/hooks/use-resource"
+import { seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { createSalesOrder, dueDateFor, salesTotals, updateSalesOrder, type SalesDraft } from "./actions"
 import type { SalesLine, SalesOrder } from "./api"
 import type { OrderLookups } from "./lookups"
@@ -209,12 +210,13 @@ export function SalesOrderEditor({
     }
   }
 
+  const scope = useLocationScope()
   const options = {
     customers: lookups.customers
       .filter((row) => row.isActive !== false || row.ItemId === customerId)
       .filter((row) => !ownOnly || row.salesRepUserId === ownOnly || row.ItemId === customerId)
       .map((row) => ({ value: row.ItemId, label: row.name })),
-    locations: lookups.locations.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: row.name })),
+    locations: lookups.locations.filter((row) => row.isActive !== false && seesLocation(scope, row.ItemId)).map((row) => ({ value: row.ItemId, label: row.name })),
     currencies: lookups.currencies.map((code) => ({ value: code, label: code })),
     schemes: lookups.schemes.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: `${row.name} (${row.currencyCode})` })),
     taxes: lookups.taxSchemes.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: row.name })),

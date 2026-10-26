@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useResource } from "@/hooks/use-resource"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { locationFilter, seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { posting, quantitiesFor, repairIfDue } from "./api"
 import { SOURCE_LABELS, useStockLookups, type StockLookups } from "./lookups"
 import type { Movement } from "./posting.ts"
@@ -62,9 +63,10 @@ export function StockPage() {
 function OnHand({ lookups, onOpenProduct }: { lookups: StockLookups; onOpenProduct: (productId: string) => void }) {
   const [locationId, setLocationId] = React.useState("")
   const [query, setQuery] = React.useState("")
+  const scope = useLocationScope()
   const { data, error, loading, reload } = useResource(
-    () => posting.balances(locationId ? { locationId, onHand: { $ne: 0 } } : { onHand: { $ne: 0 } }, { pageSize: 2000 }),
-    [locationId]
+    () => posting.balances({ ...locationFilter(scope, "locationId", locationId), onHand: { $ne: 0 } }, { pageSize: 2000 }),
+    [locationId, scope.key]
   )
   const needle = query.trim().toLowerCase()
   const rows = (data?.items ?? [])
@@ -80,7 +82,7 @@ function OnHand({ lookups, onOpenProduct }: { lookups: StockLookups; onOpenProdu
           label="Location"
           allowNone
           placeholder="All locations"
-          options={lookups.locations.map((location) => ({ value: location.ItemId, label: location.name }))}
+          options={lookups.locations.filter((location) => seesLocation(scope, location.ItemId)).map((location) => ({ value: location.ItemId, label: location.name }))}
           value={locationId}
           onChange={setLocationId}
           className="md:w-64"
@@ -136,11 +138,13 @@ function OnHand({ lookups, onOpenProduct }: { lookups: StockLookups; onOpenProdu
 
 function ProductStock({ lookups, productId, onProductChange }: { lookups: StockLookups; productId: string; onProductChange: (id: string) => void }) {
   const product = lookups.product(productId)
-  const quantities = useResource(async () => (productId ? quantitiesFor(productId) : []), [productId])
+  const scope = useLocationScope()
+  // Per location rows: only allowed locations (spec 0003 Location limits).
+  const quantities = useResource(async () => (productId ? (await quantitiesFor(productId)).filter((row) => seesLocation(scope, row.locationId)) : []), [productId, scope.key])
   const [asOf, setAsOf] = React.useState("")
   const history = useResource(
-    async () => (productId ? (await posting.movements({ productId, status: "posted" }, { sort: { effectiveAt: 1 }, pageSize: 2000 })).items : []),
-    [productId]
+    async () => (productId ? (await posting.movements({ productId, status: "posted", ...locationFilter(scope, "locationId") }, { sort: { effectiveAt: 1 }, pageSize: 2000 })).items : []),
+    [productId, scope.key]
   )
 
   const totals = (quantities.data ?? []).reduce(

@@ -17,6 +17,7 @@ import { currencies, taxCodes, taxingSchemes } from "@/features/settings/api"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { CURRENCY_CODES, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { PRICE_EDITORS } from "@/features/team/roles"
 import { priceBreaks, pricingSchemes, productPrices, type PriceBreak, type PricingScheme, type ProductPrice } from "./api"
 import { computeTax, resolvePrice } from "./pricing.ts"
 
@@ -24,7 +25,6 @@ import { computeTax, resolvePrice } from "./pricing.ts"
 // average cost) and volume breaks (spec 0010 AC-3, AC-4), plus a price check
 // that runs the shared price and tax module (AC-5, AC-6).
 
-const PRICE_EDITORS = ["admin", "manager"]
 const headClass = "h-9 label-overline"
 
 export function PriceListsPage() {

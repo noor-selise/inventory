@@ -33,3 +33,10 @@ dist-ssr
 !.env.example
 .cert/
 .design/
+# EGM bootstrap READMEs inside src (regenerated with /egm:egm-bootstrap)
+src/**/README.md
+
+# EGM reports, reviews and drafts (local only)
+egm/
+
+graphify-out/

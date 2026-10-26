@@ -13,6 +13,8 @@ type CurrentUserValue = {
   hasRole: (...slugs: string[]) => boolean
   /** Per person settings (spec 0027); undefined until loaded or when none exist. */
   profile: TeamMemberProfile | undefined
+  /** True once the user and profile load has finished (or failed). Location limits depend on it. */
+  loaded: boolean
   reload: () => Promise<void>
 }
 
@@ -26,16 +28,22 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
   const { status } = useAuth()
   const [user, setUser] = React.useState<BlocksUser>()
   const [profile, setProfile] = React.useState<TeamMemberProfile>()
+  const [loaded, setLoaded] = React.useState(false)
 
   const reload = React.useCallback(async () => {
     try {
       const response = await blocksClient.iam.me()
-      setUser(response.data)
       const userId = response.data?.itemId
-      setProfile(userId ? await profileFor(String(userId)).catch(() => undefined) : undefined)
+      // Load the profile before publishing the user, so screens never render
+      // with the user known but their location limits missing (spec 0003).
+      const nextProfile = userId ? await profileFor(String(userId)).catch(() => undefined) : undefined
+      setUser(response.data)
+      setProfile(nextProfile)
     } catch {
       setUser(undefined)
       setProfile(undefined)
+    } finally {
+      setLoaded(true)
     }
   }, [])
 
@@ -44,6 +52,7 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
     if (status === "unauthenticated") {
       setUser(undefined)
       setProfile(undefined)
+      setLoaded(false)
     }
   }, [status, reload])
 
@@ -51,8 +60,8 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
     const roles = roleSlugs(user?.roles)
     const hasRole = (...slugs: string[]) =>
       slugs.some((slug) => roles.includes(slug))
-    return { user, roles, isAdmin: hasRole(ADMIN_ROLE), hasRole, profile, reload }
-  }, [user, profile, reload])
+    return { user, roles, isAdmin: hasRole(ADMIN_ROLE), hasRole, profile, loaded, reload }
+  }, [user, profile, loaded, reload])
 
   return (
     <CurrentUserContext.Provider value={value}>

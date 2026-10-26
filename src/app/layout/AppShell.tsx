@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/app/providers/AuthProvider"
 import { useCurrentUser, userDisplayName } from "@/app/providers/CurrentUserProvider"
 import { Link, useNavigation } from "@/app/router/navigation"
+import { LoadingRows } from "@/components/app/page"
 import { ThemeMenu } from "@/components/app/theme-menu"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -44,6 +45,7 @@ import { companies } from "@/features/settings/api"
 import { roleName } from "@/features/team/roles"
 import { useResource } from "@/hooks/use-resource"
 import { cn } from "@/lib/utils"
+import { locationFilter, useLocationScope } from "@/features/team/location-scope"
 
 // App shell (docs/DESIGN.md §6.6, §7.2): from md up, sidebar expands to 240px or
 // folds to a 64px rail (preference remembered); phones use a sheet. Footer is
@@ -145,7 +147,8 @@ function useStoredState<T>(key: string, initial: T) {
 
 /** Live counts beside nav links, read once per visit. */
 function useNavBadges() {
-  const reorder = useResource(async () => (await reorderSuggestions.list({ pageSize: 1 })).totalCount, [])
+  const scope = useLocationScope()
+  const reorder = useResource(async () => (await reorderSuggestions.list({ filter: locationFilter(scope, "locationId"), pageSize: 1 })).totalCount, [scope.key])
   return { reorder: reorder.data ?? 0 }
 }
 
@@ -369,6 +372,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [folded, setFolded] = useStoredState("inventory:sidebar-folded", false)
   useDailyReorderCheck()
+  const { loaded } = useCurrentUser()
 
   return (
     <div className="flex min-h-svh bg-background">
@@ -411,7 +415,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main id="main" className="min-w-0 flex-1 px-4 py-4 md:px-6 md:py-6 lg:px-8">
-          <div className="mx-auto w-full max-w-[1600px]">{children}</div>
+          <div className="mx-auto w-full max-w-[1600px]">{loaded ? children : <LoadingRows rows={6} />}</div>
         </main>
         <AppFooter />
       </div>

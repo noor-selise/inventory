@@ -14,13 +14,15 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createPurchaseOrder } from "@/features/purchasing/actions"
-import { PURCHASE_EDITORS, useOrderLookups, type OrderLookups } from "@/features/sales/lookups"
+import { useOrderLookups, type OrderLookups } from "@/features/sales/lookups"
+import { PURCHASE_EDITORS } from "@/features/team/roles"
 import { headClass } from "@/features/sales/OrderBits"
 import { createTransfer } from "@/features/stock/actions"
 import { useStockLookups } from "@/features/stock/lookups"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { locationFilter, seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { REORDER_METHODS, reorderSettings, reorderSuggestions, runReorderCheck, sendLowStockAlerts, suggestedPoints, type ReorderSetting, type ReorderSuggestion } from "./api"
 
 // Reorder points, the reorder list and one click drafts (spec 0014). The list
@@ -59,7 +61,8 @@ export function ReorderPage() {
   const canEdit = hasRole(...PURCHASE_EDITORS)
   const lookups = useOrderLookups()
   const stockLookups = useStockLookups()
-  const list = useResource(() => reorderSuggestions.list({ pageSize: 2000 }), [])
+  const scope = useLocationScope()
+  const list = useResource(() => reorderSuggestions.list({ filter: locationFilter(scope, "locationId"), pageSize: 2000 }), [scope.key])
   const settings = useResource(() => reorderSettings.list({ pageSize: 5000 }), [])
   const suggested = useResource(async () => (settings.data ? suggestedPoints(settings.data.items) : undefined), [settings.data])
   const [checking, setChecking] = React.useState(false)
@@ -128,7 +131,8 @@ export function ReorderPage() {
   const alertedCount = all.filter((row) => settingOf(row)?.isAlerting).length
   const draftable = rows.filter((row) => row.method !== "manufacture")
   const productOptions = (data?.products ?? []).filter((product) => product.itemType === "stocked").map((product) => ({ value: product.ItemId, label: `${product.name} (${product.sku})` }))
-  const locationOptions = (data?.locations ?? []).map((location) => ({ value: location.ItemId, label: location.name }))
+  const allLocationOptions = (data?.locations ?? []).map((location) => ({ value: location.ItemId, label: location.name }))
+  const locationOptions = allLocationOptions.filter((option) => seesLocation(scope, option.value))
   const vendorOptions = (data?.vendors ?? []).map((vendor) => ({ value: vendor.ItemId, label: vendor.name }))
   const unit = (productId: string) => data?.productOf(productId)?.standardUom ?? ""
   const how = (row: ReorderSuggestion) =>
@@ -294,7 +298,7 @@ export function ReorderPage() {
                 { name: "safetyStock", label: "Safety stock", type: "number", min: 0, helper: "Extra units on top of lead time demand, used for the suggested point." },
                 { name: "method", label: "How", type: "select", required: true, options: REORDER_METHODS.map((method) => ({ value: method.value, label: method.label })) },
                 { name: "vendorId", label: "Vendor", type: "select", options: vendorOptions, allowNone: true, visible: (values) => values.method === "purchase" },
-                { name: "sourceLocationId", label: "Move from", type: "select", options: locationOptions, allowNone: true, visible: (values) => values.method === "transfer" },
+                { name: "sourceLocationId", label: "Move from", type: "select", options: allLocationOptions, allowNone: true, visible: (values) => values.method === "transfer" },
               ]}
               defaults={{ method: "purchase" }}
               validate={(values, items, editing) => {

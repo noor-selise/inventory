@@ -23,7 +23,6 @@ import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import {
-  CONFIRMERS,
   cancelSalesOrder,
   confirmSalesOrder,
   convertSalesOrder,
@@ -46,7 +45,9 @@ import {
   type PickRequest,
 } from "./actions"
 import { salesOrders, type SalesOrder } from "./api"
-import { COST_VIEWERS, FULFILLERS, SALES_EDITORS, type OrderLookups } from "./lookups"
+import { CONFIRMERS, COST_VIEWERS, FULFILLERS, SALES_EDITORS } from "@/features/team/roles"
+import { seesLocation, useLocationScope } from "@/features/team/location-scope"
+import { type OrderLookups } from "./lookups"
 import { isReturn, salesLineRemaining, toHome } from "./order-math"
 import { HistoryList, InventoryBadge, PaymentBadge, TotalsBlock, headClass } from "./OrderBits"
 
@@ -74,6 +75,7 @@ export function SalesOrderDetail({
   const canEdit = hasRole(...SALES_EDITORS)
   const canFulfill = hasRole(...FULFILLERS)
   const canSeeCost = hasRole(...COST_VIEWERS)
+  const scope = useLocationScope()
   const loaded = useResource(() => salesOrders.get(orderId), [orderId])
   const paid = useResource(async () => (await payments.list({ filter: { "allocations.orderId": orderId }, pageSize: 200 })).items, [orderId])
   const [dialog, setDialog] = React.useState<StepDialog>(null)
@@ -127,6 +129,20 @@ export function SalesOrderDetail({
           <DialogHeader>
             <DialogTitle>Not your order</DialogTitle>
             <DialogDescription>You can open only orders where you are the sales rep.</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // Location limits (spec 0003): app side only, like the rep restriction.
+  if (!seesLocation(scope, order.locationId)) {
+    return (
+      <Dialog open onOpenChange={(value) => !value && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>No access to this location</DialogTitle>
+            <DialogDescription>This order belongs to a location you are not set up for. Ask an owner to add it on the Team screen.</DialogDescription>
           </DialogHeader>
         </DialogContent>
       </Dialog>

@@ -18,26 +18,28 @@ import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { cancelCount, completeCount, countVariances, createCount, saveSheetCounts, startSheet } from "./actions"
 import { posting, stockCounts, type StockCount } from "./api"
-import { DocumentStatus, STOCK_EDITORS, postingMessage } from "./AdjustmentsPage"
+import { STOCK_EDITORS, STOCK_REVIEWERS } from "@/features/team/roles"
+import { locationFilter, seesLocation, useLocationScope } from "@/features/team/location-scope"
+import { DocumentStatus, postingMessage } from "./AdjustmentsPage"
 import { useStockLookups, type StockLookups } from "./lookups"
 
 // Stock counts split into sheets; review variances; completing posts one
 // adjustment of the differences (spec 0008 AC-4 to AC-6).
 
 /** Reviewers see expected quantities while counting; counters count blind. */
-const REVIEWERS = ["admin", "manager"]
 const headClass = "h-9 label-overline"
 
 export function CountsPage() {
   const { hasRole, user } = useCurrentUser()
   const canEdit = hasRole(...STOCK_EDITORS)
-  const isReviewer = hasRole(...REVIEWERS)
+  const isReviewer = hasRole(...STOCK_REVIEWERS)
   const lookups = useStockLookups()
   const team = useResource(async () => {
     const response = await blocksClient.iam.users.list({ pageNo: 1, pageSize: 100 }).catch(() => ({ data: [] }))
     return (response.data ?? []).filter((member) => member.itemId && member.active !== false)
   }, [])
-  const list = useResource(() => stockCounts.list({ sort: { CreatedDate: -1 }, pageSize: 100 }), [])
+  const scope = useLocationScope()
+  const list = useResource(() => stockCounts.list({ filter: locationFilter(scope, "locationId"), sort: { CreatedDate: -1 }, pageSize: 100 }), [scope.key])
   const [creating, setCreating] = React.useState(false)
   const [viewingId, setViewingId] = React.useState<string>()
 
@@ -131,8 +133,9 @@ export function CountsPage() {
 type SheetDraft = { key: string; name: string; assigneeId: string; productIds: string[] }
 
 function NewCount({ lookups, team, onClose, onDone }: { lookups: StockLookups; team: { value: string; label: string }[]; onClose: () => void; onDone: (count: StockCount) => void }) {
-  const active = lookups.locations.filter((location) => location.isActive !== false)
-  const [locationId, setLocationId] = React.useState(active.find((location) => location.isDefault)?.ItemId ?? "")
+  const scope = useLocationScope()
+  const active = lookups.locations.filter((location) => location.isActive !== false && seesLocation(scope, location.ItemId))
+  const [locationId, setLocationId] = React.useState((active.find((location) => location.isDefault) ?? (scope.limited ? active[0] : undefined))?.ItemId ?? "")
   const [remarks, setRemarks] = React.useState("")
   const [sheets, setSheets] = React.useState<SheetDraft[]>([{ key: crypto.randomUUID(), name: "Sheet 1", assigneeId: "", productIds: [] }])
   const [saving, setSaving] = React.useState(false)

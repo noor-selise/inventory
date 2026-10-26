@@ -2,7 +2,7 @@ import { blocksClient } from "@/lib/blocks/client"
 import { collection, dateFilter, type Entity } from "@/lib/blocks/data"
 import { products, vendorItems, type VendorItem } from "@/features/products/api"
 import { locations } from "@/features/locations/api"
-import { roleSlugs } from "@/features/team/roles"
+import { ALERT_ROLES, roleSlugs } from "@/features/team/roles"
 import { OPEN_PO_FILTER, purchaseOrders } from "@/features/purchasing/api"
 import { OPEN_ORDER_FILTER, salesOrders } from "@/features/sales/api"
 import { posting, stockTransfers } from "@/features/stock/api"
@@ -127,7 +127,6 @@ export async function suggestedPoints(settings: ReorderSetting[]) {
 // used: notify needs a notification configuration, a connection id and a
 // response key and value, and Blocks publishes no channel values to create one.
 
-export const ALERT_ROLES = ["purchasing"]
 export const ALERT_MAIL_PURPOSE = "low-stock-alert"
 
 export type AlertResult = { count: number; inApp: string; email: string }
@@ -149,7 +148,7 @@ export async function sendLowStockAlerts(outcome: ReorderOutcome): Promise<Alert
   try {
     const users = await blocksClient.iam.users.list({ pageNo: 1, pageSize: 200 })
     const to = (users.data ?? [])
-      .filter((user) => user.active !== false && user.email && roleSlugs(user.roles).some((slug) => ALERT_ROLES.includes(slug)))
+      .filter((user) => user.active !== false && user.email && roleSlugs(user.roles).some((slug) => (ALERT_ROLES as string[]).includes(slug)))
       .map((user) => String(user.email))
     if (!to.length) result.email = "no purchasing users with an email"
     else {

@@ -6,6 +6,7 @@ import { formatDateTime } from "@/components/app/audit"
 import { locations } from "@/features/locations/api"
 import { products } from "@/features/products/api"
 import { useResource } from "@/hooks/use-resource"
+import { locationFilter, useLocationScope } from "@/features/team/location-scope"
 import { reorderSettings } from "./api"
 
 // In app low stock alerts (spec 0014 AC-4): every reorder point that went
@@ -13,8 +14,9 @@ import { reorderSettings } from "./api"
 // breach by the reorder check, so an alert shows once until it clears.
 
 export function LowStockAlerts() {
+  const scope = useLocationScope()
   const alerts = useResource(async () => {
-    const { items } = await reorderSettings.list({ filter: { isAlerting: true }, sort: { lastAlertedAt: -1 }, pageSize: 50 })
+    const { items } = await reorderSettings.list({ filter: { isAlerting: true, ...locationFilter(scope, "locationId") }, sort: { lastAlertedAt: -1 }, pageSize: 50 })
     if (!items.length) return []
     const [productRows, locationRows] = await Promise.all([
       products.list({ filter: { ItemId: { $in: items.map((item) => item.productId) } }, pageSize: 50 }),
@@ -25,7 +27,7 @@ export function LowStockAlerts() {
       product: productRows.items.find((row) => row.ItemId === item.productId)?.name ?? "",
       location: locationRows.items.find((row) => row.ItemId === item.locationId)?.name ?? "",
     }))
-  }, [])
+  }, [scope.key])
   if (!alerts.data?.length) return null
   return (
     <SectionCard title="Low stock" description="Below their reorder point. They clear once restocked." className="mt-6">

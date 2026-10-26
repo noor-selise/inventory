@@ -60,7 +60,7 @@ Spec [0025](../specs/0025-design-system-integration.md) (Assumed) · code in `sr
 Blocks hosted login, MFA, one company per organization, seven role bundles, cost hidden from people without cost access.
 **Done when:** a user signs in over HTTPS, belongs to one company, and sees only what their role allows (spec 0003 AC-1 to AC-7).
 **Blocks fit:** ✅ mostly; location limits and approval limit partly app side.
-- [x] Design it (spec): [0003](../specs/0003-auth-team-roles.md)
+- [x] Design it (spec): [0003](../specs/0003-auth-team-roles/index.md)
 - [ ] Build it: `/develop sign in, team and roles`
   - [x] App side: SDK client, hosted login, callback, guards, local HTTPS, team screen, last changed by
   - [x] Blocks side: OIDC client, OIDC on, seven roles, admin user
@@ -68,7 +68,7 @@ Blocks hosted login, MFA, one company per organization, seven role bundles, cost
   - [x] Two step login: tenant MFA on (authenticator app, email code, backup codes), Security screen to enroll, company rule for admins
   - [ ] Cost masking on the server: a column policy masks a field for everyone whatever its rules say (allow or deny, always true or false; sources 0 to 2, operators 0 to 14 accepted). Waits on Blocks for how a rule or DataProtection permission unmasks a field for some roles
 - [ ] Verify it: `/check verify sign in, team and roles`
-Spec [0003](../specs/0003-auth-team-roles.md) · [0027](../specs/0027-orders-reports-p1-choices.md) (Assumed) · code in `src/lib/blocks/`, `src/app/`, `src/features/auth/`, `src/features/team/`, `scripts/blocks-setup.sh`
+Spec [0003](../specs/0003-auth-team-roles/index.md) · [0027](../specs/0027-orders-reports-p1-choices.md) (Assumed) · code in `src/lib/blocks/`, `src/app/`, `src/features/auth/`, `src/features/team/`, `scripts/blocks-setup.sh`
 
 ### 4. Company settings and lookups · in-progress
 Company profile, currencies and rates, document numbering, payment terms, taxing schemes, reasons, carriers, payment methods.

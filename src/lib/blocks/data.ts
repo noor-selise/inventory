@@ -88,7 +88,8 @@ export function collection<T extends Entity>(
         query: `query q($input: DynamicQueryInput) { ${listField}(input: $input) { items { ${selection} } totalCount } }`,
         variables: {
           input: {
-            filter: options.filter ? JSON.stringify(options.filter) : undefined,
+            // An empty filter (no location limits, say) is sent as no filter.
+            filter: options.filter && Object.keys(options.filter).length ? JSON.stringify(options.filter) : undefined,
             sort: options.sort ? JSON.stringify(options.sort) : undefined,
             pageNo: options.pageNo ?? 1,
             pageSize: options.pageSize ?? 100,

@@ -19,6 +19,7 @@ import { OrderLinesEditor, emptyOrderLine, type OrderLineDraft } from "@/feature
 import { TotalsBlock } from "@/features/sales/OrderBits"
 import { errorMessage } from "@/hooks/use-resource"
 import { formatMoney } from "@/lib/format"
+import { seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { createPurchaseOrder, purchaseTotals, updatePurchaseOrder, type PurchaseDraft } from "./actions"
 import type { ExtraCost, PurchaseLine, PurchaseOrder } from "./api"
 
@@ -194,9 +195,10 @@ export function PurchaseOrderEditor({
     }
   }
 
+  const scope = useLocationScope()
   const options = {
     vendors: lookups.vendors.filter((row) => row.isActive !== false || row.ItemId === vendorId).map((row) => ({ value: row.ItemId, label: row.name })),
-    locations: lookups.locations.filter((row) => row.isActive !== false).map((row) => ({ value: row.ItemId, label: row.name })),
+    locations: lookups.locations.filter((row) => row.isActive !== false && seesLocation(scope, row.ItemId)).map((row) => ({ value: row.ItemId, label: row.name })),
   }
 
   return (

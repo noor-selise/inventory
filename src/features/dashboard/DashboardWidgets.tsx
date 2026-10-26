@@ -14,6 +14,7 @@ import { DASHBOARD_WIDGETS, saveProfile, type DashboardWidget } from "@/features
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { dateFilter } from "@/lib/blocks/data"
 import { formatMoney, formatNumber } from "@/lib/format"
+import { locationFilter, useLocationScope } from "@/features/team/location-scope"
 
 // Home dashboard widgets (spec 0015 AC-6): each person picks which to show,
 // saved on their TeamMemberProfile (spec 0027). Numbers are read live.
@@ -27,13 +28,14 @@ export function DashboardWidgets() {
   const [customizing, setCustomizing] = React.useState(false)
   const [draft, setDraft] = React.useState<DashboardWidget[]>(chosen)
 
+  const scope = useLocationScope()
   const numbers = useResource(async () => {
     const start = new Date()
     start.setHours(0, 0, 0, 0)
     const [today, open, low, company] = await Promise.all([
-      salesOrders.list({ filter: { isQuote: false, isCancelled: { $ne: true }, orderDate: { $gte: dateFilter(start.toISOString()) } }, pageSize: 2000 }),
-      salesOrders.list({ filter: OPEN_ORDER_FILTER, pageSize: 1 }),
-      reorderSuggestions.list({ pageSize: 1 }),
+      salesOrders.list({ filter: { isQuote: false, isCancelled: { $ne: true }, orderDate: { $gte: dateFilter(start.toISOString()) }, ...locationFilter(scope, "locationId") }, pageSize: 2000 }),
+      salesOrders.list({ filter: { ...OPEN_ORDER_FILTER, ...locationFilter(scope, "locationId") }, pageSize: 1 }),
+      reorderSuggestions.list({ filter: locationFilter(scope, "locationId"), pageSize: 1 }),
       companies.list({ pageSize: 1 }),
     ])
     return {
@@ -43,7 +45,7 @@ export function DashboardWidgets() {
       lowStock: low.totalCount,
       currency: company.items[0]?.homeCurrency ?? "USD",
     }
-  }, [])
+  }, [scope.key])
 
   async function save() {
     if (!user?.itemId) return

@@ -14,7 +14,9 @@ import { cn } from "@/lib/utils"
 import { salesOrders, type SalesOrder } from "./api"
 import { toHome } from "./order-math"
 import { FulfillmentQueue } from "./FulfillmentQueue"
-import { SALES_EDITORS, useOrderLookups } from "./lookups"
+import { SALES_EDITORS } from "@/features/team/roles"
+import { locationFilter, useLocationScope } from "@/features/team/location-scope"
+import { useOrderLookups } from "./lookups"
 import { InventoryBadge, PaymentBadge, headClass } from "./OrderBits"
 import { SalesOrderDetail } from "./SalesOrderDetail"
 import { SalesOrderEditor } from "./SalesOrderEditor"
@@ -36,7 +38,11 @@ export function SalesOrdersPage() {
   const lookups = useOrderLookups()
   // A rep limited to their own customers sees only orders where they are the rep (spec 0011 AC-8).
   const ownOnly = profile?.ownCustomersOnly ? String(user?.itemId ?? "none") : null
-  const list = useResource(() => salesOrders.list({ filter: ownOnly ? { salesRepUserId: ownOnly } : undefined, sort: { CreatedDate: -1 }, pageSize: 300 }), [ownOnly])
+  const scope = useLocationScope()
+  const list = useResource(
+    () => salesOrders.list({ filter: { ...(ownOnly ? { salesRepUserId: ownOnly } : {}), ...locationFilter(scope, "locationId") }, sort: { CreatedDate: -1 }, pageSize: 300 }),
+    [ownOnly, scope.key]
+  )
   const [view, setView] = React.useState<keyof typeof VIEWS>("open")
   const [editing, setEditing] = React.useState<{ order?: SalesOrder; isQuote: boolean }>()
   const [viewing, setViewing] = React.useState<string>()

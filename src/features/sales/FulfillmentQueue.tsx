@@ -14,7 +14,9 @@ import { formatDate, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { buildQueue, setPriority, type QueueRow } from "./actions"
 import { type SalesOrder } from "./api"
-import { SALES_EDITORS, type OrderLookups } from "./lookups"
+import { SALES_EDITORS } from "@/features/team/roles"
+import { locationFilter, useLocationScope } from "@/features/team/location-scope"
+import { type OrderLookups } from "./lookups"
 import { InventoryBadge, headClass } from "./OrderBits"
 
 // The fulfillment queue (spec 0011 AC-10): open orders by priority, each
@@ -26,12 +28,13 @@ export function FulfillmentQueue({ orders, lookups, onOpen, onChanged }: { order
   const { hasRole, user } = useCurrentUser()
   const canPrioritize = hasRole(...SALES_EDITORS)
   const [busy, setBusy] = React.useState(false)
+  const scope = useLocationScope()
   const stock = useResource(async () => {
-    const { items: balances } = await posting.balances({ onHand: { $gt: 0 } }, { pageSize: 5000 })
+    const { items: balances } = await posting.balances({ onHand: { $gt: 0 }, ...locationFilter(scope, "locationId") }, { pageSize: 5000 })
     const lotIds = [...new Set(balances.map((row) => row.lotId).filter(Boolean) as string[])]
     const lotRows = lotIds.length ? (await lots.list({ filter: { ItemId: { $in: lotIds } }, pageSize: lotIds.length })).items : []
     return { balances, lotRows }
-  }, [orders])
+  }, [orders, scope.key])
 
   const open = orders.filter((order) => !order.isQuote && !order.isCancelled && ["unconfirmed", "unfulfilled", "started"].includes(String(order.inventoryStatus)))
   const now = new Date().toISOString()

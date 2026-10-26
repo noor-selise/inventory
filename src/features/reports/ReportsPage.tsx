@@ -13,11 +13,13 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { collection, type Entity } from "@/lib/blocks/data"
-import { COST_VIEWERS, useOrderLookups } from "@/features/sales/lookups"
+import { useOrderLookups } from "@/features/sales/lookups"
+import { COST_VIEWERS } from "@/features/team/roles"
 import { headClass } from "@/features/sales/OrderBits"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { REPORTS, type ReportColumn, type ReportDefinition, type ReportFilters, type ReportRow } from "./definitions"
 import { BackgroundJobs } from "./BackgroundJobs"
 import { startBackgroundReport, toCsv } from "./jobs"
@@ -63,6 +65,9 @@ export function ReportsPage() {
   const report = REPORTS.find((item) => item.key === key) ?? REPORTS[0]
   const allowed = React.useMemo(() => report.columns.filter((column) => seeCost || !column.cost), [report, seeCost])
   const [filters, setFilters] = React.useState<ReportFilters>(() => defaultFilters(REPORTS[0]))
+  const scope = useLocationScope()
+  // A limited person's reports cover only their locations (spec 0003); saved reports keep `filters` clean.
+  const scoped = React.useMemo<ReportFilters>(() => (scope.limited ? { ...filters, allowedLocationIds: scope.ids } : filters), [filters, scope])
   const [visible, setVisible] = React.useState<string[]>(allowed.map((column) => column.key))
   const [groupBy, setGroupBy] = React.useState("")
   const [rows, setRows] = React.useState<ReportRow[]>()
@@ -90,14 +95,14 @@ export function ReportsPage() {
     setRunning(true)
     setError(undefined)
     try {
-      const result = await report.load(filters, data)
+      const result = await report.load(scoped, data)
       if (id === runId.current) setRows(result)
     } catch (caught) {
       if (id === runId.current) setError(errorMessage(caught))
     } finally {
       if (id === runId.current) setRunning(false)
     }
-  }, [data, report, filters])
+  }, [data, report, scoped])
 
   // Run again shortly after the report or a filter changes; a newer run wins.
   React.useEffect(() => {
@@ -127,7 +132,7 @@ export function ReportsPage() {
   async function runInBackground() {
     if (!data || !user) return
     try {
-      const { done } = await startBackgroundReport({ report, filters, columns, lookups: data, ownerId: String(user.itemId ?? user.email ?? "") })
+      const { done } = await startBackgroundReport({ report, filters: scoped, columns, lookups: data, ownerId: String(user.itemId ?? user.email ?? "") })
       toast.success(`${report.title} is running in the background. Keep this tab open until it finishes.`)
       setJobsVersion((value) => value + 1)
       void done.then(() => setJobsVersion((value) => value + 1))
@@ -161,7 +166,7 @@ export function ReportsPage() {
   const me = String(user?.itemId ?? user?.email ?? "")
   const mySaved = (saved.data?.items ?? []).filter((item) => item.reportKey !== "probe" && (item.isShared || item.ownerId === me))
   const options = {
-    locations: (data?.locations ?? []).map((row) => ({ value: row.ItemId, label: row.name })),
+    locations: (data?.locations ?? []).filter((row) => seesLocation(scope, row.ItemId)).map((row) => ({ value: row.ItemId, label: row.name })),
     products: (data?.products ?? []).map((row) => ({ value: row.ItemId, label: row.name })),
     customers: (data?.customers ?? []).map((row) => ({ value: row.ItemId, label: row.name })),
     vendors: (data?.vendors ?? []).map((row) => ({ value: row.ItemId, label: row.name })),

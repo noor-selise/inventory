@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { purchaseOrders } from "@/features/purchasing/api"
 import { salesOrders } from "@/features/sales/api"
-import { SALES_EDITORS, PURCHASE_EDITORS, useOrderLookups, type OrderLookups } from "@/features/sales/lookups"
+import { useOrderLookups, type OrderLookups } from "@/features/sales/lookups"
+import { PAYMENT_EDITORS } from "@/features/team/roles"
 import { headClass } from "@/features/sales/OrderBits"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney } from "@/lib/format"
@@ -43,7 +44,7 @@ function PaymentKpis({ rows, balances, home }: { rows: Payment[]; balances: { pa
 
 export function PaymentsPage() {
   const { hasRole, user } = useCurrentUser()
-  const canEdit = hasRole(...SALES_EDITORS, ...PURCHASE_EDITORS)
+  const canEdit = hasRole(...PAYMENT_EDITORS)
   const lookups = useOrderLookups()
   const list = useResource(() => payments.list({ sort: { paidOn: -1 }, pageSize: 300 }), [])
   const balances = useResource(() => partyBalances.list({ pageSize: 2000 }), [])

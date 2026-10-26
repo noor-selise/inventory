@@ -12,6 +12,7 @@ import { products, vendorItems } from "@/features/products/api"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { BlocksDataError } from "@/lib/blocks/data"
 import { formatMoney } from "@/lib/format"
+import { VENDOR_EDITORS } from "@/features/team/roles"
 import { vendors, type Address, type Contact, type Vendor } from "./api"
 import { AddressFields, ContactsEditor, EMAIL_PATTERN, cleanAddress, cleanContacts } from "./fields"
 import { PartnerList } from "./PartnerList"
@@ -19,7 +20,6 @@ import { usePartnerLookups } from "./useLookups"
 
 // Vendors with their defaults (spec 0010 AC-2) and the products they supply (spec 0005 AC-8).
 
-const VENDOR_EDITORS = ["admin", "manager", "purchasing"]
 
 export function VendorsPage() {
   const canEdit = useCurrentUser().hasRole(...VENDOR_EDITORS)

@@ -7,13 +7,15 @@ import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PURCHASE_EDITORS, useOrderLookups } from "@/features/sales/lookups"
+import { useOrderLookups } from "@/features/sales/lookups"
+import { PURCHASE_EDITORS } from "@/features/team/roles"
 import { InventoryBadge, PaymentBadge, headClass } from "@/features/sales/OrderBits"
 import { repairIfDue } from "@/features/stock/api"
 import { useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { toHome } from "@/features/sales/order-math"
 import { cn } from "@/lib/utils"
+import { locationFilter, useLocationScope } from "@/features/team/location-scope"
 import { purchaseOrders, type PurchaseOrder } from "./api"
 import { PurchaseOrderDetail } from "./PurchaseOrderDetail"
 import { PurchaseOrderEditor } from "./PurchaseOrderEditor"
@@ -31,7 +33,8 @@ const VIEWS = {
 export function PurchaseOrdersPage() {
   const canEdit = useCurrentUser().hasRole(...PURCHASE_EDITORS)
   const lookups = useOrderLookups()
-  const list = useResource(() => purchaseOrders.list({ sort: { CreatedDate: -1 }, pageSize: 300 }), [])
+  const scope = useLocationScope()
+  const list = useResource(() => purchaseOrders.list({ filter: locationFilter(scope, "receiveLocationId"), sort: { CreatedDate: -1 }, pageSize: 300 }), [scope.key])
   const [view, setView] = React.useState<keyof typeof VIEWS>("open")
   const [editing, setEditing] = React.useState<{ order?: PurchaseOrder; isQuote: boolean }>()
   const [viewing, setViewing] = React.useState<string>()
