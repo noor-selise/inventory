@@ -40,3 +40,5 @@ src/**/README.md
 egm/
 
 graphify-out/
+# Claude Code project settings (machine-specific hook paths; keep local)
+.claude/settings.json
