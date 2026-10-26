@@ -2,10 +2,16 @@ import { collection, type Entity } from "@/lib/blocks/data"
 
 // Schemas from spec 0005. Field names match blocks/data/schemas/*.json.
 
+/** Length, width, and height on Product are stored as centimeters (unitless floats in the gateway). */
+export const PRODUCT_DIMENSION_UNIT = "cm"
+/** Weight on Product is stored as kilograms. */
+export const PRODUCT_WEIGHT_UNIT = "kg"
+
 export const ITEM_TYPES = [
   { value: "stocked", label: "Stocked product" },
   { value: "non_stocked", label: "Non stocked product" },
   { value: "service", label: "Service" },
+  { value: "fixed_asset", label: "Fixed asset" },
 ] as const
 
 export type ItemType = (typeof ITEM_TYPES)[number]["value"]
@@ -43,6 +49,8 @@ export type Product = Entity & {
   averageCost?: number | null
   /** The vendor of the latest purchase receipt (spec 0012 AC-7). */
   lastVendorId?: string | null
+  /** Default depreciation class; fixed asset products only (spec 0028 AC-5). */
+  depreciationClassId?: string | null
 }
 
 export type ProductBarcode = Entity & {
@@ -73,11 +81,29 @@ export const PRODUCT_FIELDS = [
   "sellBeforeExpiryDays",
   "expiryNoticeDays",
   "isActive",
+  "depreciationClassId",
 ] as const satisfies readonly (keyof Product)[]
 
 export const categories = collection<Category>("Category", ["name", "parentId", "isDefault"])
 export const products = collection<Product>("Product", [...PRODUCT_FIELDS, "averageCost", "lastVendorId"])
 export const productBarcodes = collection<ProductBarcode>("ProductBarcode", ["barcode", "productId"])
+
+const isActiveFixedAsset = (product: Product) => product.itemType === "fixed_asset" && product.isActive !== false
+
+/** Fixed-asset products for registers and PO receipts. Filters client-side if the gateway drops itemType. */
+export async function listFixedAssetProducts(): Promise<Product[]> {
+  const sort = { name: 1 as const }
+  let filtered: Product[] = []
+  try {
+    filtered = (await products.list({ filter: { itemType: "fixed_asset" }, sort, pageSize: 1000 })).items
+  } catch {
+    filtered = []
+  }
+  const fromFilter = filtered.filter(isActiveFixedAsset)
+  if (fromFilter.length) return fromFilter
+  const broad = (await products.list({ sort, pageSize: 500 })).items
+  return broad.filter(isActiveFixedAsset)
+}
 
 export type VendorItem = Entity & {
   vendorId: string

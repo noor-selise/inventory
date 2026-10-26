@@ -15,10 +15,11 @@ import { PaymentDialog } from "@/features/payments/PaymentDialog"
 import { payments } from "@/features/payments/api"
 import { type OrderLookups } from "@/features/sales/lookups"
 import { COST_VIEWERS, PURCHASE_EDITORS, RECEIVERS } from "@/features/team/roles"
+import { syncReceiptAssets } from "@/features/depreciation/receipts"
 import { discounted, landedUnitCosts } from "@/features/sales/order-math"
 import { HistoryList, InventoryBadge, PaymentBadge, TotalsBlock, headClass } from "@/features/sales/OrderBits"
 import { postingMessage } from "@/features/stock/AdjustmentsPage"
-import { useResource } from "@/hooks/use-resource"
+import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { canApprove } from "@/features/team/profile"
@@ -67,6 +68,17 @@ export function PurchaseOrderDetail({
   // The price list lives in the screen's lookups, so hide the prompt once applied here.
   const [pricesApplied, setPricesApplied] = React.useState(false)
   const order = loaded.data
+
+  // Fills in any asset a stopped receipt left out (spec 0028 AC-6). Safe to run every time the order opens.
+  const receivedAssets = Boolean(order?.lines.some((line) => lookups.productOf(line.productId)?.itemType === "fixed_asset" && Number(line.receivedQty ?? 0) > 0))
+  React.useEffect(() => {
+    if (!order || !receivedAssets || !canReceive) return
+    syncReceiptAssets(order, (id) => lookups.productOf(id))
+      .then((added) => (added ? toast.success(`${added} fixed asset${added === 1 ? "" : "s"} added from this order`) : undefined))
+      .catch((caught) => setError(errorMessage(caught)))
+    // Once per opened order version.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.ItemId, order?.LastUpdatedDate, receivedAssets, canReceive])
 
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true)
@@ -385,18 +397,19 @@ function ReceiveDialog({ order, lookups, returns, busy, onClose, onReceive }: { 
             const product = lookups.productOf(line.productId)
             const left = Math.abs(line.stdQty) - Math.abs(Number(line.receivedQty ?? 0))
             const stocked = product?.itemType === "stocked"
+            const asset = product?.itemType === "fixed_asset"
             return (
               <section key={line.lineId} className="rounded-md border p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold">
                     {product?.name} <span className="font-normal text-muted-foreground">· {formatNumber(left)} {product?.standardUom} left</span>
                   </h3>
-                  {stocked ? (
+                  {stocked || (asset && !returns) ? (
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
-                      onClick={() => setRows((current) => [...current, { key: crypto.randomUUID(), lineId: line.lineId, qty: product?.trackSerials ? "1" : "", binCode: "", lotNumber: "", lotExpiresOn: "", serial: "" }])}
+                      onClick={() => setRows((current) => [...current, { key: crypto.randomUUID(), lineId: line.lineId, qty: product?.trackSerials || asset ? "1" : "", binCode: "", lotNumber: "", lotExpiresOn: "", serial: "" }])}
                     >
                       <Plus aria-hidden /> Row
                     </Button>
@@ -415,6 +428,17 @@ function ReceiveDialog({ order, lookups, returns, busy, onClose, onReceive }: { 
                         </>
                       ) : null}
                       {stocked && product?.trackSerials ? <Input aria-label="Serial" placeholder="Serial" className="h-8 w-40 font-mono" value={row.serial} onChange={(event) => set(row.key, { serial: event.target.value })} /> : null}
+                      {asset ? (
+                        <Input
+                          aria-label="Serial (optional, one unit per row)"
+                          placeholder="Serial, optional"
+                          className="h-8 w-44 font-mono"
+                          value={row.serial}
+                          disabled={row.qty !== "1"}
+                          title={row.qty !== "1" ? "Receive one unit per row to record its serial" : undefined}
+                          onChange={(event) => set(row.key, { serial: event.target.value })}
+                        />
+                      ) : null}
                     </div>
                   ))}
               </section>

@@ -8,6 +8,16 @@ export type Company = Entity & {
   timeZone: string
   homeCurrency: string
   dateFormat?: string | null
+  // Depreciation setup and its control state (spec 0028). Empty strings mean
+  // "none", because Blocks ignores null in an update.
+  countryCode?: string | null
+  depreciationPresetId?: string | null
+  incomeYearStartMonth?: number | null
+  depreciationStartPeriod?: string | null
+  depreciationStatus?: "open" | "closing" | "reopening" | null
+  depreciationLatestClosed?: string | null
+  depreciationActivePeriod?: string | null
+  depreciationRunId?: string | null
 }
 
 export type Currency = Entity & {
@@ -70,6 +80,14 @@ export const companies = collection<Company>("Company", [
   "timeZone",
   "homeCurrency",
   "dateFormat",
+  "countryCode",
+  "depreciationPresetId",
+  "incomeYearStartMonth",
+  "depreciationStartPeriod",
+  "depreciationStatus",
+  "depreciationLatestClosed",
+  "depreciationActivePeriod",
+  "depreciationRunId",
 ])
 
 export const currencies = collection<Currency>("Currency", ["code", "symbol", "decimals"])

@@ -4,6 +4,11 @@ All changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Product standard, purchase, and sales units use dropdowns with a shared UOM catalog (by noor-selise, 2026-10-27)
+- Clarify product size (cm), weight (kg), and purchase/sales unit conversions in the product form (by noor-selise, 2026-10-27)
+- Fix fixed-asset product picker: resilient load, refresh on dialog open, empty-state link (by noor-selise, 2026-10-27)
+- Widen company settings with profile and depreciation side by side on large screens (by noor-selise, 2026-10-27)
+- Let depreciation classes use full page width like other record lists (by noor-selise, 2026-10-27)
 - Run nginx as non-root in the release image so Blocks deploy matches cluster policy (by noor-selise, 2026-10-25)
 - Push `dev` branch and trigger Blocks release deploy for the dev environment (by noor-selise, 2026-10-20)
 - Hide native number spinners and align input focus rings with DESIGN.md (by noor-selise, 2026-10-20)

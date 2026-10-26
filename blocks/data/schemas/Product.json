@@ -128,6 +128,11 @@
       "name": "lastVendorId",
       "type": "ID",
       "isArray": false
+    },
+    {
+      "name": "depreciationClassId",
+      "type": "ID",
+      "isArray": false
     }
   ]
 }

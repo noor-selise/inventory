@@ -1,0 +1,53 @@
+{
+  "schemaName": "DepreciationEntry",
+  "collectionName": "DepreciationEntrys",
+  "schemaType": 1,
+  "description": "One month's depreciation for one asset, never edited (spec 0028 AC-8, AC-9)",
+  "fields": [
+    {
+      "name": "assetId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "period",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "incomeYear",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "classId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "ratePercent",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "base",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "amount",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "closingWdv",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "runId",
+      "type": "String",
+      "isArray": false
+    }
+  ]
+}

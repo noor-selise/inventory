@@ -16,6 +16,7 @@ export const DOCUMENT_TYPES = [
   { value: "manufacture_order", label: "Manufacture order", prefix: "MO-" },
   { value: "customer_payment", label: "Customer payment", prefix: "CP-" },
   { value: "vendor_payment", label: "Vendor payment", prefix: "VP-" },
+  { value: "fixed_asset", label: "Fixed asset", prefix: "FA-" },
 ] as const
 
 export const DEFAULT_PADDING = 5

@@ -33,6 +33,10 @@ export const STOCK_REVIEWERS: RoleSlug[] = ["admin", "manager"]
 export const PAYMENT_EDITORS: RoleSlug[] = ["admin", "manager", "sales", "purchasing"]
 /** Stands in for the Cost View right until field masking exists (spec 0003 step 5c). */
 export const COST_VIEWERS: RoleSlug[] = ["admin", "manager", "purchasing"]
+/** Depreciation setup, classes, and closing or reopening months (spec 0028 AC-14). */
+export const DEPRECIATION_ADMINS: RoleSlug[] = ["admin"]
+/** Add, edit, dispose of, and delete fixed assets (spec 0028 AC-14). */
+export const ASSET_EDITORS: RoleSlug[] = ["admin", "manager"]
 /** Who receives low stock alert emails (spec 0014). */
 export const ALERT_ROLES: RoleSlug[] = ["purchasing"]
 

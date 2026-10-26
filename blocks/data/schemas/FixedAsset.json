@@ -1,0 +1,83 @@
+{
+  "schemaName": "FixedAsset",
+  "collectionName": "FixedAssets",
+  "schemaType": 1,
+  "description": "One owned unit that depreciates (spec 0028 AC-6, AC-7, AC-11)",
+  "fields": [
+    {
+      "name": "assetNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "unitKey",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "productId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "classId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "locationId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "purchaseOrderId",
+      "type": "ID",
+      "isArray": false
+    },
+    {
+      "name": "source",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "serialNumber",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "inServiceDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "cost",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "openingWdv",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "status",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "disposalType",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "disposalDate",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "disposalAmount",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

@@ -60,7 +60,8 @@ type Props = {
 }
 
 export function OrderLinesEditor({ mode, lines, onChange, lookups, currency, taxSchemeId, priceFor, vendorCodeFor, errors, disabled }: Props) {
-  const products = lookups.products.filter((product) => product.isActive !== false)
+  // Fixed assets are bought, never sold (spec 0028 AC-5).
+  const products = lookups.products.filter((product) => product.isActive !== false && (mode === "purchase" || product.itemType !== "fixed_asset"))
   const codes = lookups.taxCodes.filter((code) => code.taxingSchemeId === taxSchemeId && code.isActive !== false)
 
   function update(key: string, patch: Partial<OrderLineDraft>) {

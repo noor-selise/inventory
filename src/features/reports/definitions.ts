@@ -11,6 +11,9 @@ import { computeTax } from "@/features/pricing/pricing"
 import { adjustmentReasons } from "@/features/settings/api"
 import { dateFilter } from "@/lib/blocks/data"
 import { locationFilter, locationScope, seesAnyLocation } from "@/features/team/location-scope"
+import { loadState } from "@/features/depreciation/actions"
+import { allPages as allAssetPages, fixedAssets, listClasses, listEntries } from "@/features/depreciation/api"
+import { dayInZone, incomeYearEnd, incomeYearLabel, incomeYearStart, periodOfDate, scheduleRow } from "@/features/depreciation/calc"
 
 // The core 20 reports (spec 0015 AC-1). Blocks has no server side sums, so
 // each report reads raw rows in pages and adds them up in the browser; fine
@@ -585,6 +588,46 @@ export const REPORTS: ReportDefinition[] = [
           days: lot!.expiresOn ? Math.floor((new Date(lot!.expiresOn).getTime() - Date.now()) / 86_400_000) : null,
           onHand: balance.onHand,
         }))
+    },
+  },
+  {
+    key: "depreciation-schedule",
+    title: "Depreciation schedule",
+    group: "Inventory",
+    description: "Fixed assets for the income year that contains the chosen date, closed months only (spec 0028). Group by class for the class view. Each row: opening + additions − depreciation − disposals = closing.",
+    filters: ["asOf", "location"],
+    columns: [
+      { key: "classCode", label: "Class code", type: "text" },
+      { key: "className", label: "Class", type: "text" },
+      { key: "assetNumber", label: "Asset", type: "text" },
+      { key: "product", label: "Product", type: "text" },
+      { key: "opening", label: "Opening WDV", type: "money", cost: true },
+      { key: "additions", label: "Additions", type: "money", cost: true },
+      { key: "depreciation", label: "Depreciation", type: "money", cost: true },
+      { key: "disposalWdv", label: "Disposals (WDV)", type: "money", cost: true },
+      { key: "disposalAmount", label: "Disposal proceeds", type: "money", cost: true },
+      { key: "closing", label: "Closing WDV", type: "money", cost: true },
+      { key: "closedThrough", label: "Closed through", type: "text" },
+    ],
+    load: async (filters, lookups) => {
+      const state = await loadState()
+      if (!state) return []
+      const startMonth = state.setup.incomeYearStartMonth
+      const period = periodOfDate(filters.to ?? dayInZone(new Date(), state.timeZone))
+      const yearEnd = incomeYearEnd(period, startMonth)
+      const counted = state.latestClosed ? (state.latestClosed < yearEnd ? state.latestClosed : yearEnd) : ""
+      const [assets, classes, entries] = await Promise.all([
+        allAssetPages((pageNo, pageSize) => fixedAssets.list({ filter: loc("locationId", filters), pageNo, pageSize })),
+        listClasses(),
+        counted ? listEntries({ to: counted }) : Promise.resolve([]),
+      ])
+      const closedThrough = !counted || counted < incomeYearStart(period, startMonth) ? "Nothing closed" : counted === yearEnd ? `${incomeYearLabel(period, startMonth)} complete` : counted
+      return assets.flatMap((asset) => {
+        const row = scheduleRow(asset, entries, period, state.setup)
+        if (!row) return []
+        const cls = classes.find((item) => item.ItemId === asset.classId)
+        return [{ classCode: cls?.code ?? "", className: cls?.name ?? "", assetNumber: asset.assetNumber, product: lookups.productOf(asset.productId)?.name ?? "", ...row, closedThrough }]
+      })
     },
   },
 ]

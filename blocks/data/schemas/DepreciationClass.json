@@ -1,0 +1,38 @@
+{
+  "schemaName": "DepreciationClass",
+  "collectionName": "DepreciationClasss",
+  "schemaType": 1,
+  "description": "Depreciation class and rate per organization (spec 0028 AC-1, AC-4)",
+  "fields": [
+    {
+      "name": "code",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "name",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "method",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "ratePercent",
+      "type": "Float",
+      "isArray": false
+    },
+    {
+      "name": "presetId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "isActive",
+      "type": "Boolean",
+      "isArray": false
+    }
+  ]
+}

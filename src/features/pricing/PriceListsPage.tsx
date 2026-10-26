@@ -100,7 +100,7 @@ function SchemePrices({ scheme, canEdit }: { scheme: PricingScheme; canEdit: boo
   const [editing, setEditing] = React.useState<PriceRow>()
   const { data, error, loading, reload } = useResource(async (): Promise<PriceRow[]> => {
     const [productRows, prices] = await Promise.all([
-      products.list({ filter: { isActive: { $ne: false } }, sort: { name: 1 }, pageSize: 500 }),
+      products.list({ filter: { isActive: { $ne: false }, itemType: { $ne: "fixed_asset" } }, sort: { name: 1 }, pageSize: 500 }),
       productPrices.list({ filter: { pricingSchemeId: scheme.ItemId }, pageSize: 1000 }),
     ])
     const priceIds = prices.items.map((price) => price.ItemId)
@@ -329,7 +329,7 @@ function PriceCheck() {
   const lookups = useResource(async () => {
     const [customerRows, productRows, schemeRows, taxRows, codeRows] = await Promise.all([
       customers.list({ filter: { isActive: { $ne: false } }, sort: { name: 1 }, pageSize: 500 }),
-      products.list({ filter: { isActive: { $ne: false } }, sort: { name: 1 }, pageSize: 500 }),
+      products.list({ filter: { isActive: { $ne: false }, itemType: { $ne: "fixed_asset" } }, sort: { name: 1 }, pageSize: 500 }),
       pricingSchemes.list({ pageSize: 100 }),
       taxingSchemes.list({ pageSize: 100 }),
       taxCodes.list({ pageSize: 200 }),

@@ -22,11 +22,14 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { listClasses } from "@/features/depreciation/api"
 import { withNextNumber } from "@/features/settings/numbering"
-import { errorMessage } from "@/hooks/use-resource"
+import { errorMessage, useResource } from "@/hooks/use-resource"
 import { BlocksDataError } from "@/lib/blocks/data"
 import {
   ITEM_TYPES,
+  PRODUCT_DIMENSION_UNIT,
+  PRODUCT_WEIGHT_UNIT,
   productBarcodes,
   products,
   type ItemType,
@@ -35,9 +38,11 @@ import {
 } from "./api"
 import { generateEan13, normalizeBarcode } from "./barcode"
 import { ProductVendors } from "./ProductVendors"
+import { PACKAGING_UOM_OPTIONS, STANDARD_UOM_OPTIONS, withCurrentUom } from "./uom"
 
 // Create and edit a product (spec 0005 AC-1 to AC-6). The type and tracking
 // flags lock after the first save; Blocks cannot enforce that, the form does.
+// A fixed asset product carries a default depreciation class (spec 0028 AC-5).
 
 type Form = {
   name: string
@@ -61,6 +66,7 @@ type Form = {
   shelfLifeDays: string
   sellBeforeExpiryDays: string
   expiryNoticeDays: string
+  depreciationClassId: string
 }
 
 const text = (value: number | string | null | undefined) =>
@@ -89,6 +95,7 @@ function toForm(product: Product | undefined, defaultCategoryId: string): Form {
     shelfLifeDays: text(product?.shelfLifeDays),
     sellBeforeExpiryDays: text(product?.sellBeforeExpiryDays),
     expiryNoticeDays: text(product?.expiryNoticeDays),
+    depreciationClassId: text(product?.depreciationClassId),
   }
 }
 
@@ -98,6 +105,7 @@ function validate(form: Form): Partial<Record<keyof Form, string>> {
   const errors: Partial<Record<keyof Form, string>> = {}
   if (!form.name.trim()) errors.name = "Name is required."
   if (!form.standardUom.trim()) errors.standardUom = "Standard unit is required."
+  if (form.itemType === "fixed_asset" && !form.depreciationClassId) errors.depreciationClassId = "Choose the depreciation class new assets get."
   for (const [uom, ratio] of [
     ["purchaseUom", "purchaseUomRatio"],
     ["salesUom", "salesUomRatio"],
@@ -137,6 +145,7 @@ function toPayload(form: Form, locked: boolean) {
     shelfLifeDays: stocked && form.trackLots ? optionalNumber(form.shelfLifeDays) : null,
     sellBeforeExpiryDays: stocked && form.trackExpiry ? optionalNumber(form.sellBeforeExpiryDays) : null,
     expiryNoticeDays: stocked && form.trackExpiry ? optionalNumber(form.expiryNoticeDays) : null,
+    ...(form.itemType === "fixed_asset" ? { depreciationClassId: form.depreciationClassId } : {}),
   }
   if (!locked) {
     // Type and tracking are written once, on create (AC-2, AC-5).
@@ -199,7 +208,22 @@ export function ProductDialog({
   const errors = validate(form)
   const shown = touched ? errors : {}
   const stocked = form.itemType === "stocked"
+  const fixedAsset = form.itemType === "fixed_asset"
+  const classes = useResource(() => (open && fixedAsset ? listClasses() : Promise.resolve([])), [open, fixedAsset])
+  const classOptions = (classes.data ?? [])
+    .filter((item) => item.isActive !== false || item.ItemId === form.depreciationClassId)
+    .map((item) => ({ value: item.ItemId, label: `${item.name} (${item.ratePercent}%)` }))
+  const standardUomOptions = React.useMemo(() => withCurrentUom(STANDARD_UOM_OPTIONS, form.standardUom), [form.standardUom])
+  const purchaseUomOptions = React.useMemo(() => withCurrentUom(PACKAGING_UOM_OPTIONS, form.purchaseUom), [form.purchaseUom])
+  const salesUomOptions = React.useMemo(() => withCurrentUom(PACKAGING_UOM_OPTIONS, form.salesUom), [form.salesUom])
   const set = <K extends keyof Form>(key: K) => (value: Form[K]) => setForm({ ...form, [key]: value })
+
+  const choosePurchaseUom = (value: string) => {
+    setForm((current) => ({ ...current, purchaseUom: value, purchaseUomRatio: value ? current.purchaseUomRatio : "" }))
+  }
+  const chooseSalesUom = (value: string) => {
+    setForm((current) => ({ ...current, salesUom: value, salesUomRatio: value ? current.salesUomRatio : "" }))
+  }
 
   async function barcodeTaken(code: string) {
     const { items } = await productBarcodes.list({ filter: { barcode: code }, pageSize: 1 })
@@ -331,36 +355,97 @@ export function ProductDialog({
               onChange={set("categoryId")}
               disabled={!canEdit}
             />
-            <TextField id="product-uom" label="Standard unit" required value={form.standardUom} onChange={set("standardUom")} error={shown.standardUom} helper="The unit stock is counted in, like each or kg." />
+            <SelectField
+              id="product-uom"
+              label="Standard unit"
+              required
+              options={standardUomOptions}
+              value={form.standardUom}
+              onChange={set("standardUom")}
+              error={shown.standardUom}
+              disabled={!canEdit}
+              placeholder="Choose…"
+              helper="How stock quantities are counted on hand and on orders."
+            />
+            {fixedAsset ? (
+              <SelectField
+                id="product-depreciation-class"
+                label="Depreciation class"
+                required
+                options={classOptions}
+                value={form.depreciationClassId}
+                onChange={set("depreciationClassId")}
+                error={shown.depreciationClassId}
+                disabled={!canEdit}
+                placeholder={classes.loading ? "Loading…" : classOptions.length ? "Choose…" : "Set the country in Company settings first"}
+                helper="Each unit you receive or add becomes an asset in this class. You can change it per asset."
+              />
+            ) : null}
             <TextAreaField id="product-description" label="Description" value={form.description} onChange={set("description")} className="md:col-span-2" />
           </fieldset>
 
           <Separator />
           <fieldset disabled={!canEdit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <legend className="mb-2 text-base font-semibold">Units</legend>
-            <TextField id="product-purchase-uom" label="Purchasing unit" value={form.purchaseUom} onChange={set("purchaseUom")} helper="For example case" />
+            <legend className="mb-1 text-base font-semibold">Units</legend>
+            <p className="col-span-full -mt-1 mb-1 text-xs text-muted-foreground">
+              Inventory counts in the <strong className="font-medium text-foreground">standard unit</strong>. Purchase and sales units are optional
+              names (case, roll) with a conversion — not dimensions like cm or kg.
+            </p>
+            <SelectField
+              id="product-purchase-uom"
+              label="Purchasing unit"
+              allowNone
+              options={purchaseUomOptions}
+              value={form.purchaseUom}
+              onChange={choosePurchaseUom}
+              placeholder="None"
+              helper="How vendors sell it (case, box). Leave none if you only buy in the standard unit."
+            />
             <TextField
               id="product-purchase-ratio"
-              label={`${form.standardUom || "Standard units"} per ${form.purchaseUom || "purchasing unit"}`}
+              label={form.purchaseUom.trim() ? `1 ${form.purchaseUom.trim()} =` : "Conversion"}
+              suffix={form.standardUom.trim() || "standard"}
               type="number"
               inputMode="decimal"
               step="any"
+              min={0}
               value={form.purchaseUomRatio}
               onChange={set("purchaseUomRatio")}
               error={shown.purchaseUomRatio}
               disabled={!form.purchaseUom.trim()}
+              helper={
+                form.purchaseUom.trim()
+                  ? `How many ${form.standardUom || "standard units"} you receive per one ${form.purchaseUom}. Example: 12 for a case of 12.`
+                  : "Enter a purchasing unit first."
+              }
             />
-            <TextField id="product-sales-uom" label="Sales unit" value={form.salesUom} onChange={set("salesUom")} />
+            <SelectField
+              id="product-sales-uom"
+              label="Sales unit"
+              allowNone
+              options={salesUomOptions}
+              value={form.salesUom}
+              onChange={chooseSalesUom}
+              placeholder="None"
+              helper="How customers can order it (pack). Leave none to sell only in the standard unit."
+            />
             <TextField
               id="product-sales-ratio"
-              label={`${form.standardUom || "Standard units"} per ${form.salesUom || "sales unit"}`}
+              label={form.salesUom.trim() ? `1 ${form.salesUom.trim()} =` : "Conversion"}
+              suffix={form.standardUom.trim() || "standard"}
               type="number"
               inputMode="decimal"
               step="any"
+              min={0}
               value={form.salesUomRatio}
               onChange={set("salesUomRatio")}
               error={shown.salesUomRatio}
               disabled={!form.salesUom.trim()}
+              helper={
+                form.salesUom.trim()
+                  ? `How many ${form.standardUom || "standard units"} are in one ${form.salesUom}. Example: 50 for a pack of 50.`
+                  : "Enter a sales unit first."
+              }
             />
           </fieldset>
 
@@ -455,11 +540,60 @@ export function ProductDialog({
 
           <Separator />
           <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <legend className="mb-2 text-base font-semibold">Size and weight</legend>
-            <TextField id="product-length" label="Length" type="number" inputMode="decimal" step="any" value={form.length} onChange={set("length")} error={shown.length} />
-            <TextField id="product-width" label="Width" type="number" inputMode="decimal" step="any" value={form.width} onChange={set("width")} error={shown.width} />
-            <TextField id="product-height" label="Height" type="number" inputMode="decimal" step="any" value={form.height} onChange={set("height")} error={shown.height} />
-            <TextField id="product-weight" label="Weight" type="number" inputMode="decimal" step="any" value={form.weight} onChange={set("weight")} error={shown.weight} />
+            <legend className="mb-1 text-base font-semibold">Size and weight</legend>
+            <p className="col-span-full -mt-1 mb-1 text-xs text-muted-foreground">
+              Outer dimensions in <strong className="font-medium text-foreground">{PRODUCT_DIMENSION_UNIT}</strong> and weight in{" "}
+              <strong className="font-medium text-foreground">{PRODUCT_WEIGHT_UNIT}</strong>. Values are stored in these units everywhere (not meters or
+              pounds).
+            </p>
+            <TextField
+              id="product-length"
+              label="Length"
+              suffix={PRODUCT_DIMENSION_UNIT}
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min={0}
+              value={form.length}
+              onChange={set("length")}
+              error={shown.length}
+            />
+            <TextField
+              id="product-width"
+              label="Width"
+              suffix={PRODUCT_DIMENSION_UNIT}
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min={0}
+              value={form.width}
+              onChange={set("width")}
+              error={shown.width}
+            />
+            <TextField
+              id="product-height"
+              label="Height"
+              suffix={PRODUCT_DIMENSION_UNIT}
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min={0}
+              value={form.height}
+              onChange={set("height")}
+              error={shown.height}
+            />
+            <TextField
+              id="product-weight"
+              label="Weight"
+              suffix={PRODUCT_WEIGHT_UNIT}
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min={0}
+              value={form.weight}
+              onChange={set("weight")}
+              error={shown.weight}
+            />
             <TextAreaField id="product-remarks" label="Remarks" value={form.remarks} onChange={set("remarks")} className="col-span-2 md:col-span-4" />
           </fieldset>
 

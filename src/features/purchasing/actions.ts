@@ -11,10 +11,20 @@ import { discounted, landedUnitCosts, purchaseInventoryStatus, purchaseLineAmoun
 import { mutateOrder } from "@/features/sales/order-store"
 import { finishStep, runStockStep, type StepConfig } from "@/features/sales/stock-steps"
 import { canApprove, type TeamMemberProfile } from "@/features/team/profile"
-import { purchaseOrders, type PurchaseOrder } from "./api"
+import { loadState } from "@/features/depreciation/actions"
+import { depreciationEntries, fixedAssets } from "@/features/depreciation/api"
+import { assetsForOrder, syncReceiptAssets } from "@/features/depreciation/receipts"
+import { purchaseOrders, type PurchaseLine, type PurchaseOrder } from "./api"
 
 // Purchase order actions (spec 0012). Receiving posts stock at the landed unit
-// cost and then updates the moving average cost (spec 0007 AC-7).
+// cost and then updates the moving average cost (spec 0007 AC-7). Fixed asset
+// lines post no stock; each received unit becomes an asset (spec 0028 AC-6).
+
+/** A fixed asset's cost: the net vendor price per standard unit in home currency, with no freight share (spec 0028 AC-6). */
+export function netUnitCost(line: Pick<PurchaseLine, "qty" | "stdQty" | "unitPrice" | "discountType" | "discount">, exchangeRate?: number | null) {
+  const stdQty = Number(line.stdQty) || Number(line.qty) || 1
+  return round2(toHome((discounted(Number(line.unitPrice ?? 0), line.discountType, line.discount) * Number(line.qty)) / stdQty, exchangeRate))
+}
 
 export function purchaseTotals(order: Pick<PurchaseOrder, "lines" | "freight" | "taxingSchemeId">, context: SalesContext) {
   const tax = computeTax(
@@ -64,6 +74,7 @@ function checkLines(order: Pick<PurchaseOrder, "lines">, previous: PurchaseOrder
     if (!product) throw new Error("A line has no product.")
     if (!line.qty) throw new Error(`${product.name}: enter a quantity other than zero.`)
     if (!(Number(line.unitPrice) >= 0)) throw new Error(`${product.name}: enter a price.`)
+    if (product.itemType === "fixed_asset" && line.qty < 0) throw new Error(`${product.name}: fixed assets cannot be returned to the vendor. Dispose of the asset instead.`)
     const old = previous?.lines.find((item) => item.lineId === line.lineId)
     const received = Number(old?.receivedQty ?? 0)
     if (old && received !== 0) {
@@ -171,6 +182,11 @@ export async function receiveLines(order: PurchaseOrder, requests: ReceiveReques
     if (!line || !product) throw new Error("A line is not on this order any more.")
     if (product.itemType === "stocked" && product.trackSerials && (request.qty !== 1 || !request.serial?.trim())) throw new Error(`${product.name}: enter serial numbers one per row.`)
     if (product.itemType === "stocked" && product.trackLots && !request.lotNumber?.trim()) throw new Error(`${product.name}: enter the lot number.`)
+    if (product.itemType === "fixed_asset") {
+      if (!Number.isInteger(request.qty)) throw new Error(`${product.name}: receive whole units of a fixed asset.`)
+      if (!product.depreciationClassId) throw new Error(`${product.name}: set its depreciation class on the product first.`)
+      if (request.serial?.trim() && request.qty !== 1) throw new Error(`${product.name}: record serials one unit per row.`)
+    }
     const sublocationId = product.itemType === "stocked" ? await resolveBin(order.receiveLocationId, request.binCode ?? "") : null
     const lotId =
       product.itemType === "stocked" && product.trackLots
@@ -179,7 +195,11 @@ export async function receiveLines(order: PurchaseOrder, requests: ReceiveReques
             shelfLifeDays: product.shelfLifeDays,
           })
         : null
-    resolved.push({ request, line, product, sublocationId, lotId, serial: product.trackSerials ? request.serial?.trim() || null : null })
+    const assetSerial = product.itemType === "fixed_asset" && request.qty === 1 ? request.serial?.trim() || null : null
+    resolved.push({ request, line, product, sublocationId, lotId, serial: product.trackSerials ? request.serial?.trim() || null : assetSerial })
+  }
+  if (kind === "receive" && resolved.some((row) => row.product.itemType === "fixed_asset") && !(await loadState())) {
+    throw new Error("Set the company's country for depreciation in Company settings before receiving fixed assets.")
   }
 
   const landed = landedUnitCosts(order, (id) => context.productOf(id))
@@ -201,7 +221,8 @@ export async function receiveLines(order: PurchaseOrder, requests: ReceiveReques
         totals.set(line.lineId, (totals.get(line.lineId) ?? 0) + row.request.qty)
         const left = Math.abs(Number(line.stdQty)) - Math.abs(Number(line.receivedQty ?? 0))
         if (totals.get(line.lineId)! > left + 1e-9) throw new Error(`${row.product.name}: only ${left} left to ${kind === "receive" ? "receive" : "return"}.`)
-        const unitCost = kind === "receive" ? (landed.get(line.lineId) ?? null) : averageCost(row.product.ItemId)
+        const unitCost =
+          kind !== "receive" ? averageCost(row.product.ItemId) : row.product.itemType === "fixed_asset" ? netUnitCost(line, current.exchangeRate) : (landed.get(line.lineId) ?? null)
         lines.push({ lineId: line.lineId, qty: row.request.qty, sublocationId: row.sublocationId, lotId: row.lotId, serial: row.serial, unitCost })
         if (row.product.itemType === "stocked") {
           postingLines.push({
@@ -241,6 +262,8 @@ export async function receiveLines(order: PurchaseOrder, requests: ReceiveReques
     for (const [productId, entry] of byProduct) await posting.applyReceiptCost(productId, entry.qty, entry.value / entry.qty)
     // The product remembers its last vendor (spec 0012 AC-7).
     for (const productId of new Set(resolved.map((row) => row.product.ItemId))) await products.update(productId, { lastVendorId: order.vendorId })
+    // One asset per received unit; safe to run again if this stops halfway.
+    await syncReceiptAssets(done, (id) => context.productOf(id))
   }
   return done
 }
@@ -276,11 +299,19 @@ export async function applyVendorPrices(order: PurchaseOrder, changes: VendorPri
 export async function finishPurchaseStep(order: PurchaseOrder, step: StockStep, context: SalesContext, by: string) {
   const kind = step.kind === "unstock" ? "unstock" : "receive"
   const expected = step.lines.filter((line) => context.productOf(order.lines.find((item) => item.lineId === line.lineId)?.productId)?.itemType === "stocked").length
-  return finishStep(stepConfig(order.ItemId, kind, by), step, "purchase_reversal", expected)
+  const settled = await finishStep(stepConfig(order.ItemId, kind, by), step, "purchase_reversal", expected)
+  await syncReceiptAssets(settled, (id) => context.productOf(id))
+  return settled
 }
 
 /** Cancels the PO: receipts and returns are reversed, payments become vendor credit. Average cost is not rewound. */
 export async function cancelPurchaseOrder(order: PurchaseOrder, by: string) {
+  // Assets from this order go with it, unless depreciation or a disposal already used them (spec 0028).
+  const assets = await assetsForOrder(order.ItemId)
+  if (assets.some((asset) => asset.status === "disposed")) throw new Error("An asset from this order is disposed of, so the order cannot be cancelled.")
+  if (assets.length && (await depreciationEntries.list({ filter: { assetId: { $in: assets.map((asset) => asset.ItemId) } }, pageSize: 1 })).items.length) {
+    throw new Error("Assets from this order already have depreciation entries, so the order cannot be cancelled. Reopen those months first.")
+  }
   const current = await mutateOrder(purchaseOrders, order.ItemId, (latest) => {
     if (latest.isCancelled) return { patch: {} }
     if ((latest.stockSteps ?? []).some((step) => step.status === "posting")) throw new Error("A receipt is still posting. Finish it first.")
@@ -290,5 +321,6 @@ export async function cancelPurchaseOrder(order: PurchaseOrder, by: string) {
   await posting.reverseSource("purchase_receive", current.ItemId, "purchase_reversal", { allowNegative: false })
   await posting.reverseSource("po_unstock", current.ItemId, "purchase_reversal")
   await voidAllocationsFor("purchase", current.ItemId, by)
+  for (const asset of assets) await fixedAssets.remove(asset.ItemId)
   return current
 }

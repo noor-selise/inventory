@@ -78,6 +78,7 @@ export const STARTER_DOCUMENT_TYPES = [
   { documentType: "manufacture_order", prefix: "MO-" },
   { documentType: "customer_payment", prefix: "CP-" },
   { documentType: "vendor_payment", prefix: "VP-" },
+  { documentType: "fixed_asset", prefix: "FA-" },
 ]
 
 export const SAMPLE_CATEGORIES: { name: string; parent?: string; isDefault?: boolean }[] = [

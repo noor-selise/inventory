@@ -28,6 +28,46 @@
       "name": "dateFormat",
       "type": "String",
       "isArray": false
+    },
+    {
+      "name": "countryCode",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "depreciationPresetId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "incomeYearStartMonth",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "depreciationStartPeriod",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "depreciationStatus",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "depreciationLatestClosed",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "depreciationActivePeriod",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "depreciationRunId",
+      "type": "String",
+      "isArray": false
     }
   ]
 }

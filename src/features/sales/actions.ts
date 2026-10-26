@@ -105,6 +105,7 @@ function checkLines(lines: SalesLine[], previous: SalesLine[] | undefined, conte
   for (const line of lines) {
     const product = context.productOf(line.productId)
     if (!product) throw new Error("A line has no product.")
+    if (product.itemType === "fixed_asset") throw new Error(`${product.name} is a fixed asset and cannot be sold. Dispose of it from Fixed assets instead.`)
     if (!line.qty) throw new Error(`${product.name}: enter a quantity other than zero.`)
     if (line.qty < 0 && !line.returnAction) throw new Error(`${product.name}: choose restock or discard for the return.`)
     const old = previous?.find((item) => item.lineId === line.lineId)

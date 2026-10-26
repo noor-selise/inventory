@@ -6,6 +6,8 @@ import { SelectField, TextAreaField, TextField } from "@/components/app/form"
 import { ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
 import { useAuth } from "@/app/providers/AuthProvider"
 import { OrganizationCard } from "@/features/team/OrganizationCard"
+import { DepreciationSetupCard } from "@/features/depreciation/DepreciationSetupCard"
+import { isLocked } from "@/features/depreciation/actions"
 import { Button } from "@/components/ui/button"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { CURRENCY_CODES, TIME_ZONES, formatDate, formatMoney } from "@/lib/format"
@@ -47,11 +49,17 @@ export function CompanyPage() {
   }, [data])
 
   const nameError = !form.name.trim() ? "Company name is required." : undefined
+  // Months follow the company time zone, so it locks once a depreciation month is closed (spec 0028 AC-3).
+  const zoneLocked = isLocked(company)
 
   async function save(event: React.FormEvent) {
     event.preventDefault()
     setTouched(true)
     if (nameError) return
+    if (zoneLocked && company && form.timeZone !== company.timeZone) {
+      setSaveError("The time zone is locked because a depreciation month is closed.")
+      return
+    }
     setSaving(true)
     setSaveError(undefined)
     const payload = {
@@ -86,76 +94,83 @@ export function CompanyPage() {
       {loading && !data ? (
         <LoadingRows rows={5} />
       ) : (
-        <SectionCard className="max-w-3xl">
-          <form onSubmit={save} className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {saveError ? (
-              <div className="md:col-span-2">
-                <ErrorBanner message={saveError} />
-              </div>
-            ) : null}
-            <fieldset disabled={!canEdit} className="contents">
-              <TextField
-                id="company-name"
-                label="Company name"
-                required
-                value={form.name}
-                onChange={(name) => setForm({ ...form, name })}
-                error={touched ? nameError : undefined}
-                autoComplete="organization"
-                className="md:col-span-2"
-              />
-              <TextAreaField
-                id="company-address"
-                label="Address"
-                value={form.address}
-                onChange={(address) => setForm({ ...form, address })}
-                className="md:col-span-2"
-              />
-              <SelectField
-                id="company-time-zone"
-                label="Time zone"
-                required
-                options={TIME_ZONES.map((zone) => ({ value: zone, label: zone }))}
-                value={form.timeZone}
-                onChange={(timeZone) => setForm({ ...form, timeZone })}
-                disabled={!canEdit}
-              />
-              <SelectField
-                id="company-currency"
-                label="Home currency"
-                required
-                helper={`Example: ${formatMoney(-1234.5, form.homeCurrency)}`}
-                options={CURRENCY_CODES.map((code) => ({ value: code, label: code }))}
-                value={form.homeCurrency}
-                onChange={(homeCurrency) => setForm({ ...form, homeCurrency })}
-                disabled={!canEdit}
-              />
-              <SelectField
-                id="company-date-format"
-                label="Date format on documents"
-                options={DATE_FORMATS}
-                value={form.dateFormat}
-                onChange={(dateFormat) => setForm({ ...form, dateFormat })}
-                helper={`Today in your time zone: ${formatDate(new Date().toISOString(), form.timeZone)}`}
-                disabled={!canEdit}
-              />
-            </fieldset>
-            <div className="flex flex-wrap items-center justify-between gap-3 md:col-span-2">
-              {company ? <AuditLine record={company} /> : <span />}
-              {canEdit ? (
-                <Button type="submit" disabled={saving} className="min-w-24">
-                  {saving ? "Saving…" : "Save"}
-                </Button>
-              ) : (
-                <p className="text-xs text-muted-foreground">Only admins can change company settings.</p>
-              )}
-            </div>
-          </form>
-        </SectionCard>
+        <div className="flex flex-col gap-6">
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+            <SectionCard
+              title="Company profile"
+              description="Name, address, currency and how dates appear on documents."
+            >
+              <form onSubmit={save} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {saveError ? (
+                  <div className="md:col-span-2">
+                    <ErrorBanner message={saveError} />
+                  </div>
+                ) : null}
+                <fieldset disabled={!canEdit} className="contents">
+                  <TextField
+                    id="company-name"
+                    label="Company name"
+                    required
+                    value={form.name}
+                    onChange={(name) => setForm({ ...form, name })}
+                    error={touched ? nameError : undefined}
+                    autoComplete="organization"
+                    className="md:col-span-2"
+                  />
+                  <TextAreaField
+                    id="company-address"
+                    label="Address"
+                    value={form.address}
+                    onChange={(address) => setForm({ ...form, address })}
+                    className="md:col-span-2"
+                  />
+                  <SelectField
+                    id="company-time-zone"
+                    label="Time zone"
+                    required
+                    options={TIME_ZONES.map((zone) => ({ value: zone, label: zone }))}
+                    value={form.timeZone}
+                    onChange={(timeZone) => setForm({ ...form, timeZone })}
+                    disabled={!canEdit || zoneLocked}
+                    helper={zoneLocked ? "Locked: a depreciation month is closed." : undefined}
+                  />
+                  <SelectField
+                    id="company-currency"
+                    label="Home currency"
+                    required
+                    helper={`Example: ${formatMoney(-1234.5, form.homeCurrency)}`}
+                    options={CURRENCY_CODES.map((code) => ({ value: code, label: code }))}
+                    value={form.homeCurrency}
+                    onChange={(homeCurrency) => setForm({ ...form, homeCurrency })}
+                    disabled={!canEdit}
+                  />
+                  <SelectField
+                    id="company-date-format"
+                    label="Date format on documents"
+                    options={DATE_FORMATS}
+                    value={form.dateFormat}
+                    onChange={(dateFormat) => setForm({ ...form, dateFormat })}
+                    helper={`Today in your time zone: ${formatDate(new Date().toISOString(), form.timeZone)}`}
+                    disabled={!canEdit}
+                  />
+                </fieldset>
+                <div className="flex flex-wrap items-center justify-between gap-3 md:col-span-2">
+                  {company ? <AuditLine record={company} /> : <span />}
+                  {canEdit ? (
+                    <Button type="submit" disabled={saving} className="min-w-24">
+                      {saving ? "Saving…" : "Save"}
+                    </Button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Only admins can change company settings.</p>
+                  )}
+                </div>
+              </form>
+            </SectionCard>
+            <DepreciationSetupCard company={company} canEdit={canEdit} onSaved={() => void reload()} />
+          </div>
+          <OrganizationCard current={currentOrg} />
+        </div>
       )}
-      <div className="mt-6 max-w-3xl">
-        <OrganizationCard current={currentOrg} />
-      </div>
     </>
   )
 }

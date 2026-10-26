@@ -58,6 +58,15 @@
     { "schema": "WorkflowRun", "fields": "runKey", "unique": true },
 
     { "schema": "TeamMemberProfile", "fields": "userId", "unique": true },
-    { "schema": "ReportJob", "fields": "ownerId,startedAt:desc" }
+    { "schema": "ReportJob", "fields": "ownerId,startedAt:desc" },
+
+    { "schema": "DepreciationClass", "fields": "code", "unique": true },
+    { "schema": "FixedAsset", "fields": "assetNumber", "unique": true },
+    { "schema": "FixedAsset", "fields": "unitKey", "unique": true },
+    { "schema": "FixedAsset", "fields": "purchaseOrderId" },
+    { "schema": "FixedAsset", "fields": "status,classId" },
+    { "schema": "DepreciationEntry", "fields": "assetId,period", "unique": true },
+    { "schema": "DepreciationEntry", "fields": "period" },
+    { "schema": "DepreciationRun", "fields": "period,at:desc" }
   ]
 }

@@ -34,6 +34,8 @@ function blocks(args, cwd = root) {
         cwd,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
+        // The schema list for 60 schemas is over Node's 1 MB default.
+        maxBuffer: 64 * 1024 * 1024,
         env: { ...process.env, BLOCKS_STRICT_FLAGS: "1" },
       })
       break

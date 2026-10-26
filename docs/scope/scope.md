@@ -35,6 +35,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 22 | B2B portal | v1.1 | planned |
 | 23 | Plans and entitlements | v1.1 | planned |
 | 24 | Mobile and offline | MVP | planned |
+| 25 | Asset depreciation (per organization) | v1.1 | in-progress |
 
 ## Foundations
 
@@ -259,6 +260,20 @@ Plans with limits and feature flags, trial, billing provider events.
 **Blocks fit:** ⚠️ no billing on Blocks; checks app side.
 - [ ] Design it (spec): drafted as [0023](../specs/0023-plans-entitlements.md) (Proposed), confirm it: `/architect plans and entitlements`
 
+### 25. Asset depreciation (per organization) · in-progress · Beta
+A fixed asset product type. Each owned unit is its own asset and depreciates monthly on written down value (WDV). Each organization picks its country; Bangladesh seeds standard classes and rates (Third Schedule basis, to confirm against the Income Tax Act 2023) as that organization's own copy.
+**Done when:** an organization set to Bangladesh gets the ten standard classes, each received or hand entered asset shows a correct WDV schedule per income year, closed months never change, one organization's edits never change another's, and sale stock keeps its average cost untouched.
+**Blocks fit:** ✅ schemas, unique indexes, compare and set on the company record for close and reopen; ⚠️ row policies and per organization unique keys unverified, close runs in the browser.
+- [x] Design it (spec): [0028](../specs/0028-asset-depreciation/index.md) (revised after the EGM review)
+- [ ] Build it: `/develop asset depreciation`
+  - [ ] Data, rules and the first close: schemas, Bangladesh setup, hand entered assets, close a month, asset detail (AC-1, AC-2, AC-7, AC-8, AC-9, AC-14, part of AC-12). Code done; the Blocks deploy needs one more run (security, indexes, reload)
+  - [x] Classes, reopen and disposal (AC-3, AC-4, AC-10, AC-11)
+  - [x] Receiving and sales exclusion (AC-5, AC-6)
+  - [x] Assets list and depreciation schedule report (AC-12, AC-13)
+- [ ] Verify it: `/check verify asset depreciation`
+- [ ] Test it: `/test asset depreciation`
+Spec [0028](../specs/0028-asset-depreciation/index.md) · code in `src/features/depreciation/`, `src/features/purchasing/actions.ts`, `blocks/data/schemas/`, `scripts/checks/depreciation.mjs`
+
 ## Later
 
 ### 19. Public API and webhooks · needs a decision
@@ -270,6 +285,8 @@ Outgoing signed webhooks now; public REST API, MCP, Zapier moved later.
 ## Deferred
 Out of scope for the current build pass, kept so the plan stays honest.
 - **Backend, database and auth**: decided, SELISE Blocks only, see [0002](../specs/0002-blocks-backend-platform.md) (Proposed). Open inside it: **D1 stock posting strategy**, waiting on the Blocks team's answer about transactions.
+- **Depreciation extras** (follow up to feature 25): accelerated 60/40 for plant in manufacturing, tourism or sports outside Dhaka and Chittagong, higher initial allowances for new buildings and machinery, reconditioned imported vehicle rates by age (10/20/30/35%) · needs a decision
+- **Depreciation later items** (from spec 0028): a yearly tax view (full year in, none out) beside the monthly schedule, returning fixed assets to the vendor, CSV import of opening assets (with feature 17), month close as a server workflow once workflows can sign in
 - **Routing**: decide when the second screen arrives · needs a decision · from spec 0001
 
 ## Legend

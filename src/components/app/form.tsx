@@ -76,6 +76,7 @@ export function TextField({
   error,
   className,
   mono,
+  suffix,
   ...inputProps
 }: Omit<React.ComponentProps<"input">, "onChange" | "value"> & {
   id: string
@@ -85,6 +86,8 @@ export function TextField({
   helper?: string
   error?: string
   mono?: boolean
+  /** Shown inside the field on the right (e.g. cm, kg). */
+  suffix?: string
 }) {
   return (
     <FieldShell
@@ -95,16 +98,30 @@ export function TextField({
       error={error}
       className={className}
     >
-      <Input
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, error, helper)}
-        required={required}
-        className={cn(mono && "font-mono", inputProps.type === "number" && "text-right num")}
-        {...inputProps}
-      />
+      <div className={cn(suffix && "relative")}>
+        <Input
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(id, error, helper)}
+          required={required}
+          className={cn(
+            mono && "font-mono",
+            inputProps.type === "number" && "text-right num",
+            suffix && "pr-10"
+          )}
+          {...inputProps}
+        />
+        {suffix ? (
+          <span
+            className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-xs text-muted-foreground"
+            aria-hidden
+          >
+            {suffix}
+          </span>
+        ) : null}
+      </div>
     </FieldShell>
   )
 }

@@ -1,0 +1,43 @@
+{
+  "schemaName": "DepreciationRun",
+  "collectionName": "DepreciationRuns",
+  "schemaType": 1,
+  "description": "Audit log of month closes and reopens (spec 0028 AC-9, AC-10)",
+  "fields": [
+    {
+      "name": "action",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "period",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "runId",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "by",
+      "type": "String",
+      "isArray": false
+    },
+    {
+      "name": "at",
+      "type": "DateTime",
+      "isArray": false
+    },
+    {
+      "name": "assetCount",
+      "type": "Int",
+      "isArray": false
+    },
+    {
+      "name": "total",
+      "type": "Float",
+      "isArray": false
+    }
+  ]
+}

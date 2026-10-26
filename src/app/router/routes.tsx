@@ -7,6 +7,9 @@ import { CallbackPage } from "@/features/auth/CallbackPage"
 import { LoginPage } from "@/features/auth/LoginPage"
 import { NotFoundPage } from "@/features/auth/NotFoundPage"
 import { HomePage } from "@/features/dashboard/HomePage"
+import { AssetsPage } from "@/features/depreciation/AssetsPage"
+import { ClassesPage } from "@/features/depreciation/ClassesPage"
+import { CloseMonthPage } from "@/features/depreciation/CloseMonthPage"
 import { LocationsPage } from "@/features/locations/LocationsPage"
 import { CustomersPage } from "@/features/partners/CustomersPage"
 import { VendorsPage } from "@/features/partners/VendorsPage"
@@ -42,6 +45,8 @@ const protectedRoutes: Record<string, React.ComponentType> = {
   "/stock/counts": CountsPage,
   "/stock/lots": LotsPage,
   "/stock/reorder": ReorderPage,
+  "/assets": AssetsPage,
+  "/assets/close": CloseMonthPage,
   "/sales/orders": SalesOrdersPage,
   "/purchasing/orders": PurchaseOrdersPage,
   "/payments": PaymentsPage,
@@ -53,6 +58,7 @@ const protectedRoutes: Record<string, React.ComponentType> = {
   "/settings/company": CompanyPage,
   "/settings/currencies": CurrenciesPage,
   "/settings/numbering": NumberingPage,
+  "/settings/depreciation": ClassesPage,
   "/settings/lists": ListsPage,
   "/settings/team": TeamPage,
   "/settings/security": SecurityPage,

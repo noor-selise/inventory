@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   Boxes,
   Building2,
+  CalendarCheck,
   ChartColumn,
   ChevronDown,
   ClipboardCheck,
@@ -11,6 +12,7 @@ import {
   Contact,
   FolderTree,
   Hash,
+  Landmark,
   LayoutDashboard,
   ListChecks,
   ListRestart,
@@ -20,6 +22,7 @@ import {
   Package,
   PackageSearch,
   Palette,
+  Percent,
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
@@ -96,6 +99,8 @@ const NAV_SECTIONS: NavSection[] = [
       { to: "/stock/lots", label: "Lots and serials", icon: Waypoints },
       { to: "/stock/reorder", label: "Reordering", icon: ListRestart, badge: "reorder" },
       { to: "/locations", label: "Locations", icon: MapPin },
+      { to: "/assets", label: "Fixed assets", icon: Landmark },
+      { to: "/assets/close", label: "Close month", icon: CalendarCheck },
     ],
   },
   {
@@ -110,6 +115,7 @@ const NAV_SECTIONS: NavSection[] = [
       { to: "/settings/company", label: "Company", icon: Building2 },
       { to: "/settings/currencies", label: "Currencies", icon: Coins },
       { to: "/settings/numbering", label: "Numbering", icon: Hash },
+      { to: "/settings/depreciation", label: "Depreciation", icon: Percent },
       { to: "/settings/lists", label: "Lists and taxes", icon: ListChecks },
       { to: "/settings/team", label: "Team", icon: Users, adminOnly: true },
       { to: "/settings/security", label: "Security", icon: ShieldCheck },
@@ -119,7 +125,7 @@ const NAV_SECTIONS: NavSection[] = [
 ]
 
 // Exact match for parents that have their own child entries (/stock vs /stock/counts).
-const EXACT = new Set(["/", "/stock"])
+const EXACT = new Set(["/", "/stock", "/assets"])
 
 function isActive(path: string, to: string) {
   return EXACT.has(to) ? path === to : path === to || path.startsWith(`${to}/`)
