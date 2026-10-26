@@ -15,6 +15,8 @@ type AuthContextValue = {
   logout: () => Promise<void>
   refresh: () => Promise<void>
   status: AuthStatus
+  /** True after the person signed out on purpose, so sign in starts fresh instead of returning to their last page. */
+  signedOut: boolean
 }
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
@@ -26,6 +28,7 @@ const STATUS_POLL_MS = 5 * 60_000
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = React.useState<AuthStatus>("loading")
   const [claims, setClaims] = React.useState<Record<string, unknown>>()
+  const [signedOut, setSignedOut] = React.useState(false)
 
   const refresh = React.useCallback(async () => {
     const sessionClaims = await fetchSessionClaims()
@@ -53,13 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = React.useCallback(async () => {
+    // Set before the status flips, so RequireAuth sends them to a plain /login.
+    setSignedOut(true)
     await endSession()
     await refresh()
   }, [refresh])
 
   const value = React.useMemo(
-    () => ({ claims, login, logout, refresh, status }),
-    [claims, login, logout, refresh, status]
+    () => ({ claims, login, logout, refresh, status, signedOut }),
+    [claims, login, logout, refresh, status, signedOut]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

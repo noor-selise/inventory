@@ -1,7 +1,7 @@
 import type * as React from "react"
 
 import { AppShell } from "@/app/layout/AppShell"
-import { RedirectIfAuthenticated, RequireAuth } from "@/app/router/guards"
+import { RedirectIfAuthenticated, RequireAuth, RequireScreen } from "@/app/router/guards"
 import { useNavigation } from "@/app/router/navigation"
 import { CallbackPage } from "@/features/auth/CallbackPage"
 import { LoginPage } from "@/features/auth/LoginPage"
@@ -80,11 +80,18 @@ export function AppRouter() {
     )
   }
 
-  const Page = protectedRoutes[path.replace(/\/+$/, "") || "/"] ?? NotFoundPage
+  const route = path.replace(/\/+$/, "") || "/"
+  const Page = protectedRoutes[route]
   return (
     <RequireAuth>
       <AppShell>
-        <Page />
+        {Page ? (
+          <RequireScreen path={route}>
+            <Page />
+          </RequireScreen>
+        ) : (
+          <NotFoundPage />
+        )}
       </AppShell>
     </RequireAuth>
   )

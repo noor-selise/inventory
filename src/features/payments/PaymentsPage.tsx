@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { KpiCard, KpiRow, RecordCard } from "@/components/app/data"
-import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard, TablePagination } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -24,6 +24,7 @@ import { PaymentDialog } from "./PaymentDialog"
 // Payments, balances per currency and aging (spec 0013 AC-1, AC-4, AC-5).
 
 const DAY = 86_400_000
+const BALANCE_PAGE_SIZE = 25
 
 /** Money in and out this month and open balances, in home currency (DESIGN.md §6.4). */
 function PaymentKpis({ rows, balances, home }: { rows: Payment[]; balances: { party: Party; currencyCode: string; openBalance: number }[]; home: string }) {
@@ -254,6 +255,7 @@ function BalanceAgingSection({
 function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups: OrderLookups; rows: Awaited<ReturnType<typeof partyBalances.list>>["items"]; onRefreshed: () => void }) {
   const { user } = useCurrentUser()
   const [busy, setBusy] = React.useState(false)
+  const [page, setPage] = React.useState(1)
   // Aging over orders with money still due, by days past their due date (spec 0013 AC-5).
   const aging = useResource(async () => {
     const filter = { isQuote: false, isCancelled: { $ne: true } }
@@ -279,7 +281,13 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
   }, [party])
 
   const mine = rows.filter((row) => row.party === party && (Math.abs(row.openBalance) > 0.005 || Math.abs(row.storeCredit) > 0.005))
+  const total = mine.length
+  const pages = Math.max(1, Math.ceil(total / BALANCE_PAGE_SIZE))
+  const safePage = Math.min(Math.max(1, page), pages)
+  const paged = mine.slice((safePage - 1) * BALANCE_PAGE_SIZE, safePage * BALANCE_PAGE_SIZE)
   const name = (id: string) => (party === "customer" ? lookups.customerOf(id)?.name : lookups.vendorOf(id)?.name) ?? ""
+
+  React.useEffect(() => setPage(1), [party, total])
 
   async function refreshAll() {
     setBusy(true)
@@ -323,7 +331,7 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
       ) : (
         <>
           <ul className="divide-y lg:hidden" aria-label={party === "customer" ? "Customer balances" : "Vendor balances"}>
-            {mine.map((row) => {
+            {paged.map((row) => {
               const bucket = aging.data?.get(`${row.partyId}|${row.currencyCode}`)
               return (
                 <li key={row.ItemId} className="flex flex-col gap-3 px-4 py-4">
@@ -371,7 +379,7 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mine.map((row) => {
+                {paged.map((row) => {
                   const bucket = aging.data?.get(`${row.partyId}|${row.currencyCode}`)
                   return (
                     <TableRow key={row.ItemId} className="h-11">
@@ -393,6 +401,13 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
               </TableBody>
             </Table>
           </div>
+          <TablePagination
+            page={safePage}
+            pageSize={BALANCE_PAGE_SIZE}
+            total={total}
+            summary={`${total} open balance${total === 1 ? "" : "s"}`}
+            onPageChange={setPage}
+          />
         </>
       )}
     </SectionCard>

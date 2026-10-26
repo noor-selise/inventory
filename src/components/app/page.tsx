@@ -1,5 +1,5 @@
 import type * as React from "react"
-import { CircleAlert, RotateCw } from "lucide-react"
+import { ChevronLeft, ChevronRight, CircleAlert, RotateCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -107,6 +107,59 @@ export function LoadingRows({ rows = 4 }: { rows?: number }) {
       {Array.from({ length: rows }, (_, index) => (
         <Skeleton key={index} className="h-11 w-full rounded-sm" />
       ))}
+    </div>
+  )
+}
+
+/** Footer for data tables (DESIGN.md §6.3 — 25-row pages, prev/next). */
+export function TablePagination({
+  page,
+  pageSize,
+  total,
+  summary,
+  onPageChange,
+  className,
+}: {
+  page: number
+  pageSize: number
+  total: number
+  summary: string
+  onPageChange: (page: number) => void
+  className?: string
+}) {
+  const pages = Math.max(1, Math.ceil(total / pageSize))
+  const safePage = Math.min(Math.max(1, page), pages)
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-3 border-t border-border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between md:px-6",
+        className,
+      )}
+    >
+      <span className="text-muted-foreground num">
+        {summary} · page {safePage} of {pages}
+      </span>
+      <div className="flex gap-2 self-end sm:self-auto">
+        <Button
+          size="icon-sm"
+          variant="secondary"
+          aria-label="Previous page"
+          disabled={safePage <= 1}
+          onClick={() => onPageChange(safePage - 1)}
+        >
+          <ChevronLeft />
+        </Button>
+        <Button
+          size="icon-sm"
+          variant="secondary"
+          aria-label="Next page"
+          disabled={safePage >= pages}
+          onClick={() => onPageChange(safePage + 1)}
+        >
+          <ChevronRight />
+        </Button>
+      </div>
     </div>
   )
 }

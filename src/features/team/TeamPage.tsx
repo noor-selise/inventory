@@ -5,7 +5,7 @@ import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { CheckboxField, SelectField, TextField } from "@/components/app/form"
-import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard, TablePagination } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +38,7 @@ import { ADMIN_ROLE, ROLE_BUNDLES, roleName, roleSlugs } from "./roles"
 
 const roleOptions = ROLE_BUNDLES.map((role) => ({ value: role.slug, label: role.name }))
 const headClass = "h-9 label-overline"
+const TEAM_PAGE_SIZE = 25
 
 type Pending =
   | { kind: "role"; user: BlocksUser; role: string }
@@ -67,14 +68,32 @@ function ensureOk(response: { isSuccess?: boolean; errors?: unknown; message?: s
   }
 }
 
+async function fetchTeamRoster(): Promise<BlocksUser[]> {
+  const pageSize = 50
+  const roster: BlocksUser[] = []
+  let pageNo = 1
+  let totalCount = Number.POSITIVE_INFINITY
+  while (roster.length < totalCount) {
+    const response = await blocksClient.iam.users.list({ pageNo, pageSize })
+    ensureOk(response)
+    totalCount = response.totalCount ?? roster.length
+    const batch = response.data ?? []
+    roster.push(...batch)
+    if (!batch.length) break
+    pageNo += 1
+  }
+  return roster.filter((user) => !user.email?.toLowerCase().endsWith("@example.com"))
+}
+
 export function TeamPage() {
   const { user: me, isAdmin } = useCurrentUser()
-  const { data, error, loading, reload } = useResource(async () => {
-    const response = await blocksClient.iam.users.list({ pageNo: 1, pageSize: 100 })
-    ensureOk(response)
-    return response.data ?? []
-  }, [])
-  const users = data ?? []
+  const { data, error, loading, reload } = useResource(() => fetchTeamRoster(), [])
+  const roster = data ?? []
+  const [page, setPage] = React.useState(1)
+  const total = roster.length
+  const pages = Math.max(1, Math.ceil(total / TEAM_PAGE_SIZE))
+  const safePage = Math.min(Math.max(1, page), pages)
+  const users = roster.slice((safePage - 1) * TEAM_PAGE_SIZE, safePage * TEAM_PAGE_SIZE)
   const profiles = useResource(() => teamProfiles.list({ pageSize: 500 }), [])
   const profileOf = (userId?: string) => profiles.data?.items.find((row) => row.userId === userId)
   const [editing, setEditing] = React.useState<BlocksUser>()
@@ -82,7 +101,11 @@ export function TeamPage() {
   const [pending, setPending] = React.useState<Pending>()
   const [busy, setBusy] = React.useState(false)
 
-  const activeAdmins = users.filter((user) => isActive(user) && roleSlugs(user.roles).includes(ADMIN_ROLE))
+  const activeAdmins = roster.filter((user) => isActive(user) && roleSlugs(user.roles).includes(ADMIN_ROLE))
+
+  React.useEffect(() => {
+    if (page > pages) setPage(pages)
+  }, [page, pages])
 
   // An admin cannot remove the last admin (spec 0003 key invariant).
   function wouldRemoveLastAdmin(user: BlocksUser) {
@@ -137,9 +160,10 @@ export function TeamPage() {
       <SectionCard>
         {loading && !data ? (
           <LoadingRows />
-        ) : users.length === 0 ? (
+        ) : total === 0 ? (
           <EmptyState icon={Users} message="No team members found." />
         ) : (
+          <>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -236,6 +260,14 @@ export function TeamPage() {
               </TableBody>
             </Table>
           </div>
+          <TablePagination
+            page={safePage}
+            pageSize={TEAM_PAGE_SIZE}
+            total={total}
+            summary={`${total} team member${total === 1 ? "" : "s"}`}
+            onPageChange={setPage}
+          />
+          </>
         )}
       </SectionCard>
 

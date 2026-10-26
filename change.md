@@ -4,6 +4,9 @@ All changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Add TablePagination; paginate Team roster and payment balance tables (by noor-selise, 2026-10-27)
+- Hide legacy @example.com users on Team; sync script revokes their org access (by noor-selise, 2026-10-27)
+- Replace demo team with yopmail accounts; add sync-demo-team script and seed password env (by noor-selise, 2026-10-27)
 - Fix nginx container: move pid to main config so non-root deploy health checks pass (by noor-selise, 2026-10-27)
 - Payments mobile: scrollable tabs, balance cards to lg, touch targets, void on phone (by noor-selise, 2026-10-27)
 - Refine payment balance table spacing: shrink-to-fit name/currency, aging group border, card header padding (by noor-selise, 2026-10-27)

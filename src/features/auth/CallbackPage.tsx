@@ -4,9 +4,29 @@ import { useAuth } from "@/app/providers/AuthProvider"
 import { useNavigation } from "@/app/router/navigation"
 import { ErrorBanner } from "@/components/app/page"
 import { Button } from "@/components/ui/button"
+import { canOpen } from "@/features/team/screen-access"
+import { ADMIN_ROLE, roleSlugs } from "@/features/team/roles"
 import { completeLogin } from "@/lib/blocks/auth"
+import { blocksClient } from "@/lib/blocks/client"
 import { AuthScreen } from "./LoginPage"
 import { LoadingScreen } from "./LoadingScreen"
+
+/**
+ * The page to open after sign in: the saved return page when the person who
+ * just signed in may open it, else the dashboard. The saved page can belong to
+ * someone else (a session that expired, then another person signed in) or come
+ * from a link meant for another role.
+ */
+async function landingFor(returnTo: string) {
+  const path = returnTo.split(/[?#]/)[0] || "/"
+  if (path === "/") return "/"
+  try {
+    const roles = roleSlugs((await blocksClient.iam.me()).data?.roles)
+    return canOpen(path, roles, roles.includes(ADMIN_ROLE)) ? returnTo : "/"
+  } catch {
+    return "/"
+  }
+}
 
 // Handles /login/callback. Never wrap it in a guard: the user is not signed in yet.
 export function CallbackPage() {
@@ -27,7 +47,7 @@ export function CallbackPage() {
           return
         }
         await refresh()
-        navigate(result.returnTo)
+        navigate(await landingFor(result.returnTo))
       })
       .catch((caught: unknown) =>
         setError(caught instanceof Error ? caught.message : String(caught))

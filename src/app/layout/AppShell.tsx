@@ -46,6 +46,7 @@ import { reorderSuggestions } from "@/features/reorder/api"
 import { useDailyReorderCheck } from "@/features/reorder/useDailyReorderCheck"
 import { companies } from "@/features/settings/api"
 import { roleName } from "@/features/team/roles"
+import { canOpen } from "@/features/team/screen-access"
 import { useResource } from "@/hooks/use-resource"
 import { cn } from "@/lib/utils"
 import { locationFilter, useLocationScope } from "@/features/team/location-scope"
@@ -58,7 +59,6 @@ type NavItem = {
   to: string
   label: string
   icon: React.ComponentType<{ className?: string }>
-  adminOnly?: boolean
   /** Shows a live count beside the link. */
   badge?: "reorder"
 }
@@ -117,7 +117,7 @@ const NAV_SECTIONS: NavSection[] = [
       { to: "/settings/numbering", label: "Numbering", icon: Hash },
       { to: "/settings/depreciation", label: "Depreciation", icon: Percent },
       { to: "/settings/lists", label: "Lists and taxes", icon: ListChecks },
-      { to: "/settings/team", label: "Team", icon: Users, adminOnly: true },
+      { to: "/settings/team", label: "Team", icon: Users },
       { to: "/settings/security", label: "Security", icon: ShieldCheck },
       { to: "/settings/appearance", label: "Appearance", icon: Palette },
     ],
@@ -187,7 +187,7 @@ function NavLink({ item, active, rail, count, onNavigate }: { item: NavItem; act
 
 function NavLinks({ rail = false, onNavigate }: { rail?: boolean; onNavigate?: () => void }) {
   const { path } = useNavigation()
-  const { isAdmin } = useCurrentUser()
+  const { roles, isAdmin, loaded } = useCurrentUser()
   const badges = useNavBadges()
   const [closed, setClosed] = useStoredState<string[]>("inventory:nav-closed", [])
 
@@ -195,7 +195,10 @@ function NavLinks({ rail = false, onNavigate }: { rail?: boolean; onNavigate?: (
     <nav aria-label="Main" className={cn("flex flex-col", rail ? "gap-1" : "gap-4")}>
       <NavLink item={HOME} active={isActive(path, HOME.to)} rail={rail} onNavigate={onNavigate} />
       {NAV_SECTIONS.map((section) => {
-        const items = section.items.filter((item) => !item.adminOnly || isAdmin)
+        // Each role sees only the screens it may open (src/features/team/screen-access.ts).
+        // Nothing until the roles load, so the menu never flashes links a role cannot open.
+        const items = loaded ? section.items.filter((item) => canOpen(item.to, roles, isAdmin)) : []
+        if (!items.length) return null
         const holdsActive = items.some((item) => isActive(path, item.to))
         // The section holding the current page always shows its links.
         const open = holdsActive || !closed.includes(section.key)

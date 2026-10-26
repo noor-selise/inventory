@@ -311,14 +311,14 @@ export const DEMO_OPENING_STOCK: Record<string, OpeningLine[]> = {
 
 // Team, rate history and stock activity demo data.
 
-/** One demo member per role. @example.com never receives mail, so these accounts cannot be activated by anyone. */
+/** One demo member per non-admin role. Use @yopmail.com with DEMO_TEAM_PASSWORD so accounts can sign in. */
 export const DEMO_TEAM = [
-  { email: "manager.demo@example.com", firstName: "Maya", lastName: "Manager", role: "manager" },
-  { email: "sales.demo@example.com", firstName: "Sami", lastName: "Sales", role: "sales" },
-  { email: "purchasing.demo@example.com", firstName: "Priya", lastName: "Purchasing", role: "purchasing" },
-  { email: "warehouse.demo@example.com", firstName: "Wasim", lastName: "Warehouse", role: "warehouse" },
-  { email: "production.demo@example.com", firstName: "Pablo", lastName: "Production", role: "production" },
-  { email: "readonly.demo@example.com", firstName: "Rita", lastName: "Readonly", role: "readonly" },
+  { email: "maya@yopmail.com", firstName: "Maya", lastName: "Manager", role: "manager" },
+  { email: "sami@yopmail.com", firstName: "Sami", lastName: "Sales", role: "sales" },
+  { email: "priya@yopmail.com", firstName: "Priya", lastName: "Purchasing", role: "purchasing" },
+  { email: "wasim@yopmail.com", firstName: "Wasim", lastName: "Warehouse", role: "warehouse" },
+  { email: "pablo@yopmail.com", firstName: "Pablo", lastName: "Production", role: "production" },
+  { email: "rita@yopmail.com", firstName: "Rita", lastName: "Readonly", role: "readonly" },
 ]
 
 /** Older sample rates: [currency, days ago, rate]. */
@@ -348,7 +348,7 @@ export const DEMO_TRANSFERS: { remarks: string; from: string; to: string; state:
 
 /** Counts in three states. `counted` is how far off the count is from what was expected, per line. */
 export const DEMO_COUNTS: { remarks: string; location: string; state: "completed" | "in_review" | "in_progress"; daysAgo: number; sheets: { name: string; assignee: string; skus: string[]; offsets?: Record<string, number>; submitted: boolean }[] }[] = [
-  { remarks: "Monthly store count (demo)", location: "Downtown store", state: "completed", daysAgo: 5, sheets: [{ name: "Front counter", assignee: "warehouse.demo@example.com", skus: ["SAMPLE-0001", "SAMPLE-0003", "SAMPLE-0021"], offsets: { "SAMPLE-0003": -4 }, submitted: true }] },
-  { remarks: "Aisle A cycle count (demo)", location: "Main warehouse", state: "in_review", daysAgo: 1, sheets: [{ name: "Aisle A", assignee: "warehouse.demo@example.com", skus: ["SAMPLE-0002", "SAMPLE-0004", "SAMPLE-0005"], offsets: { "SAMPLE-0004": 12, "SAMPLE-0005": -25 }, submitted: true }] },
-  { remarks: "Power tools spot check (demo)", location: "Main warehouse", state: "in_progress", daysAgo: 0, sheets: [{ name: "Bin B-01", assignee: "warehouse.demo@example.com", skus: ["SAMPLE-0009", "SAMPLE-0010"], submitted: false }, { name: "Bin B-02", assignee: "manager.demo@example.com", skus: ["SAMPLE-0011", "SAMPLE-0013"], submitted: false }] },
+  { remarks: "Monthly store count (demo)", location: "Downtown store", state: "completed", daysAgo: 5, sheets: [{ name: "Front counter", assignee: "wasim@yopmail.com", skus: ["SAMPLE-0001", "SAMPLE-0003", "SAMPLE-0021"], offsets: { "SAMPLE-0003": -4 }, submitted: true }] },
+  { remarks: "Aisle A cycle count (demo)", location: "Main warehouse", state: "in_review", daysAgo: 1, sheets: [{ name: "Aisle A", assignee: "wasim@yopmail.com", skus: ["SAMPLE-0002", "SAMPLE-0004", "SAMPLE-0005"], offsets: { "SAMPLE-0004": 12, "SAMPLE-0005": -25 }, submitted: true }] },
+  { remarks: "Power tools spot check (demo)", location: "Main warehouse", state: "in_progress", daysAgo: 0, sheets: [{ name: "Bin B-01", assignee: "wasim@yopmail.com", skus: ["SAMPLE-0009", "SAMPLE-0010"], submitted: false }, { name: "Bin B-02", assignee: "maya@yopmail.com", skus: ["SAMPLE-0011", "SAMPLE-0013"], submitted: false }] },
 ]

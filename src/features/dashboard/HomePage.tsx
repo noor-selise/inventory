@@ -6,15 +6,16 @@ import { PageHeader } from "@/components/app/page"
 import { LowStockAlerts } from "@/features/reorder/LowStockAlerts"
 import { DashboardWidgets } from "./DashboardWidgets"
 import { StarterDataCard } from "@/features/settings/StarterDataCard"
+import { canOpen } from "@/features/team/screen-access"
 
 const SHORTCUTS = [
   { to: "/products", label: "Products", description: "Add and find products, scan barcodes", icon: Package },
   { to: "/settings/company", label: "Company settings", description: "Profile, currencies, numbering, taxes", icon: Building2 },
-  { to: "/settings/team", label: "Team", description: "Invite people and set their roles", icon: Users, adminOnly: true },
+  { to: "/settings/team", label: "Team", description: "Invite people and set their roles", icon: Users },
 ]
 
 export function HomePage() {
-  const { user, isAdmin } = useCurrentUser()
+  const { user, roles, isAdmin } = useCurrentUser()
   const name = userDisplayName(user)
 
   return (
@@ -25,7 +26,7 @@ export function HomePage() {
       />
       <DashboardWidgets />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {SHORTCUTS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
+        {SHORTCUTS.filter((item) => canOpen(item.to, roles, isAdmin)).map((item) => (
           <Link
             key={item.to}
             to={item.to}
