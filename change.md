@@ -4,6 +4,10 @@ All changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Fix nginx container: move pid to main config so non-root deploy health checks pass (by noor-selise, 2026-10-27)
+- Payments mobile: scrollable tabs, balance cards to lg, touch targets, void on phone (by noor-selise, 2026-10-27)
+- Refine payment balance table spacing: shrink-to-fit name/currency, aging group border, card header padding (by noor-selise, 2026-10-27)
+- Tighten payment balance tables: grouped aging header, fixed columns, mobile cards; drop table header word-spacing (by noor-selise, 2026-10-27)
 - Product standard, purchase, and sales units use dropdowns with a shared UOM catalog (by noor-selise, 2026-10-27)
 - Clarify product size (cm), weight (kg), and purchase/sales unit conversions in the product form (by noor-selise, 2026-10-27)
 - Fix fixed-asset product picker: resilient load, refresh on dialog open, empty-state link (by noor-selise, 2026-10-27)

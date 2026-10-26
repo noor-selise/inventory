@@ -73,7 +73,7 @@ export function PaymentsPage() {
         description="Money in from customers and out to vendors, split over orders. Balances update right after each payment and again on the server."
         actions={
           canEdit ? (
-            <Button onClick={() => setCreating(true)} disabled={!data}>
+            <Button className="w-full min-h-11 sm:min-h-9 sm:w-auto" onClick={() => setCreating(true)} disabled={!data}>
               <Plus aria-hidden /> Record payment
             </Button>
           ) : null
@@ -82,10 +82,19 @@ export function PaymentsPage() {
       {list.error ? <ErrorBanner message={list.error} onRetry={list.reload} /> : null}
       {list.data && balances.data && data ? <PaymentKpis rows={list.data.items} balances={balances.data.items} home={data.homeCurrency} /> : null}
       <Tabs defaultValue="payments">
-        <TabsList className="mb-4" aria-label="Payment views">
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="customers">Customer balances</TabsTrigger>
-          <TabsTrigger value="vendors">Vendor balances</TabsTrigger>
+        <TabsList
+          className="mb-4 -mx-1 flex snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible"
+          aria-label="Payment views"
+        >
+          <TabsTrigger value="payments" className="min-h-11 snap-start sm:min-h-8">Payments</TabsTrigger>
+          <TabsTrigger value="customers" className="min-h-11 snap-start sm:min-h-8">
+            <span className="sm:hidden">Customers</span>
+            <span className="hidden sm:inline">Customer balances</span>
+          </TabsTrigger>
+          <TabsTrigger value="vendors" className="min-h-11 snap-start sm:min-h-8">
+            <span className="sm:hidden">Vendors</span>
+            <span className="hidden sm:inline">Vendor balances</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="payments">
           <SectionCard className="p-0 md:p-0">
@@ -107,20 +116,22 @@ export function PaymentsPage() {
               />
             ) : (
               <>
-              <ul className="md:hidden" aria-label="Payments">
+              <ul className="lg:hidden" aria-label="Payments">
                 {(list.data?.items ?? []).map((payment) => (
                   <RecordCard
                     key={payment.ItemId}
                     title={
                       <span className={cn(payment.isVoided && "text-muted-foreground line-through")}>
-                        <span className="font-mono text-[13px]">{payment.number}</span> · {payment.party === "customer" ? data.customerOf(payment.partyId)?.name : data.vendorOf(payment.partyId)?.name}
+                        <span className="font-mono text-[13px]">{payment.number}</span> ·{" "}
+                        {payment.party === "customer" ? data.customerOf(payment.partyId)?.name : data.vendorOf(payment.partyId)?.name}
                       </span>
                     }
                     value={formatMoney(payment.amount, payment.currencyCode)}
                     badges={
                       <>
                         <Badge variant={payment.party === "customer" ? "success" : "info"}>
-                          {payment.party === "customer" ? <ArrowDownLeft aria-hidden /> : <ArrowUpRight aria-hidden />} {payment.party === "customer" ? "Received" : "Paid out"}
+                          {payment.party === "customer" ? <ArrowDownLeft aria-hidden /> : <ArrowUpRight aria-hidden />}{" "}
+                          {payment.party === "customer" ? "Received" : "Paid out"}
                         </Badge>
                         {payment.isVoided ? (
                           <Badge variant="muted">
@@ -130,10 +141,24 @@ export function PaymentsPage() {
                       </>
                     }
                     meta={`${formatDate(payment.paidOn)} · ${PAYMENT_TYPES.find((type) => type.value === payment.type)?.label ?? ""}`}
+                    footer={
+                      canEdit && !payment.isVoided ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="min-h-11 w-full justify-center sm:min-h-9"
+                          disabled={busy === payment.ItemId}
+                          onClick={() => void onVoid(payment)}
+                        >
+                          Void payment
+                        </Button>
+                      ) : null
+                    }
                   />
                 ))}
               </ul>
-              <div className="hidden overflow-x-auto md:block">
+              <div className="hidden overflow-x-auto lg:block">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted hover:bg-muted">
@@ -189,6 +214,43 @@ export function PaymentsPage() {
   )
 }
 
+type AgingBucket = { current: number; d30: number; d60: number; older: number }
+
+function BalanceAgingSection({
+  currencyCode,
+  bucket,
+  loading,
+}: {
+  currencyCode: string
+  bucket?: AgingBucket
+  loading?: boolean
+}) {
+  const rows = [
+    { label: "Current", value: bucket?.current ?? 0 },
+    { label: "1–30 days", value: bucket?.d30 ?? 0 },
+    { label: "31–60 days", value: bucket?.d60 ?? 0 },
+    { label: "61+ days", value: bucket?.older ?? 0 },
+  ] as const
+
+  return (
+    <div className="border-t border-border pt-3">
+      <p className="mb-2 text-xs font-semibold text-muted-foreground">Aging · days past due</p>
+      {loading ? (
+        <p className="text-xs text-muted-foreground">Loading aging…</p>
+      ) : (
+        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          {rows.map(({ label, value }) => (
+            <div key={label} className="rounded-md bg-muted/50 px-2.5 py-2 sm:px-3">
+              <dt className="text-[11px] font-medium text-muted-foreground">{label}</dt>
+              <dd className="mt-0.5 text-base font-semibold num tabular-nums sm:text-sm">{formatMoney(value, currencyCode)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  )
+}
+
 function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups: OrderLookups; rows: Awaited<ReturnType<typeof partyBalances.list>>["items"]; onRefreshed: () => void }) {
   const { user } = useCurrentUser()
   const [busy, setBusy] = React.useState(false)
@@ -234,13 +296,24 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
     }
   }
 
+  const th = cn(headClass, "px-3 py-2")
+  const td = "px-3 py-2.5"
+  const money = "text-right num tabular-nums"
+  const agingEdge = "border-l border-border"
+
   return (
     <SectionCard
-      className="p-0 md:p-0"
+      className="overflow-hidden p-0 md:p-0 [&>div:first-child]:flex-col [&>div:first-child]:items-stretch [&>div:first-child]:gap-3 [&>div:first-child]:border-b [&>div:first-child]:border-border [&>div:first-child]:px-4 [&>div:first-child]:py-4 sm:[&>div:first-child]:flex-row sm:[&>div:first-child]:items-start md:[&>div:first-child]:px-6"
       title={party === "customer" ? "What customers owe you" : "What you owe vendors"}
       description="Per currency. Store credit is money received or paid that is not on any order."
       actions={
-        <Button size="sm" variant="secondary" onClick={() => void refreshAll()} disabled={busy}>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="min-h-11 w-full justify-center sm:min-h-9 sm:w-auto"
+          onClick={() => void refreshAll()}
+          disabled={busy}
+        >
           <RefreshCw aria-hidden /> {busy ? "Recomputing…" : "Recompute"}
         </Button>
       }
@@ -248,40 +321,79 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
       {mine.length === 0 ? (
         <EmptyState icon={Wallet} message="Nothing open." />
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted hover:bg-muted">
-                <TableHead className={headClass}>{party === "customer" ? "Customer" : "Vendor"}</TableHead>
-                <TableHead className={headClass}>Currency</TableHead>
-                <TableHead className={cn(headClass, "text-right")}>Open balance</TableHead>
-                <TableHead className={cn(headClass, "text-right")}>Store credit</TableHead>
-                <TableHead className={cn(headClass, "hidden text-right md:table-cell")}>Current</TableHead>
-                <TableHead className={cn(headClass, "hidden text-right md:table-cell")}>1 to 30</TableHead>
-                <TableHead className={cn(headClass, "hidden text-right md:table-cell")}>31 to 60</TableHead>
-                <TableHead className={cn(headClass, "hidden text-right md:table-cell")}>61+</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mine.map((row) => {
-                const bucket = aging.data?.get(`${row.partyId}|${row.currencyCode}`)
-                return (
-                  <TableRow key={row.ItemId} className="h-11">
-                    <TableCell>{name(row.partyId)}</TableCell>
-                    <TableCell>{row.currencyCode}</TableCell>
-                    <TableCell className="text-right num">{formatMoney(row.openBalance, row.currencyCode)}</TableCell>
-                    <TableCell className="text-right num">{formatMoney(row.storeCredit, row.currencyCode)}</TableCell>
-                    {[bucket?.current, bucket?.d30, bucket?.d60, bucket?.older].map((value, index) => (
-                      <TableCell key={index} className="hidden text-right num md:table-cell">
-                        {formatMoney(value ?? 0, row.currencyCode)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
+        <>
+          <ul className="divide-y lg:hidden" aria-label={party === "customer" ? "Customer balances" : "Vendor balances"}>
+            {mine.map((row) => {
+              const bucket = aging.data?.get(`${row.partyId}|${row.currencyCode}`)
+              return (
+                <li key={row.ItemId} className="flex flex-col gap-3 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="min-w-0 flex-1 text-base font-semibold leading-snug">{name(row.partyId)}</h3>
+                    <Badge variant="muted" className="shrink-0 font-mono text-xs">{row.currencyCode}</Badge>
+                  </div>
+                  <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5">
+                      <dt className="text-xs text-muted-foreground">Open balance</dt>
+                      <dd className="mt-0.5 text-base font-semibold num tabular-nums">{formatMoney(row.openBalance, row.currencyCode)}</dd>
+                    </div>
+                    <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5">
+                      <dt className="text-xs text-muted-foreground">Store credit</dt>
+                      <dd className="mt-0.5 text-base font-semibold num tabular-nums">{formatMoney(row.storeCredit, row.currencyCode)}</dd>
+                    </div>
+                  </dl>
+                  <BalanceAgingSection currencyCode={row.currencyCode} bucket={bucket} loading={aging.loading && !aging.data} />
+                </li>
+              )
+            })}
+          </ul>
+          <div className="hidden lg:block">
+            <Table className="w-full border-separate border-spacing-0">
+              <TableHeader className="bg-muted">
+                <TableRow className="border-b-0 bg-muted hover:bg-muted">
+                  <TableHead rowSpan={2} className={cn(th, "w-[1%] max-w-[16rem] align-bottom")}>
+                    {party === "customer" ? "Customer" : "Vendor"}
+                  </TableHead>
+                  <TableHead rowSpan={2} className={cn(th, "w-[1%] align-bottom")}>Curr.</TableHead>
+                  <TableHead rowSpan={2} className={cn(th, "w-[1%] align-bottom text-right")}>Open</TableHead>
+                  <TableHead rowSpan={2} className={cn(th, "w-[1%] align-bottom pr-4 text-right")}>Credit</TableHead>
+                  <TableHead
+                    colSpan={4}
+                    className={cn(th, agingEdge, "border-b border-border pb-1 text-center normal-case tracking-normal")}
+                  >
+                    <span className="label-overline">Aging · days past due</span>
+                  </TableHead>
+                </TableRow>
+                <TableRow className="border-b border-border bg-muted hover:bg-muted">
+                  <TableHead className={cn(th, agingEdge, "h-8 pt-0 text-right")}>Current</TableHead>
+                  <TableHead className={cn(th, "h-8 pt-0 text-right")}>1–30</TableHead>
+                  <TableHead className={cn(th, "h-8 pt-0 text-right")}>31–60</TableHead>
+                  <TableHead className={cn(th, "pr-4 h-8 pt-0 text-right")}>61+</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mine.map((row) => {
+                  const bucket = aging.data?.get(`${row.partyId}|${row.currencyCode}`)
+                  return (
+                    <TableRow key={row.ItemId} className="h-11">
+                      <TableCell className={cn(td, "max-w-[16rem] truncate font-medium")}>{name(row.partyId)}</TableCell>
+                      <TableCell className={cn(td, "text-muted-foreground")}>{row.currencyCode}</TableCell>
+                      <TableCell className={cn(td, money)}>{formatMoney(row.openBalance, row.currencyCode)}</TableCell>
+                      <TableCell className={cn(td, money, "pr-4")}>{formatMoney(row.storeCredit, row.currencyCode)}</TableCell>
+                      {[bucket?.current, bucket?.d30, bucket?.d60, bucket?.older].map((value, index) => (
+                        <TableCell
+                          key={index}
+                          className={cn(td, money, index === 0 && agingEdge, index === 3 && "pr-4")}
+                        >
+                          {formatMoney(value ?? 0, row.currencyCode)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </SectionCard>
   )

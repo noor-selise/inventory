@@ -115,6 +115,7 @@ export function RecordCard({
   value,
   badges,
   meta,
+  footer,
   onClick,
   selected,
   leading,
@@ -123,6 +124,7 @@ export function RecordCard({
   value?: React.ReactNode
   badges?: React.ReactNode
   meta?: React.ReactNode
+  footer?: React.ReactNode
   onClick?: () => void
   selected?: boolean
   leading?: React.ReactNode
@@ -131,22 +133,30 @@ export function RecordCard({
     <span className="flex min-w-0 flex-1 flex-col gap-1.5">
       <span className="flex items-start justify-between gap-3">
         <span className="min-w-0 truncate font-semibold">{title}</span>
-        {value != null ? <span className="shrink-0 font-semibold num">{value}</span> : null}
+        {value != null ? <span className="shrink-0 text-base font-semibold num sm:text-sm">{value}</span> : null}
       </span>
       {badges ? <span className="flex flex-wrap gap-1.5">{badges}</span> : null}
-      {meta ? <span className="truncate text-xs text-muted-foreground">{meta}</span> : null}
+      {meta ? <span className="text-xs leading-relaxed text-muted-foreground">{meta}</span> : null}
     </span>
   )
   return (
-    <li className={cn("flex items-start gap-3 border-b px-4 py-3 last:border-b-0", selected && "border-l-2 border-l-primary bg-primary/10")}>
-      {leading}
-      {onClick ? (
-        <button type="button" onClick={onClick} className="flex min-w-0 flex-1 cursor-pointer text-left">
-          {content}
-        </button>
-      ) : (
-        content
+    <li
+      className={cn(
+        "flex flex-col gap-2 border-b px-4 py-3 last:border-b-0",
+        selected && "border-l-2 border-l-primary bg-primary/10"
       )}
+    >
+      <span className="flex items-start gap-3">
+        {leading}
+        {onClick ? (
+          <button type="button" onClick={onClick} className="flex min-w-0 flex-1 cursor-pointer text-left">
+            {content}
+          </button>
+        ) : (
+          content
+        )}
+      </span>
+      {footer}
     </li>
   )
 }

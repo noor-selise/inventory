@@ -22,7 +22,10 @@ RUN pnpm build
 FROM nginx:1.27-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx \
+# Non-root pods: unprivileged port 8080 and a pid file nginx can write.
+RUN sed -i 's|pid        /run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
+  && sed -i 's|pid        /var/run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
+  && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx \
   && touch /tmp/nginx.pid \
   && chown nginx:nginx /tmp/nginx.pid
 USER nginx
