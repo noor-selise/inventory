@@ -613,10 +613,6 @@ export async function runSeed(store: SeedStore, parts: SeedParts): Promise<SeedR
   if (parts.demoTeam) {
     const users = store.client.iam?.users
     if (!users) throw new Error("This client cannot manage team members.")
-    const password = process.env.DEMO_TEAM_PASSWORD
-    if (!password?.trim()) {
-      throw new Error("Set DEMO_TEAM_PASSWORD before seeding the demo team (sign-in-ready @yopmail.com accounts).")
-    }
     let added = 0
     for (const member of DEMO_TEAM) {
       const available = await users.emailAvailable({ email: member.email })
@@ -625,7 +621,6 @@ export async function runSeed(store: SeedStore, parts: SeedParts): Promise<SeedR
         email: member.email,
         firstName: member.firstName,
         lastName: member.lastName,
-        password,
         roles: [member.role],
       })
       if (result.isSuccess === false) throw new Error(`Team member ${member.email}: ${JSON.stringify(result.errors)}`)

@@ -311,7 +311,7 @@ export const DEMO_OPENING_STOCK: Record<string, OpeningLine[]> = {
 
 // Team, rate history and stock activity demo data.
 
-/** One demo member per non-admin role. Use @yopmail.com with DEMO_TEAM_PASSWORD so accounts can sign in. */
+/** One demo member per non-admin role (@yopmail.com). For sign-in-ready accounts use scripts/sync-demo-team.sh. */
 export const DEMO_TEAM = [
   { email: "maya@yopmail.com", firstName: "Maya", lastName: "Manager", role: "manager" },
   { email: "sami@yopmail.com", firstName: "Sami", lastName: "Sales", role: "sales" },
