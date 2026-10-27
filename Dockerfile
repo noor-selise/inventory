@@ -28,5 +28,6 @@ RUN sed -i 's|pid        /run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.
   && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx \
   && touch /tmp/nginx.pid \
   && chown nginx:nginx /tmp/nginx.pid
-USER nginx
+# Numeric uid (nginx = 101): runAsNonRoot can't verify a named user and rejects the pod.
+USER 101:101
 EXPOSE 8080
