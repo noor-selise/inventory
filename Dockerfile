@@ -22,12 +22,14 @@ RUN pnpm build
 FROM nginx:1.27-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-# Non-root pods: unprivileged port 8080 and a pid file nginx can write.
-RUN sed -i 's|pid        /run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
-  && sed -i 's|pid        /var/run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
+# Non-root, read-only-root-fs pods: unprivileged port 8080, no pid file to write,
+# temp dirs pre-created (nginx only mkdirs them at startup when missing), and no
+# entrypoint scripts that rewrite /etc/nginx.
+RUN sed -i 's|^pid .*|pid /dev/null;|' /etc/nginx/nginx.conf \
+  && mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/proxy_temp \
+     /var/cache/nginx/fastcgi_temp /var/cache/nginx/uwsgi_temp /var/cache/nginx/scgi_temp \
   && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx \
-  && touch /tmp/nginx.pid \
-  && chown nginx:nginx /tmp/nginx.pid
+  && rm -f /docker-entrypoint.d/*
 # Numeric uid (nginx = 101): runAsNonRoot can't verify a named user and rejects the pod.
 USER 101:101
 EXPOSE 8080
