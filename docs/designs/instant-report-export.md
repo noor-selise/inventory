@@ -43,7 +43,7 @@ Removing the background path makes CSV and Print the only exports, and those two
 
 *   The Export menu shows exactly two items, "CSV file" and "Print or PDF". The Background reports card no longer renders for anyone, including people with past runs.
 *   The browser job code is gone. `BackgroundJobs.tsx` and `jobs.ts` are deleted, and `toCsv` moves to its own module.
-*   CSV and Print are disabled while the report loads or reloads. The menu shows why: "Updating the report…" while loading, "No rows to export" when empty.
+*   CSV and Print are disabled while the report loads or reloads, after a reload fails, and when there are no rows. The menu shows why: "Updating the report…", "The report didn't update. Retry to export." or "No rows to export".
 *   A CSV opened in Excel or Google Sheets:
     *   never runs a cell as a formula;
     *   shows non-English names correctly;
@@ -87,6 +87,7 @@ None. Every point the brainstorm raised was decided in the brief, and the user a
     *   "CSV file" and "Print or PDF" are disabled, and the menu shows "Updating the report…".
     *   Once Location B's rows load, both items are enabled again.
     *   A PDF printed after that has the "Location B" heading over Location B's rows.
+    *   If the reload fails, both items stay disabled with "The report didn't update. Retry to export." until Retry succeeds, so Location A's rows can never be exported under Location B's filters.
 
 ### CUJ 3: A person who used background reports before
 
@@ -141,19 +142,23 @@ ReportJob schema, rules, index, records, files: unchanged, no reader or writer i
 
 1.  **Formula guard.** Applies only when the cell value is a JavaScript string, never to numbers. If the first character is one of `=`, `+`, `-`, `@`, a tab or a carriage return, a single quote `'` goes in front. This is the OWASP CSV-injection rule. Report rows store amounts as numbers (`ReportRow` is `string | number | null`), so negative amounts are untouched.
 2.  **Quoting.** A cell is quoted when it contains `"`, `,`, `\n` or `\r`. The current rule misses `\r`. Inner `"` doubles as now.
-3.  **Byte-order mark.** The returned string starts with `﻿` (UTF-8 BOM), so Excel reads the file as UTF-8.
+3.  **Byte-order mark.** The returned string starts with `\uFEFF` (UTF-8 BOM), so Excel reads the file as UTF-8.
 
 The README invariant "`toCsv` is pure" still holds.
 
-**`ReportsPage.tsx` export menu.** The Export menu items get one shared disabled rule and one hint line:
+**`ReportsPage.tsx` export menu.** One value decides both whether the items are disabled and what the menu says:
 
 ```text
-exportBlocked = running || shown.length === 0
-hint          = running ? "Updating the report…" : shown.length === 0 ? "No rows to export" : null
+exportHint = running || !rows ? "Updating the report…"
+           : error            ? "The report didn't update. Retry to export."
+           : shown is empty   ? "No rows to export"
+           : none
 ```
 
-*   Both items use `disabled={exportBlocked}`.
-*   When `hint` is set, a muted, non-interactive line shows it at the top of the menu content.
+*   Both items use `disabled={!!exportHint}`.
+*   When `exportHint` is set, a muted, non-interactive line shows it at the top of the menu content.
+*   `!rows` covers the first 250 ms before the first run starts, when there is nothing to export yet.
+*   `error` covers a failed reload. `run()` keeps the previous rows when it fails, so without this check they could be exported under the new filters.
 *   The Export trigger keeps `disabled={!data}`, so it stays disabled until the shared lookups load.
 
 **`exportCsv()`.**
@@ -166,7 +171,7 @@ hint          = running ? "Updating the report…" : shown.length === 0 ? "No ro
 
 The file name keeps today's pattern, `<report.key>-<YYYY-MM-DD>.csv`.
 
-**`printPdf()`.** Unchanged. The disabled rule above covers the old-rows case.
+**`printPdf()`.** Unchanged. `exportHint` covers the old-rows cases (loading and failed reload).
 
 ### Data and permissions
 
@@ -270,7 +275,7 @@ All changes go in one commit. Do not stage any other file: the working tree hold
         3.  A string gets the formula-guard prefix `'` if it starts with `= + - @ \t \r`.
         4.  The result is quoted if it contains `" , \n \r`, with inner `"` doubled.
     *   The header row uses the same `cell` on labels.
-    *   The output is `"﻿" + lines.join("\n")`.
+    *   The output is `"\uFEFF" + lines.join("\n")`.
     *   Import only types from `./definitions`.
 *   **Why**: `toCsv` is the one live part of `jobs.ts`. It needs a home that is not tied to the job runner, and it now carries the CSV safety rules.
 
@@ -294,10 +299,10 @@ All changes go in one commit. Do not stage any other file: the working tree hold
     *   **State**: remove `jobsVersion` (line 77).
     *   **Functions**: remove `runInBackground()` (lines 132-142).
     *   **`exportCsv()`** (lines 144-151): add try/catch and append the link to the page before `click()`. Delay `URL.revokeObjectURL` with `window.setTimeout(..., 1000)`. Show a success toast with the file name and `formatNumber(shown.length)` rows, and an error toast through `errorMessage`.
-    *   **Export state**: derive `exportBlocked` and `exportHint` as described in the Technical Plan.
+    *   **Export state**: derive `exportHint` as described in the Technical Plan, from `running`, `rows`, `error` and `shown`.
     *   **Menu** (lines 276-287):
         *   When `exportHint` is set, render it first as a muted, non-interactive line. Use `DropdownMenuLabel` with muted text classes, since it is already imported.
-        *   Both items take `disabled={exportBlocked}`.
+        *   Both items take `disabled={!!exportHint}`.
         *   Remove the separator and the "Run in the background" item.
     *   **Card**: remove `<BackgroundJobs version={jobsVersion} />` (line 347).
 *   **Why**: This is the visible change, plus the old-rows guard and a reliable download.
@@ -329,7 +334,7 @@ All changes go in one commit. Do not stage any other file: the working tree hold
         3.  Build `toCsv(rows, noCost)`.
         4.  Assert that the first line, after the BOM is stripped, equals the `noCost` labels joined by commas.
         5.  Assert that no cost label appears.
-        6.  Assert that the file starts with `﻿`.
+        6.  Assert that the file starts with `\uFEFF`.
         7.  Assert that `toCsv([{ name: "=1+1", amount: -5 }], [{key:"name",label:"Name"},{key:"amount",label:"Amount"}])` has the data line `'=1+1,-5`.
     *   No records or files are created, so the step needs no cleanup.
 *   **Why**: The old step imports the deleted module. It was also the only automated proof of AC-4 for exported files, so the check is rewritten, not dropped.
@@ -392,7 +397,7 @@ Files deliberately **not** changed: `blocks/data/schemas/ReportJob.json`, `block
     Expect only the deferral notes and this design.
 *   **Unit Tests**: the repo has no test script. The `toCsv` behaviour is asserted in the rewritten `p1-live.mjs` step 9.
 *   **E2E/Integration**: `node scripts/checks/p1-live.mjs` against the dev tenant. All 10 checks pass.
-*   **Manual (browser preview)**: walk CUJ 1 to CUJ 5. Also confirm:
+*   **Manual (your desktop browser)**: walk CUJ 1 to CUJ 5 at `https://dbpgei-epxmf.slsblx.com:5173/reports` in Chrome, Brave or Firefox. The Claude desktop built-in browser blocks every request the page makes to this host, because the hosts file maps it to 127.0.0.1, so the page stays blank there. If Brave shows a blank page, turn Shields off for the site, since Shields also reports `ERR_BLOCKED_BY_CLIENT`. Also confirm:
     *   A report with more than 2,000 rows exports every loaded row.
     *   The page loads with no console errors for a user who has past `ReportJob` records.
 *   **Graph**: `graphify update .` after the code changes.

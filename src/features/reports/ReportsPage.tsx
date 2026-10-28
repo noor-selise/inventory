@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { DateField, DateRangeField, RANGE_PRESETS, formatDay } from "@/components/app/date-picker"
 import { CheckboxField, SelectField, TextField } from "@/components/app/form"
-import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard, TablePagination } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -39,6 +39,8 @@ const GROUPS = [
 ] as const
 
 const numeric = (column: ReportColumn) => column.type === "number" || column.type === "money"
+/** Table page size (DESIGN.md §6.3); totals and exports always cover every row. */
+const PAGE_SIZE = 25
 /** Ratios and per row values that make no sense added up. */
 const NOT_SUMMED = new Set(["margin", "days", "cost"])
 
@@ -73,6 +75,8 @@ export function ReportsPage() {
   const [running, setRunning] = React.useState(false)
   const [error, setError] = React.useState<string>()
   const [search, setSearch] = React.useState("")
+  const [page, setPage] = React.useState(1)
+  const [pickerOpen, setPickerOpen] = React.useState(false)
   const runId = React.useRef(0)
   const data = lookups.data
   const currency = data?.homeCurrency ?? "USD"
@@ -85,6 +89,7 @@ export function ReportsPage() {
     setVisible(preset?.columns?.filter((column) => nextAllowed.includes(column)) ?? nextAllowed)
     setGroupBy("")
     setRows(undefined)
+    setPickerOpen(false)
   }
 
   const run = React.useCallback(async () => {
@@ -126,10 +131,16 @@ export function ReportsPage() {
   const displayColumns = groupBy ? [allowed.find((column) => column.key === groupBy)!, ...columns.filter((column) => column.key !== groupBy && numeric(column))] : columns
   const summed = displayColumns.filter((column) => numeric(column) && !NOT_SUMMED.has(column.key))
   const totals = Object.fromEntries(summed.map((column) => [column.key, shown.reduce((sum, row) => sum + Number(row[column.key] ?? 0), 0)]))
+  // A new result (report, filters, grouping) starts again on page 1.
+  React.useEffect(() => setPage(1), [shown])
+  const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
+  const safePage = Math.min(page, pages)
+  const pageRows = shown.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
-  // Exports use the rows on screen, so they wait while a run replaces them:
-  // otherwise a file could carry the new filters over the old rows.
-  const exportHint = running || !rows ? "Updating the report…" : !shown.length ? "No rows to export" : undefined
+  // Exports use the rows on screen, so they wait while a run replaces them and
+  // stay off after a failed run (which keeps the old rows): otherwise a file
+  // could carry the new filters over the old rows.
+  const exportHint = running || !rows ? "Updating the report…" : error ? "The report didn't update. Retry to export." : !shown.length ? "No rows to export" : undefined
 
   function exportCsv() {
     try {
@@ -192,63 +203,93 @@ export function ReportsPage() {
   const matches = (title: string) => !term || title.toLowerCase().includes(term)
   const GroupIcon = GROUPS.find((group) => group.name === report.group)?.icon ?? ChartColumn
 
+  const reportSearch = (
+    <div className="relative shrink-0 bg-background">
+      <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+      <Input aria-label="Find a report" placeholder="Find a report" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" />
+    </div>
+  )
+
+  const reportNav = (
+    <>
+      {GROUPS.map(({ name, icon: Icon }) => {
+        const items = REPORTS.filter((item) => item.group === name && matches(item.title))
+        if (!items.length) return null
+        return (
+          <nav key={name} aria-label={`${name} reports`} className="flex flex-col gap-0.5">
+            <p className="mb-1 flex items-center gap-2 px-2 label-overline">
+              <Icon className="size-3.5" aria-hidden /> {name}
+            </p>
+            {items.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                aria-current={item.key === key ? "page" : undefined}
+                onClick={() => choose(item.key)}
+                className={cn("rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent", item.key === key && "bg-accent font-semibold text-foreground")}
+              >
+                {item.title}
+              </button>
+            ))}
+          </nav>
+        )
+      })}
+      {mySaved.filter((item) => matches(item.name)).length ? (
+        <nav aria-label="Saved reports" className="flex flex-col gap-0.5">
+          <p className="mb-1 flex items-center gap-2 px-2 label-overline">
+            <Save className="size-3.5" aria-hidden /> Saved
+          </p>
+          {mySaved
+            .filter((item) => matches(item.name))
+            .map((item) => (
+              <div key={item.ItemId} className="group flex items-center gap-1">
+                <button type="button" className="flex-1 truncate rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent" onClick={() => choose(item.reportKey, { filters: JSON.parse(item.filters || "{}"), columns: item.columns })}>
+                  {item.name}
+                  {item.isShared ? <span className="text-xs text-muted-foreground"> · shared</span> : null}
+                </button>
+                {item.ownerId === me ? (
+                  <Button size="icon-sm" variant="ghost" aria-label={`Delete ${item.name}`} onClick={() => void savedReports.remove(item.ItemId).then(saved.reload)}>
+                    <Trash2 aria-hidden />
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+        </nav>
+      ) : null}
+    </>
+  )
+
+  const reportPicker = (
+    <>
+      {reportSearch}
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain pr-1">{reportNav}</div>
+    </>
+  )
+
   return (
     <>
       <PageHeader title="Reports" description="Sales, purchasing and inventory reports from your live records. Money is in your home currency unless a column says otherwise." />
       {lookups.error ? <ErrorBanner message={lookups.error} onRetry={lookups.reload} /> : null}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
-        <aside className="flex flex-col gap-5 lg:sticky lg:top-20 lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input aria-label="Find a report" placeholder="Find a report" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" />
-          </div>
-          {GROUPS.map(({ name, icon: Icon }) => {
-            const items = REPORTS.filter((item) => item.group === name && matches(item.title))
-            if (!items.length) return null
-            return (
-              <nav key={name} aria-label={`${name} reports`} className="flex flex-col gap-0.5">
-                <p className="mb-1 flex items-center gap-2 px-2 label-overline">
-                  <Icon className="size-3.5" aria-hidden /> {name}
-                </p>
-                {items.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    aria-current={item.key === key ? "page" : undefined}
-                    onClick={() => choose(item.key)}
-                    className={cn("rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent", item.key === key && "bg-accent font-semibold text-foreground")}
-                  >
-                    {item.title}
-                  </button>
-                ))}
-              </nav>
-            )
-          })}
-          {mySaved.filter((item) => matches(item.name)).length ? (
-            <nav aria-label="Saved reports" className="flex flex-col gap-0.5">
-              <p className="mb-1 flex items-center gap-2 px-2 label-overline">
-                <Save className="size-3.5" aria-hidden /> Saved
-              </p>
-              {mySaved
-                .filter((item) => matches(item.name))
-                .map((item) => (
-                  <div key={item.ItemId} className="group flex items-center gap-1">
-                    <button type="button" className="flex-1 truncate rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent" onClick={() => choose(item.reportKey, { filters: JSON.parse(item.filters || "{}"), columns: item.columns })}>
-                      {item.name}
-                      {item.isShared ? <span className="text-xs text-muted-foreground"> · shared</span> : null}
-                    </button>
-                    {item.ownerId === me ? (
-                      <Button size="icon-sm" variant="ghost" aria-label={`Delete ${item.name}`} onClick={() => void savedReports.remove(item.ItemId).then(saved.reload)}>
-                        <Trash2 aria-hidden />
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-            </nav>
-          ) : null}
+        <aside className="hidden lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100svh-6rem)] lg:min-h-0 lg:flex-col lg:gap-3">
+          {reportPicker}
         </aside>
 
         <div className="flex min-w-0 flex-col gap-4">
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="secondary" className="w-full justify-between lg:hidden" aria-label={`Report: ${report.title}. Change report`}>
+                <span className="flex min-w-0 items-center gap-2">
+                  <GroupIcon aria-hidden />
+                  <span className="truncate">{report.title}</span>
+                </span>
+                <ChevronDown aria-hidden />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="flex max-h-[70svh] w-(--radix-popover-trigger-width) flex-col gap-3 overflow-hidden p-4">
+              {reportPicker}
+            </PopoverContent>
+          </Popover>
           <SectionCard>
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="flex min-w-0 items-start gap-3">
@@ -360,9 +401,9 @@ export function ReportsPage() {
             ) : shown.length === 0 ? (
               <EmptyState icon={ChartColumn} message="No rows match these filters. Try a wider date range." />
             ) : (
-              <div className={cn("max-h-[70vh] overflow-auto transition-opacity", running && "opacity-60")}>
+              <div className={cn("transition-opacity", running && "opacity-60")}>
                 <Table>
-                  <TableHeader className="sticky top-0 z-10">
+                  <TableHeader>
                     <TableRow className="bg-muted hover:bg-muted">
                       {displayColumns.map((column) => (
                         <TableHead key={column.key} className={cn(headClass, "bg-muted", numeric(column) && "text-right")}>
@@ -372,7 +413,7 @@ export function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {shown.slice(0, 2000).map((row, index) => (
+                    {pageRows.map((row, index) => (
                       <TableRow key={index} className="h-10 even:bg-muted/30">
                         {displayColumns.map((column) => (
                           <TableCell key={column.key} className={cn(numeric(column) && "text-right num")}>
@@ -390,7 +431,13 @@ export function ReportsPage() {
                     </TableRow>
                   </TableBody>
                 </Table>
-                {shown.length > 2000 ? <p className="p-3 text-xs text-muted-foreground">Showing the first 2,000 rows. Export CSV for all of them.</p> : null}
+                <TablePagination
+                  page={safePage}
+                  pageSize={PAGE_SIZE}
+                  total={shown.length}
+                  summary={`${formatNumber(shown.length)} ${groupBy ? "groups" : "rows"}`}
+                  onPageChange={setPage}
+                />
               </div>
             )}
           </SectionCard>
