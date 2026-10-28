@@ -193,7 +193,8 @@ Core 20 reports, filters, exports, saved reports; background reports and dashboa
 - [ ] Design it (spec): [0015](../specs/0015-reports-dashboards.md), built to the draft; confirm it: `/architect reports and dashboards`
 - [x] Build it: `/develop reports and dashboards`
   - [x] Core 20 reports with filters, group by, columns, CSV, print to PDF, saved reports, cost hidden by role
-  - [x] Background reports with status and CSV in storage, dashboard widgets per person (P1, assumed decision spec 0027)
+  - [x] Dashboard widgets per person (P1, assumed decision spec 0027)
+  - [ ] Background reports: deferred until a server runner exists (`docs/designs/instant-report-export.md`)
 - [ ] Verify it: `/check verify reports and dashboards`
 Spec [0015](../specs/0015-reports-dashboards.md) · code in `src/features/reports/`
 

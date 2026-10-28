@@ -160,7 +160,7 @@ BLOCKS_SEED_CLIENT_ID=... BLOCKS_SEED_CLIENT_SECRET=... node scripts/seed-dummy.
 | `purchasing` | Purchase orders, approval, receiving, landed cost |
 | `payments` | Payments, balances, aging |
 | `reorder` | Reorder points, reorder list, daily check, alerts, suggested points |
-| `reports` | The 20 core reports, saved reports, background reports |
+| `reports` | The 20 core reports, saved reports, CSV and print export |
 | `dashboard` | Home page and widgets |
 
 ## Feature status
@@ -183,7 +183,7 @@ Status mirrors [`docs/scope/scope.md`](docs/scope/scope.md). The project runs at
 | 12 | Purchasing and receiving | ✅ Including approval limits, last vendor, price list update | Screen check |
 | 13 | Payments and balances | ✅ Balances kept up to date in the app | Screen check |
 | 14 | Reordering and alerts | ✅ Daily check, alert email, suggested reorder point | Screen check, a live alert email to an active purchasing user |
-| 15 | Reports and dashboards | ✅ 20 reports, saved and background reports, widgets | Screen check |
+| 15 | Reports and dashboards | ✅ 20 reports, saved reports, widgets (background export deferred) | Screen check |
 | 16 to 24 | Documents, CSV, integrations, API, manufacturing, stockroom, portal, plans, mobile | Specs drafted | Design and build |
 
 ## How the app works on Blocks
@@ -209,9 +209,9 @@ Status mirrors [`docs/scope/scope.md`](docs/scope/scope.md). The project runs at
 |---|---|
 | A date range filter only matches values written as `{ "$date": "..." }`; a plain ISO string silently matches nothing | Always build date filters with `dateFilter()` |
 | An update silently ignores `null`, so a field can't be cleared that way | Text is cleared with `""`; "no approval limit" is stored as `-1`, "no credit limit" as `0`. Dates can't be cleared |
-| Storage endpoints are granted only to built in roles by default | The 7 app roles were granted upload and get file, so background reports can save their CSV |
-| Workflows signed in with Blocks authentication wrote nothing in live tests | Balances, the reorder check and background reports run in the app for now (spec 0027) |
-| A file created by a machine client has no creator | Background report files are private to their creator, so a person's own downloads work, but a machine client's don't |
+| Storage endpoints are granted only to built in roles by default | The 7 app roles were granted upload and get file, for background reports (now deferred), kept for a later server export |
+| Workflows signed in with Blocks authentication wrote nothing in live tests | Balances and the reorder check run in the app for now (spec 0027); background reports are deferred |
+| A file created by a machine client has no creator | Old background report files (feature deferred) are private to their creator, so a person's own downloads work, but a machine client's don't |
 
 ## Working on this repo
 
@@ -248,7 +248,7 @@ These run the app's own modules through Vite in Node, against the real Blocks pr
 | `scripts/checks/stock-docs-live.mjs` | Adjustments, transfers, counts |
 | `scripts/checks/pricing.mjs` | Price and tax module |
 | `scripts/checks/orders-live.mjs` | Sales, payments, purchasing, reordering, reports, ledger balance (10 checks) |
-| `scripts/checks/p1-live.mjs` | Credit hold, picking sessions, queue, rep filter, approvals, last vendor, suggested point, daily run, background report (10 checks) |
+| `scripts/checks/p1-live.mjs` | Credit hold, picking sessions, queue, rep filter, approvals, last vendor, suggested point, daily run, export file (10 checks) |
 
 ```bash
 BLOCKS_SEED_CLIENT_ID=... BLOCKS_SEED_CLIENT_SECRET=... node scripts/checks/orders-live.mjs

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Boxes, ChartColumn, ChevronDown, Clock, Columns3, Download, FileText, Printer, RefreshCw, Save, Search, ShoppingCart, Trash2, Truck, X } from "lucide-react"
+import { Boxes, ChartColumn, ChevronDown, Columns3, Download, FileText, Printer, RefreshCw, Save, Search, ShoppingCart, Trash2, Truck, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
@@ -8,7 +8,7 @@ import { CheckboxField, SelectField, TextField } from "@/components/app/form"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -21,12 +21,11 @@ import { formatDate, formatMoney, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { REPORTS, type ReportColumn, type ReportDefinition, type ReportFilters, type ReportRow } from "./definitions"
-import { BackgroundJobs } from "./BackgroundJobs"
-import { startBackgroundReport, toCsv } from "./jobs"
+import { toCsv } from "./csv"
 
-// Reports (spec 0015 AC-1 to AC-5): pick a report, set dates and filters,
-// group, choose columns, export CSV or print to PDF, save the setup for the
-// team, or run a long one in the background. A report runs again by itself
+// Reports (spec 0015 AC-1 to AC-4; AC-5 deferred): pick a report, set dates
+// and filters, group, choose columns, export CSV or print to PDF from the rows
+// already loaded, and save the setup for the team. A report runs again by itself
 // when its filters change. Cost columns never show, print or export for users
 // without cost access.
 
@@ -74,7 +73,6 @@ export function ReportsPage() {
   const [running, setRunning] = React.useState(false)
   const [error, setError] = React.useState<string>()
   const [search, setSearch] = React.useState("")
-  const [jobsVersion, setJobsVersion] = React.useState(0)
   const runId = React.useRef(0)
   const data = lookups.data
   const currency = data?.homeCurrency ?? "USD"
@@ -129,25 +127,26 @@ export function ReportsPage() {
   const summed = displayColumns.filter((column) => numeric(column) && !NOT_SUMMED.has(column.key))
   const totals = Object.fromEntries(summed.map((column) => [column.key, shown.reduce((sum, row) => sum + Number(row[column.key] ?? 0), 0)]))
 
-  async function runInBackground() {
-    if (!data || !user) return
+  // Exports use the rows on screen, so they wait while a run replaces them:
+  // otherwise a file could carry the new filters over the old rows.
+  const exportHint = running || !rows ? "Updating the report…" : !shown.length ? "No rows to export" : undefined
+
+  function exportCsv() {
     try {
-      const { done } = await startBackgroundReport({ report, filters: scoped, columns, lookups: data, ownerId: String(user.itemId ?? user.email ?? "") })
-      toast.success(`${report.title} is running in the background. Keep this tab open until it finishes.`)
-      setJobsVersion((value) => value + 1)
-      void done.then(() => setJobsVersion((value) => value + 1))
+      const fileName = `${report.key}-${new Date().toISOString().slice(0, 10)}.csv`
+      const url = URL.createObjectURL(new Blob([toCsv(shown, displayColumns)], { type: "text/csv;charset=utf-8" }))
+      const link = document.createElement("a")
+      link.href = url
+      link.download = fileName
+      document.body.append(link)
+      link.click()
+      link.remove()
+      // Some browsers cancel the download if the link is revoked straight away.
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+      toast.success(`Downloaded ${fileName} (${formatNumber(shown.length)} ${shown.length === 1 ? "row" : "rows"})`)
     } catch (caught) {
       toast.error(errorMessage(caught))
     }
-  }
-
-  function exportCsv() {
-    const url = URL.createObjectURL(new Blob([toCsv(shown, displayColumns)], { type: "text/csv" }))
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `${report.key}-${new Date().toISOString().slice(0, 10)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
   }
 
   function printPdf() {
@@ -274,15 +273,12 @@ export function ReportsPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem disabled={!shown.length} onSelect={exportCsv}>
+                    {exportHint ? <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{exportHint}</DropdownMenuLabel> : null}
+                    <DropdownMenuItem disabled={!!exportHint} onSelect={exportCsv}>
                       <FileText aria-hidden /> CSV file
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled={!shown.length} onSelect={printPdf}>
+                    <DropdownMenuItem disabled={!!exportHint} onSelect={printPdf}>
                       <Printer aria-hidden /> Print or PDF
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => void runInBackground()}>
-                      <Clock aria-hidden /> Run in the background
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -344,7 +340,6 @@ export function ReportsPage() {
           </SectionCard>
 
           {error ? <ErrorBanner message={error} onRetry={() => void run()} /> : null}
-          <BackgroundJobs version={jobsVersion} />
 
           {rows && shown.length ? (
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

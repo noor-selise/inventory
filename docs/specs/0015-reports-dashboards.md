@@ -18,7 +18,7 @@ PRD RPT-1 to RPT-5, NFR performance and scale. Reports read orders (0011, 0012),
 - **AC-2**: Each report filters by date range, location, product, customer or vendor, groups, picks columns, and exports CSV and PDF.
 - **AC-3**: Reports can be saved and shared with the team.
 - **AC-4**: Users without Cost View never see cost or profit in any report.
-- **AC-5**: Long reports run in the background with a status (not started, in progress, success, error) and a download link. (P1)
+- **AC-5**: Long reports run in the background with a status (not started, in progress, success, error) and a download link. (P1) **Deferred (2026-10-29)**: the in-browser version was removed because it reloaded the report in the same tab and ignored Group by. It returns as a server job with an email or notification link once Blocks workflows can sign in and reports reach the browser load cap. See `docs/designs/instant-report-export.md`.
 - **AC-6**: A home dashboard shows chosen widgets (sales today, low stock count, open orders). (P1)
 
 ## Options considered
@@ -34,7 +34,7 @@ PRD RPT-1 to RPT-5, NFR performance and scale. Reports read orders (0011, 0012),
 
 ## Decision
 
-**Chosen option**: Option 1. Daily summary records (`DailySalesSummary`, `DailyStockSummary`) built by schedule workflows; detailed reports page raw rows in the browser; background reports run as a webhook workflow that writes a CSV to Blocks storage.
+**Chosen option**: Option 1. Daily summary records (`DailySalesSummary`, `DailyStockSummary`) built by schedule workflows; detailed reports page raw rows in the browser; background reports run as a webhook workflow that writes a CSV to Blocks storage (deferred, see AC-5).
 
 **Implementation skills**: `blocks-data-gateway-crud`, `blocks-workflow`, `blocks-data-storage`, `blocks-iam-access-control`.
 
@@ -50,7 +50,7 @@ L3 rules out server sums. Daily summaries cover most report questions (by day, p
 | RPT-2 | Filters, CSV/PDF export | Browser (CSV, PDF made in browser) | ✅ Can do |
 | RPT-3 | Saved, shared reports | `SavedReport` schema | ✅ Can do |
 | RPT-4 | AI assistant (P2) | Workflow `agent` node exists, unverified for this | ⚠️ Unverified |
-| RPT-5 | Async reports | Webhook workflow → CSV file in storage → notifier | ⚠️ Can do; workflow limits on large data unverified |
+| RPT-5 | Async reports | Webhook workflow → CSV file in storage → notifier | ⚠️ Can do; workflow limits on large data unverified (deferred, see AC-5) |
 | AC-4 | Hide cost | DataProtection masking (spec 0003) | ✅ Can do |
 | NFR | Performance at 250k products, 5M movements | none | ❌ Not proven; no server aggregation |
 
@@ -78,15 +78,15 @@ L3 rules out server sums. Daily summaries cover most report questions (by day, p
 **Critical test scenarios**:
 - Happy path: sales by product for last month matches the orders, verifies **AC-1**
 - Failure case: a Sales user exports inventory value and the cost columns are empty, verifies **AC-4**
-- Background: a large report finishes and the user gets a download link, verifies **AC-5**
+- Background: a large report finishes and the user gets a download link, verifies **AC-5** (deferred, see AC-5)
 
 ## Build plan
 
-1. Push summary, saved report, and job schemas, satisfies **AC-3**, **AC-5**
+1. Push summary, saved report, and job schemas, satisfies **AC-3**, **AC-5** (deferred, see AC-5)
 2. Nightly summary workflows, satisfies **AC-1**
 3. Report framework (filters, group, columns, CSV and PDF), satisfies **AC-2**, **AC-4**
 4. The core 20 reports, satisfies **AC-1**
-5. P1: background jobs, dashboard, satisfies **AC-5**, **AC-6**
+5. P1: background jobs (deferred, see AC-5), dashboard, satisfies **AC-5**, **AC-6**
 
 ## Consequences
 

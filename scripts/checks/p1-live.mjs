@@ -9,7 +9,6 @@
 //
 //   BLOCKS_SEED_CLIENT_ID=... BLOCKS_SEED_CLIENT_SECRET=... node scripts/checks/p1-live.mjs
 import assert from "node:assert/strict"
-import { execFileSync } from "node:child_process"
 import { readFileSync } from "node:fs"
 import { createBlocksClient } from "@seliseblocks/client"
 import { createServer } from "vite"
@@ -36,7 +35,7 @@ try {
   const reorder = await load("/src/features/reorder/api.ts")
   const { unitsSold, suggestedPoint } = await load("/src/features/reorder/suggest.ts")
   const { REPORTS } = await load("/src/features/reports/definitions.ts")
-  const jobs = await load("/src/features/reports/jobs.ts")
+  const { toCsv } = await load("/src/features/reports/csv.ts")
   const team = await load("/src/features/team/profile.ts")
   const stock = await load("/src/features/stock/api.ts")
   const stockActions = await load("/src/features/stock/actions.ts")
@@ -291,29 +290,19 @@ try {
   assert.equal(sent.length, 1, "alerts handed to the sender once")
   console.log(`ok  daily run ${day}: ran once (${first.outcome.suggestions.length} below point, run recorded as success), second call skipped`)
 
-  // 9. Background report (spec 0015 AC-5, AC-4): job status, CSV in storage, download link, cost columns left out.
+  // 9. Export file (spec 0015 AC-4): only the allowed columns reach the CSV, it
+  // starts with a byte order mark, and text that looks like a formula is escaped.
   const profitReport = REPORTS.find((row) => row.columns.some((column) => column.cost))
   const noCost = profitReport.columns.filter((column) => !column.cost)
-  const { jobId, done } = await jobs.startBackgroundReport({ report: profitReport, filters: {}, columns: noCost, lookups, ownerId: "p1-live check" })
-  const early = await jobs.reportJobs.get(jobId)
-  assert.ok(["not_started", "in_progress", "success"].includes(early.status))
-  await done
-  const job = await jobs.reportJobs.get(jobId)
-  cleanup.push(() => jobs.reportJobs.remove(jobId))
-  assert.equal(job.status, "success", job.error ?? "")
-  assert.ok(job.fileId)
-  // The file is private to its creator. A machine client has no user id, so the
-  // file has no creator and only the project owner can read it: fetch the link
-  // through the CLI's owner session instead, and confirm the app call is refused.
-  await assert.rejects(jobs.jobDownloadUrl(job.fileId), /no download link/)
-  const fileInfo = JSON.parse(execFileSync("blocks", ["data", "files", "get", job.fileId, "--configuration-name", "Default", "--json"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }))
-  assert.equal(fileInfo.objectAccessLevel, "Creator")
-  const csv = await (await fetch(fileInfo.url)).text()
-  const header = csv.split("\n")[0]
+  const rows = await profitReport.load({}, lookups)
+  const csv = toCsv(rows, noCost)
+  assert.ok(csv.startsWith("\uFEFF"), "the file starts with a byte order mark")
+  const header = csv.slice(1).split("\n")[0]
   assert.equal(header, noCost.map((column) => column.label).join(","), "the file has exactly the allowed columns")
   for (const column of profitReport.columns.filter((column) => column.cost)) assert.ok(!header.split(",").includes(column.label), `${column.label} left out`)
-  assert.equal(jobs.isStale({ status: "in_progress", startedAt: new Date(Date.now() - 31 * 60_000).toISOString() }), true)
-  console.log(`ok  background "${profitReport.title}": ${early.status} → success, ${job.rowCount} rows, CSV stored private to its creator, downloaded, cost columns not in the file`)
+  const guarded = toCsv([{ name: "=1+1", amount: -5 }], [{ key: "name", label: "Name" }, { key: "amount", label: "Amount" }])
+  assert.equal(guarded.split("\n")[1], "'=1+1,-5", "formula text escaped, negative amounts kept as numbers")
+  console.log(`ok  export "${profitReport.title}": ${rows.length} rows, cost columns not in the file, formula text escaped`)
 } finally {
   // Undo in reverse order; report but do not hide failures.
   for (const step of cleanup.reverse()) {

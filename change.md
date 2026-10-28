@@ -4,6 +4,7 @@ All changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Reports export at once: removed Run in the background and the Background reports card; CSV and Print are disabled while a report updates, CSV cells that look like formulas are escaped, and the file opens in Excel with the right characters (by noor-selise, 2026-10-29)
 - Add TablePagination; paginate Team roster and payment balance tables (by noor-selise, 2026-10-27)
 - Hide legacy @example.com users on Team; sync script revokes their org access (by noor-selise, 2026-10-27)
 - Replace demo team with yopmail accounts; add sync-demo-team script and seed password env (by noor-selise, 2026-10-27)
