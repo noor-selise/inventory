@@ -7,6 +7,7 @@ import { formatDateTime } from "@/components/app/audit"
 import { BulkActionBar, FilterChips, KpiCard, KpiRow, RecordCard, StockMeter } from "@/components/app/data"
 import { SelectField } from "@/components/app/form"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { tableCellClass, tableCol, tableFixed, tableHeadClass } from "@/components/app/table"
 import { RecordList } from "@/components/app/record-list"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createPurchaseOrder } from "@/features/purchasing/actions"
 import { useOrderLookups, type OrderLookups } from "@/features/sales/lookups"
 import { PURCHASE_EDITORS } from "@/features/team/roles"
-import { headClass } from "@/features/sales/OrderBits"
 import { createTransfer } from "@/features/stock/actions"
 import { useStockLookups } from "@/features/stock/lookups"
 import { errorMessage, useResource } from "@/hooks/use-resource"
@@ -216,18 +216,18 @@ export function ReorderPage() {
                   })}
                 </ul>
                 <div className="hidden overflow-x-auto md:block">
-                  <Table>
+                  <Table className={tableFixed}>
                     <TableHeader>
                       <TableRow className="bg-muted hover:bg-muted">
-                        <TableHead className="w-10">
+                        <TableHead className={tableHeadClass(tableCol.select)}>
                           {canEdit ? <Checkbox aria-label="Choose all" checked={allChosen} onCheckedChange={(value) => setChosen(value === true ? draftable.map((row) => row.ItemId) : [])} /> : null}
                         </TableHead>
-                        <TableHead className={headClass}>Product</TableHead>
-                        <TableHead className={headClass}>Location</TableHead>
-                        <TableHead className={headClass}>Stock vs point</TableHead>
-                        <TableHead className={cn(headClass, "text-right")}>Suggested</TableHead>
-                        <TableHead className={cn(headClass, "hidden lg:table-cell")}>How</TableHead>
-                        <TableHead className={headClass}>Status</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.product)}>Product</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.location)}>Location</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.stockVs)}>Stock vs point</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.suggested)}>Suggested</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.how)}>How</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.status)}>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -237,29 +237,29 @@ export function ReorderPage() {
                         const Icon = METHOD_ICON[row.method as keyof typeof METHOD_ICON] ?? ShoppingCart
                         return (
                           <TableRow key={row.ItemId} data-state={picked ? "selected" : undefined} className={cn("h-14", picked && "bg-primary/10 shadow-[inset_2px_0_0_var(--primary)] hover:bg-primary/10")}>
-                            <TableCell>
+                            <TableCell className={tableCellClass(tableCol.select)}>
                               {canEdit && row.method !== "manufacture" ? (
                                 <Checkbox aria-label={`Choose ${product?.name}`} checked={picked} onCheckedChange={(value) => toggle(row.ItemId, value === true)} />
                               ) : null}
                             </TableCell>
-                            <TableCell>
-                              <span className="block font-medium">{product?.name}</span>
-                              <span className="block font-mono text-xs text-muted-foreground">{product?.sku}</span>
+                            <TableCell className={tableCellClass(tableCol.product)}>
+                              <span className="block truncate font-medium">{product?.name}</span>
+                              <span className="block truncate font-mono text-xs text-muted-foreground">{product?.sku}</span>
                             </TableCell>
-                            <TableCell className="text-sm">{data.locationName(row.locationId)}</TableCell>
-                            <TableCell>
+                            <TableCell className={tableCellClass(tableCol.location, "truncate text-sm")}>{data.locationName(row.locationId)}</TableCell>
+                            <TableCell className={tableCellClass(tableCol.stockVs)}>
                               <StockMeter value={row.anticipated} target={row.reorderPoint} unit={unit(row.productId)} />
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className={tableCellClass(tableCol.suggested)}>
                               <span className="font-semibold num">{formatNumber(row.suggestedQty)}</span> <span className="text-xs text-muted-foreground">{unit(row.productId)}</span>
                             </TableCell>
-                            <TableCell className="hidden text-sm lg:table-cell">
+                            <TableCell className={tableCellClass(tableCol.how, "text-sm")}>
                               <span className="flex items-center gap-2">
                                 <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                                 <span className="truncate">{how(row)}</span>
                               </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className={tableCellClass(tableCol.status)}>
                               <StockStatus row={row} alerted={settingOf(row)?.isAlerting ?? false} />
                             </TableCell>
                           </TableRow>

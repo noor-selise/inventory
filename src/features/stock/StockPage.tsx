@@ -6,6 +6,7 @@ import { formatDateTime, useUserName } from "@/components/app/audit"
 import { SelectField } from "@/components/app/form"
 import { DateField } from "@/components/app/date-picker"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard } from "@/components/app/page"
+import { tableCellClass, tableCol, tableFixed, tableHeadClass } from "@/components/app/table"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -19,8 +20,6 @@ import { SOURCE_LABELS, useStockLookups, type StockLookups } from "./lookups"
 import type { Movement } from "./posting.ts"
 
 // Current stock and its history (spec 0007 AC-1, AC-2, AC-6, AC-9).
-
-const headClass = "h-9 label-overline"
 
 export function StockPage() {
   const lookups = useStockLookups()
@@ -106,27 +105,27 @@ function OnHand({ lookups, onOpenProduct }: { lookups: StockLookups; onOpenProdu
           <EmptyState icon={Boxes} message="No stock here yet. Post an adjustment to add opening stock." />
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className={tableFixed}>
               <TableHeader>
                 <TableRow className="bg-muted hover:bg-muted">
-                  <TableHead className={headClass}>Product</TableHead>
-                  <TableHead className={headClass}>Location</TableHead>
-                  <TableHead className={headClass}>Bin</TableHead>
-                  <TableHead className={cn(headClass, "hidden md:table-cell")}>Lot or serial</TableHead>
-                  <TableHead className={cn(headClass, "text-right")}>On hand</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.product)}>Product</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.location)}>Location</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.bin)}>Bin</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.mono)}>Lot or serial</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.numWide)}>On hand</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map(({ balance, product }) => (
                   <TableRow key={balance.ItemId} className="h-11 cursor-pointer" onClick={() => onOpenProduct(balance.productId)}>
-                    <TableCell>
-                      <span className="block font-medium">{product?.name ?? "Unknown product"}</span>
-                      <span className="block font-mono text-xs text-muted-foreground">{product?.sku}</span>
+                    <TableCell className={tableCellClass(tableCol.product)}>
+                      <span className="block truncate font-medium">{product?.name ?? "Unknown product"}</span>
+                      <span className="block truncate font-mono text-xs text-muted-foreground">{product?.sku}</span>
                     </TableCell>
-                    <TableCell>{lookups.locationName(balance.locationId)}</TableCell>
-                    <TableCell className="font-mono text-[13px]">{lookups.binCode(balance.sublocationId)}</TableCell>
-                    <TableCell className="hidden font-mono text-[13px] md:table-cell">{balance.serial ?? lookups.lotNumber(balance.lotId)}</TableCell>
-                    <TableCell className={cn("text-right num", balance.onHand < 0 && "text-destructive-text")}>
+                    <TableCell className={tableCellClass(tableCol.location, "truncate")}>{lookups.locationName(balance.locationId)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.bin)}>{lookups.binCode(balance.sublocationId)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.mono, "truncate")}>{balance.serial ?? lookups.lotNumber(balance.lotId)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.numWide, balance.onHand < 0 && "text-destructive-text")}>
                       {formatNumber(balance.onHand)} <span className="text-xs text-muted-foreground">{product?.standardUom}</span>
                     </TableCell>
                   </TableRow>
@@ -192,11 +191,12 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
           <SectionCard title="Quantities" description="Picked stock has already left on hand. Available = on hand − reserved. Anticipated = on hand − reserved + on order.">
             {quantities.error ? <ErrorBanner message={quantities.error} /> : null}
             <div className="overflow-x-auto">
-              <Table>
+              <Table className={tableFixed}>
                 <TableHeader>
                   <TableRow className="bg-muted hover:bg-muted">
-                    {["Location", "On hand", "Picked", "Reserved", "Available", "On order", "In transit", "Anticipated"].map((label, index) => (
-                      <TableHead key={label} className={cn(headClass, index > 0 && "text-right")}>
+                    <TableHead className={tableHeadClass(tableCol.location)}>Location</TableHead>
+                    {["On hand", "Picked", "Reserved", "Available", "On order", "In transit", "Anticipated"].map((label) => (
+                      <TableHead key={label} className={tableHeadClass(tableCol.num)}>
                         {label}
                       </TableHead>
                     ))}
@@ -205,18 +205,18 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
                 <TableBody>
                   {(quantities.data ?? []).map((row) => (
                     <TableRow key={row.locationId} className="h-11">
-                      <TableCell>{lookups.locationName(row.locationId)}</TableCell>
+                      <TableCell className={tableCellClass(tableCol.location, "truncate")}>{lookups.locationName(row.locationId)}</TableCell>
                       {[row.onHand, row.picked, row.reserved, row.available, row.onOrder, row.inTransit, row.anticipated].map((value, index) => (
-                        <TableCell key={index} className={cn("text-right num", value < 0 && "text-destructive-text")}>
+                        <TableCell key={index} className={tableCellClass(tableCol.num, value < 0 && "text-destructive-text")}>
                           {formatNumber(value)}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))}
                   <TableRow className="h-11 font-semibold">
-                    <TableCell>All locations</TableCell>
+                    <TableCell className={tableCellClass(tableCol.location)}>All locations</TableCell>
                     {[totals.onHand, totals.picked, totals.reserved, totals.available, totals.onOrder, totals.inTransit, totals.anticipated].map((value, index) => (
-                      <TableCell key={index} className="text-right num">
+                      <TableCell key={index} className={tableCellClass(tableCol.num)}>
                         {formatNumber(value)}
                       </TableCell>
                     ))}
@@ -241,15 +241,15 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
                   </p>
                 ) : null}
                 <div className="max-h-[480px] overflow-auto">
-                  <Table>
+                  <Table className={cn(tableFixed, "min-w-[640px]")}>
                     <TableHeader className="sticky top-0 z-10">
                       <TableRow className="bg-muted hover:bg-muted">
-                        <TableHead className={headClass}>When</TableHead>
-                        <TableHead className={headClass}>What</TableHead>
-                        <TableHead className={cn(headClass, "hidden lg:table-cell")}>Where</TableHead>
-                        <TableHead className={cn(headClass, "hidden xl:table-cell")}>By</TableHead>
-                        <TableHead className={cn(headClass, "text-right")}>Change</TableHead>
-                        <TableHead className={cn(headClass, "text-right")}>Running</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.when)}>When</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.primary)}>What</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.trail)}>Where</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.person)}>By</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.delta)}>Change</TableHead>
+                        <TableHead className={tableHeadClass(tableCol.num)}>Running</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -270,25 +270,30 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
 
 function HistoryRow({ movement, running, lookups }: { movement: Movement; running: number; lookups: StockLookups }) {
   const by = useUserName(movement.LastUpdatedBy)
+  const byLabel = movement.LastUpdatedBy ? by ?? "…" : "—"
   const where = [lookups.locationName(movement.locationId), lookups.binCode(movement.sublocationId), movement.serial ?? lookups.lotNumber(movement.lotId)]
     .filter(Boolean)
     .join(" · ")
   return (
     <TableRow className="h-11">
-      <TableCell className="text-xs text-muted-foreground">{formatDateTime(movement.effectiveAt)}</TableCell>
-      <TableCell>
-        <span className="block">{SOURCE_LABELS[movement.sourceType] ?? movement.sourceType}</span>
-        <span className="block font-mono text-xs text-muted-foreground">{movement.sourceNumber}</span>
+      <TableCell className={tableCellClass(tableCol.when, "text-muted-foreground")}>{formatDateTime(movement.effectiveAt)}</TableCell>
+      <TableCell className={tableCellClass(tableCol.primary)}>
+        <span className="block truncate">{SOURCE_LABELS[movement.sourceType] ?? movement.sourceType}</span>
+        <span className="block truncate font-mono text-xs text-muted-foreground">{movement.sourceNumber}</span>
       </TableCell>
-      <TableCell className="hidden text-sm lg:table-cell">{where}</TableCell>
-      <TableCell className="hidden text-xs text-muted-foreground xl:table-cell">{by}</TableCell>
-      <TableCell className="text-right num">
-        <Badge variant={movement.qtyDelta >= 0 ? "success" : "warning"}>
+      <TableCell className={tableCellClass(tableCol.trail, "whitespace-normal text-sm leading-snug")}>
+        <span className="line-clamp-2">{where || "—"}</span>
+      </TableCell>
+      <TableCell className={tableCellClass(tableCol.person, "text-muted-foreground")} title={byLabel}>
+        {byLabel}
+      </TableCell>
+      <TableCell className={tableCellClass(tableCol.delta)}>
+        <Badge variant={movement.qtyDelta >= 0 ? "success" : "warning"} className="tabular-nums">
           {movement.qtyDelta >= 0 ? "+" : ""}
           {formatNumber(movement.qtyDelta)}
         </Badge>
       </TableCell>
-      <TableCell className="text-right num">{formatNumber(running)}</TableCell>
+      <TableCell className={tableCellClass(tableCol.num)}>{formatNumber(running)}</TableCell>
     </TableRow>
   )
 }

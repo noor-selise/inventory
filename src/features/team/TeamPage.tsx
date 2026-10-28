@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { CheckboxField, SelectField, TextField } from "@/components/app/form"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard, TablePagination } from "@/components/app/page"
+import { tableCellClass, tableCol, tableFixed, tableHeadClass } from "@/components/app/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,7 +38,6 @@ import { ADMIN_ROLE, ROLE_BUNDLES, roleName, roleSlugs } from "./roles"
 // (spec 0003 data model, spec 0027).
 
 const roleOptions = ROLE_BUNDLES.map((role) => ({ value: role.slug, label: role.name }))
-const headClass = "h-9 label-overline"
 const TEAM_PAGE_SIZE = 25
 
 type Pending =
@@ -165,14 +165,14 @@ export function TeamPage() {
         ) : (
           <>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className={tableFixed}>
               <TableHeader>
                 <TableRow className="bg-muted hover:bg-muted">
-                  <TableHead className={headClass}>Name</TableHead>
-                  <TableHead className={headClass}>Role</TableHead>
-                  <TableHead className={headClass}>Status</TableHead>
-                  <TableHead className={headClass}>Limits</TableHead>
-                  <TableHead className={headClass}>
+                  <TableHead className={tableHeadClass(tableCol.product)}>Name</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.role)}>Role</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.status)}>Status</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.limits)}>Limits</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.actions)}>
                     <span className="sr-only">Actions</span>
                   </TableHead>
                 </TableRow>
@@ -185,11 +185,11 @@ export function TeamPage() {
                   const role = primaryRole(user)
                   return (
                     <TableRow key={user.itemId} className="h-11">
-                      <TableCell>
-                        <span className="block font-medium">{displayName(user)}</span>
-                        <span className="block text-xs text-muted-foreground">{user.email}</span>
+                      <TableCell className={tableCellClass(tableCol.product)}>
+                        <span className="block truncate font-medium">{displayName(user)}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
                       </TableCell>
-                      <TableCell className="min-w-44">
+                      <TableCell className={tableCellClass(tableCol.role)}>
                         <SelectField
                           id={`role-${user.itemId}`}
                           label={`Role for ${displayName(user)}`}
@@ -208,7 +208,7 @@ export function TeamPage() {
                           }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell className={tableCellClass(tableCol.status)}>
                         {active ? (
                           <Badge variant="success">
                             <CircleCheck aria-hidden /> Active
@@ -223,10 +223,10 @@ export function TeamPage() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className={tableCellClass(tableCol.limits, "text-xs text-muted-foreground")}>
                         <ProfileSummary profile={profileOf(user.itemId)} />
                       </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
+                      <TableCell className={tableCellClass(tableCol.actions)}>
                         <Button size="sm" variant="ghost" aria-label={`Settings for ${displayName(user)}`} onClick={() => setEditing(user)}>
                           <SlidersHorizontal aria-hidden />
                         </Button>

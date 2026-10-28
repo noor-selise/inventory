@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { useCurrentUser } from "@/app/providers/CurrentUserProvider"
 import { KpiCard, KpiRow, RecordCard } from "@/components/app/data"
 import { EmptyState, ErrorBanner, LoadingRows, PageHeader, SectionCard, TablePagination } from "@/components/app/page"
+import { tableCellClass, tableCol, tableFixed, tableHeadClass } from "@/components/app/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -13,7 +14,6 @@ import { purchaseOrders } from "@/features/purchasing/api"
 import { salesOrders } from "@/features/sales/api"
 import { useOrderLookups, type OrderLookups } from "@/features/sales/lookups"
 import { PAYMENT_EDITORS } from "@/features/team/roles"
-import { headClass } from "@/features/sales/OrderBits"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatDate, formatMoney } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -160,28 +160,28 @@ export function PaymentsPage() {
                 ))}
               </ul>
               <div className="hidden overflow-x-auto lg:block">
-                <Table>
+                <Table className={tableFixed}>
                   <TableHeader>
                     <TableRow className="bg-muted hover:bg-muted">
-                      <TableHead className={headClass}>Number</TableHead>
-                      <TableHead className={headClass}>Who</TableHead>
-                      <TableHead className={cn(headClass, "hidden md:table-cell")}>Date</TableHead>
-                      <TableHead className={cn(headClass, "hidden md:table-cell")}>Type</TableHead>
-                      <TableHead className={cn(headClass, "text-right")}>Amount</TableHead>
-                      <TableHead className={cn(headClass, "hidden lg:table-cell")}>Split</TableHead>
-                      <TableHead className="w-24" />
+                      <TableHead className={tableHeadClass(tableCol.docNumber)}>Number</TableHead>
+                      <TableHead className={tableHeadClass(tableCol.paymentWho)}>Who</TableHead>
+                      <TableHead className={tableHeadClass(tableCol.paymentDate)}>Date</TableHead>
+                      <TableHead className={tableHeadClass(tableCol.paymentType)}>Type</TableHead>
+                      <TableHead className={tableHeadClass(tableCol.paymentAmount)}>Amount</TableHead>
+                      <TableHead className={tableHeadClass(tableCol.paymentSplit)}>Split</TableHead>
+                      <TableHead className={tableHeadClass(tableCol.actions)} />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {(list.data?.items ?? []).map((payment) => (
                       <TableRow key={payment.ItemId} className={cn("h-11", payment.isVoided && "text-muted-foreground line-through")}>
-                        <TableCell className="font-mono text-[13px]">{payment.number}</TableCell>
-                        <TableCell>{payment.party === "customer" ? data.customerOf(payment.partyId)?.name : data.vendorOf(payment.partyId)?.name}</TableCell>
-                        <TableCell className="hidden text-sm md:table-cell">{formatDate(payment.paidOn)}</TableCell>
-                        <TableCell className="hidden text-sm md:table-cell">{PAYMENT_TYPES.find((type) => type.value === payment.type)?.label}</TableCell>
-                        <TableCell className="text-right num">{formatMoney(payment.amount, payment.currencyCode)}</TableCell>
-                        <TableCell className="hidden text-xs lg:table-cell">{payment.allocations.map((item) => `${item.orderNumber ?? ""} ${formatMoney(item.amount, payment.currencyCode)}`).join(", ") || "Store credit"}</TableCell>
-                        <TableCell>
+                        <TableCell className={tableCellClass(tableCol.docNumber)}>{payment.number}</TableCell>
+                        <TableCell className={tableCellClass(tableCol.paymentWho, "truncate")}>{payment.party === "customer" ? data.customerOf(payment.partyId)?.name : data.vendorOf(payment.partyId)?.name}</TableCell>
+                        <TableCell className={tableCellClass(tableCol.paymentDate, "text-sm")}>{formatDate(payment.paidOn)}</TableCell>
+                        <TableCell className={tableCellClass(tableCol.paymentType, "text-sm")}>{PAYMENT_TYPES.find((type) => type.value === payment.type)?.label}</TableCell>
+                        <TableCell className={tableCellClass(tableCol.paymentAmount)}>{formatMoney(payment.amount, payment.currencyCode)}</TableCell>
+                        <TableCell className={tableCellClass(tableCol.paymentSplit, "truncate")}>{payment.allocations.map((item) => `${item.orderNumber ?? ""} ${formatMoney(item.amount, payment.currencyCode)}`).join(", ") || "Store credit"}</TableCell>
+                        <TableCell className={tableCellClass(tableCol.actions)}>
                           {canEdit && !payment.isVoided ? (
                             <Button size="sm" variant="ghost" disabled={busy === payment.ItemId} onClick={() => void onVoid(payment)}>
                               Void
@@ -304,9 +304,8 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
     }
   }
 
-  const th = cn(headClass, "px-3 py-2")
-  const td = "px-3 py-2.5"
-  const money = "text-right num tabular-nums"
+  const th = (...extra: (string | false | undefined)[]) => tableHeadClass("px-3 py-2", ...extra)
+  const td = (...extra: (string | false | undefined)[]) => tableCellClass("py-2.5", ...extra)
   const agingEdge = "border-l border-border"
 
   return (
@@ -354,28 +353,34 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
               )
             })}
           </ul>
-          <div className="hidden lg:block">
-            <Table className="w-full border-separate border-spacing-0">
+          <div className="hidden overflow-x-auto lg:block">
+            <Table className="min-w-[52rem] w-full border-separate border-spacing-0">
               <TableHeader className="bg-muted">
                 <TableRow className="border-b-0 bg-muted hover:bg-muted">
-                  <TableHead rowSpan={2} className={cn(th, "w-[1%] max-w-[16rem] align-bottom")}>
+                  <TableHead rowSpan={2} className={th(tableCol.name, "align-bottom")}>
                     {party === "customer" ? "Customer" : "Vendor"}
                   </TableHead>
-                  <TableHead rowSpan={2} className={cn(th, "w-[1%] align-bottom")}>Curr.</TableHead>
-                  <TableHead rowSpan={2} className={cn(th, "w-[1%] align-bottom text-right")}>Open</TableHead>
-                  <TableHead rowSpan={2} className={cn(th, "w-[1%] align-bottom pr-4 text-right")}>Credit</TableHead>
+                  <TableHead rowSpan={2} className={th(tableCol.currency, "align-bottom")}>
+                    Curr.
+                  </TableHead>
+                  <TableHead rowSpan={2} className={th(tableCol.numWide, "align-bottom")}>
+                    Open
+                  </TableHead>
+                  <TableHead rowSpan={2} className={th(tableCol.numWide, "align-bottom pr-4")}>
+                    Credit
+                  </TableHead>
                   <TableHead
                     colSpan={4}
-                    className={cn(th, agingEdge, "border-b border-border pb-1 text-center normal-case tracking-normal")}
+                    className={th(agingEdge, "border-b border-border pb-1 text-center normal-case tracking-normal")}
                   >
                     <span className="label-overline">Aging · days past due</span>
                   </TableHead>
                 </TableRow>
                 <TableRow className="border-b border-border bg-muted hover:bg-muted">
-                  <TableHead className={cn(th, agingEdge, "h-8 pt-0 text-right")}>Current</TableHead>
-                  <TableHead className={cn(th, "h-8 pt-0 text-right")}>1–30</TableHead>
-                  <TableHead className={cn(th, "h-8 pt-0 text-right")}>31–60</TableHead>
-                  <TableHead className={cn(th, "pr-4 h-8 pt-0 text-right")}>61+</TableHead>
+                  <TableHead className={th(tableCol.aging, agingEdge, "h-8 pt-0")}>Current</TableHead>
+                  <TableHead className={th(tableCol.aging, "h-8 pt-0")}>1–30</TableHead>
+                  <TableHead className={th(tableCol.aging, "h-8 pt-0")}>31–60</TableHead>
+                  <TableHead className={th(tableCol.aging, "pr-4 h-8 pt-0")}>61+</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -383,14 +388,14 @@ function Balances({ party, lookups, rows, onRefreshed }: { party: Party; lookups
                   const bucket = aging.data?.get(`${row.partyId}|${row.currencyCode}`)
                   return (
                     <TableRow key={row.ItemId} className="h-11">
-                      <TableCell className={cn(td, "max-w-[16rem] truncate font-medium")}>{name(row.partyId)}</TableCell>
-                      <TableCell className={cn(td, "text-muted-foreground")}>{row.currencyCode}</TableCell>
-                      <TableCell className={cn(td, money)}>{formatMoney(row.openBalance, row.currencyCode)}</TableCell>
-                      <TableCell className={cn(td, money, "pr-4")}>{formatMoney(row.storeCredit, row.currencyCode)}</TableCell>
+                      <TableCell className={td(tableCol.name, "truncate font-medium")}>{name(row.partyId)}</TableCell>
+                      <TableCell className={td(tableCol.currency, "text-muted-foreground")}>{row.currencyCode}</TableCell>
+                      <TableCell className={td(tableCol.numWide)}>{formatMoney(row.openBalance, row.currencyCode)}</TableCell>
+                      <TableCell className={td(tableCol.numWide, "pr-4")}>{formatMoney(row.storeCredit, row.currencyCode)}</TableCell>
                       {[bucket?.current, bucket?.d30, bucket?.d60, bucket?.older].map((value, index) => (
                         <TableCell
                           key={index}
-                          className={cn(td, money, index === 0 && agingEdge, index === 3 && "pr-4")}
+                          className={td(tableCol.aging, index === 0 && agingEdge, index === 3 && "pr-4")}
                         >
                           {formatMoney(value ?? 0, row.currencyCode)}
                         </TableCell>

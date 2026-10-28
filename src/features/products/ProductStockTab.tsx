@@ -4,11 +4,11 @@ import { toast } from "sonner"
 
 import { Link } from "@/app/router/navigation"
 import { EmptyState, ErrorBanner, LoadingRows } from "@/components/app/page"
+import { tableCellClass, tableCol, tableFixed, tableHeadClass } from "@/components/app/table"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatNumber } from "@/lib/format"
-import { cn } from "@/lib/utils"
 import { applyCostAgain, retryAdjustment } from "@/features/stock/actions"
 import { posting, quantitiesFor } from "@/features/stock/api"
 import { postingMessage } from "@/features/stock/AdjustmentsPage"
@@ -22,8 +22,6 @@ import { hasStockHistory, openingIssues, openingRowProblems, postOpening, type O
 // A product's stock in its dialog (spec 0029 G2, G3): on hand per location,
 // where it sits (bin, lot, serial), opening stock while it has no history, and
 // Adjust stock once it has. Every change posts as an ordinary adjustment.
-
-const headClass = "h-9 label-overline"
 
 /** Summarises opening stock results for a toast or banner. */
 export function openingSummary(results: OpeningResult[], lookups: Pick<StockLookups, "locationName">) {
@@ -158,22 +156,22 @@ export function ProductStockTab({
         <EmptyState icon={PackagePlus} message={noHistory ? "No stock yet." : "No stock at the locations you can see."} />
       ) : (
         <div className="overflow-x-auto">
-          <Table>
+          <Table className={tableFixed}>
             <TableHeader>
               <TableRow className="bg-muted hover:bg-muted">
-                <TableHead className={headClass}>Location</TableHead>
-                <TableHead className={cn(headClass, "text-right")}>On hand</TableHead>
-                <TableHead className={cn(headClass, "text-right")}>Available</TableHead>
-                <TableHead className={cn(headClass, "text-right")}>On order</TableHead>
+                <TableHead className={tableHeadClass(tableCol.location)}>Location</TableHead>
+                <TableHead className={tableHeadClass(tableCol.numWide)}>On hand</TableHead>
+                <TableHead className={tableHeadClass(tableCol.numWide)}>Available</TableHead>
+                <TableHead className={tableHeadClass(tableCol.numWide)}>On order</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {(quantities.data ?? []).map((row) => (
                 <TableRow key={row.locationId} className="h-11">
-                  <TableCell>{lookups.locationName(row.locationId)}</TableCell>
-                  <TableCell className="text-right num">{formatNumber(row.onHand)}</TableCell>
-                  <TableCell className="text-right num">{formatNumber(row.available)}</TableCell>
-                  <TableCell className="text-right num">{formatNumber(row.onOrder)}</TableCell>
+                  <TableCell className={tableCellClass(tableCol.location, "truncate")}>{lookups.locationName(row.locationId)}</TableCell>
+                  <TableCell className={tableCellClass(tableCol.numWide)}>{formatNumber(row.onHand)}</TableCell>
+                  <TableCell className={tableCellClass(tableCol.numWide)}>{formatNumber(row.available)}</TableCell>
+                  <TableCell className={tableCellClass(tableCol.numWide)}>{formatNumber(row.onOrder)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -185,14 +183,14 @@ export function ProductStockTab({
       {!loading && detailed && (places.data ?? []).length ? (
         <div className="overflow-x-auto">
           <h4 className="mb-2 text-sm font-semibold">Where it is</h4>
-          <Table>
+          <Table className={tableFixed}>
             <TableHeader>
               <TableRow className="bg-muted hover:bg-muted">
-                <TableHead className={headClass}>Location</TableHead>
-                <TableHead className={headClass}>Bin</TableHead>
-                <TableHead className={headClass}>{product.trackSerials ? "Serial" : "Lot"}</TableHead>
-                <TableHead className={cn(headClass, "text-right")}>On hand</TableHead>
-                {canPost ? <TableHead className={headClass} /> : null}
+                <TableHead className={tableHeadClass(tableCol.location)}>Location</TableHead>
+                <TableHead className={tableHeadClass(tableCol.bin)}>Bin</TableHead>
+                <TableHead className={tableHeadClass("min-w-0 w-[6.5rem]")}>{product.trackSerials ? "Serial" : "Lot"}</TableHead>
+                <TableHead className={tableHeadClass(tableCol.numWide)}>On hand</TableHead>
+                {canPost ? <TableHead className={tableHeadClass("w-12")} /> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -205,12 +203,12 @@ export function ProductStockTab({
                 }
                 return (
                   <TableRow key={balance.ItemId} className="h-11">
-                    <TableCell>{lookups.locationName(balance.locationId)}</TableCell>
-                    <TableCell className="font-mono text-[13px]">{place.binCode}</TableCell>
-                    <TableCell className="font-mono text-[13px]">{balance.serial ?? place.lotNumber}</TableCell>
-                    <TableCell className="text-right num">{formatNumber(balance.onHand)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.location, "truncate")}>{lookups.locationName(balance.locationId)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.bin, "truncate")}>{place.binCode}</TableCell>
+                    <TableCell className={tableCellClass("min-w-0 font-mono text-[13px] truncate")}>{balance.serial ?? place.lotNumber}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.numWide)}>{formatNumber(balance.onHand)}</TableCell>
                     {canPost ? (
-                      <TableCell className="text-right">
+                      <TableCell className={tableCellClass("w-12 text-right")}>
                         <Button size="sm" variant="ghost" onClick={() => setAdjusting(place)}>
                           Adjust
                         </Button>

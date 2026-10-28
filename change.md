@@ -5,6 +5,9 @@ All changes to this project will be documented in this file.
 ## [Unreleased]
 
 - Reports export at once: removed Run in the background and the Background reports card; CSV and Print are disabled while a report updates, CSV cells that look like formulas are escaped, and the file opens in Excel with the right characters (by noor-selise, 2026-10-29)
+- Fix payments balance aging table header overlap by using auto layout instead of table-fixed (by noor-selise, 2026-10-29)
+- Roll out table-fixed column tokens to adjustments, team, reorder, and payments list tables (by noor-selise, 2026-10-29)
+- Add shared table column tokens and table-fixed layout for stock, product stock, and payment balance tables (by noor-selise, 2026-10-29)
 - Fix History “As of” date field stretching in section headers (by noor-selise, 2026-10-29)
 - Restyle opening stock rows: stacked on mobile, clearer labels, unit cost suffix (by noor-selise, 2026-10-28)
 - Opening stock adjustments take a unit cost and set the product's average cost once; standard unit and unit ratios lock once a product has stock history. Products stocked through Adjustments before this keep an average cost of 0 until their next receipt (by noor-selise, 2026-10-28)

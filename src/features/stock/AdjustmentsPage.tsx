@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatNumber } from "@/lib/format"
-import { cn } from "@/lib/utils"
 import { CostNotAppliedError, applyCostAgain, cancelAdjustment, createAdjustment, owesCost, retryAdjustment } from "./actions"
 import { lots, repairIfDue, stockAdjustments, type StockAdjustment } from "./api"
 import { LineEditor, emptyLine, lineProblem, type LineDraft } from "./LineEditor"
@@ -25,7 +24,7 @@ import { isOpeningStock } from "./reasons"
 
 // Stock adjustments with reasons; saving posts, cancelling reverses (spec 0008 AC-1).
 
-const headClass = "h-9 label-overline"
+import { tableCellClass, tableCol, tableFixed, tableHeadClass } from "@/components/app/table"
 
 export function DocumentStatus({ status }: { status: string }) {
   const map: Record<string, { label: string; variant: "success" | "info" | "neutral" | "warning" | "destructive" | "muted"; icon: React.ComponentType<{ "aria-hidden"?: boolean }> }> = {
@@ -93,26 +92,26 @@ export function AdjustmentsPage() {
           <EmptyState icon={ClipboardList} message="No adjustments yet." />
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className={tableFixed}>
               <TableHeader>
                 <TableRow className="bg-muted hover:bg-muted">
-                  <TableHead className={headClass}>Number</TableHead>
-                  <TableHead className={headClass}>Date</TableHead>
-                  <TableHead className={headClass}>Location</TableHead>
-                  <TableHead className={cn(headClass, "hidden md:table-cell")}>Reason</TableHead>
-                  <TableHead className={cn(headClass, "hidden lg:table-cell text-right")}>Lines</TableHead>
-                  <TableHead className={headClass}>Status</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.docNumber)}>Number</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.when)}>Date</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.location)}>Location</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.reason)}>Reason</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.lineCount)}>Lines</TableHead>
+                  <TableHead className={tableHeadClass(tableCol.status)}>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map((doc) => (
                   <TableRow key={doc.ItemId} className="h-11 cursor-pointer" onClick={() => setViewing(doc)}>
-                    <TableCell className="font-mono text-[13px]">{doc.number}</TableCell>
-                    <TableCell className="text-sm">{formatDateTime(doc.adjustedAt)}</TableCell>
-                    <TableCell>{data.locationName(doc.locationId)}</TableCell>
-                    <TableCell className="hidden md:table-cell">{data.reasons.find((reason) => reason.ItemId === doc.reasonId)?.name}</TableCell>
-                    <TableCell className="hidden text-right num lg:table-cell">{doc.lines?.length ?? 0}</TableCell>
-                    <TableCell>
+                    <TableCell className={tableCellClass(tableCol.docNumber)}>{doc.number}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.when, "text-sm")}>{formatDateTime(doc.adjustedAt)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.location, "truncate")}>{data.locationName(doc.locationId)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.reason, "truncate")}>{data.reasons.find((reason) => reason.ItemId === doc.reasonId)?.name}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.lineCount)}>{doc.lines?.length ?? 0}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.status)}>
                       <DocumentStatus status={doc.status} />
                     </TableCell>
                   </TableRow>
@@ -319,14 +318,14 @@ function AdjustmentDetail({
         {error ? <ErrorBanner message={error} /> : null}
         {doc.remarks ? <p className="text-sm text-muted-foreground">{doc.remarks}</p> : null}
         <div className="overflow-x-auto">
-          <Table>
+          <Table className={tableFixed}>
             <TableHeader>
               <TableRow className="bg-muted hover:bg-muted">
-                <TableHead className={headClass}>Product</TableHead>
-                <TableHead className={headClass}>Bin</TableHead>
-                <TableHead className={headClass}>Lot or serial</TableHead>
-                <TableHead className={cn(headClass, "text-right")}>Change</TableHead>
-                {costed ? <TableHead className={cn(headClass, "text-right")}>Unit cost</TableHead> : null}
+                <TableHead className={tableHeadClass(tableCol.product)}>Product</TableHead>
+                <TableHead className={tableHeadClass(tableCol.bin)}>Bin</TableHead>
+                <TableHead className={tableHeadClass(tableCol.mono)}>Lot or serial</TableHead>
+                <TableHead className={tableHeadClass(tableCol.delta)}>Change</TableHead>
+                {costed ? <TableHead className={tableHeadClass(tableCol.numWide)}>Unit cost</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -334,10 +333,10 @@ function AdjustmentDetail({
                 const product = lookups.product(line.productId)
                 return (
                   <TableRow key={line.lineId} className="h-11">
-                    <TableCell>{product?.name}</TableCell>
-                    <TableCell className="font-mono text-[13px]">{lookups.binCode(line.sublocationId)}</TableCell>
-                    <TableCell className="font-mono text-[13px]">{line.serial ?? lotNumber(line.lotId)}</TableCell>
-                    <TableCell className="text-right num">
+                    <TableCell className={tableCellClass(tableCol.product, "truncate")}>{product?.name}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.bin)}>{lookups.binCode(line.sublocationId)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.mono, "truncate")}>{line.serial ?? lotNumber(line.lotId)}</TableCell>
+                    <TableCell className={tableCellClass(tableCol.delta)}>
                       {line.qtyDelta > 0 ? "+" : ""}
                       {formatNumber(line.qtyDelta)} {product?.standardUom}
                       {line.uom && line.uom !== product?.standardUom ? (
@@ -347,7 +346,7 @@ function AdjustmentDetail({
                       ) : null}
                     </TableCell>
                     {costed ? (
-                      <TableCell className="text-right num">
+                      <TableCell className={tableCellClass(tableCol.numWide)}>
                         {line.unitCost == null ? "" : `${formatNumber(line.unitCost)} / ${product?.standardUom ?? ""}`}
                       </TableCell>
                     ) : null}
