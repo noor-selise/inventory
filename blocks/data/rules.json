@@ -289,6 +289,102 @@
       "fieldNames": []
     },
     {
+      "schemaName": "DepreciationClass",
+      "schemaId": "fc163a6a-be7f-4df4-9045-5967c5a2da7d",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationClass",
+      "schemaId": "fc163a6a-be7f-4df4-9045-5967c5a2da7d",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationClass",
+      "schemaId": "fc163a6a-be7f-4df4-9045-5967c5a2da7d",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationClass",
+      "schemaId": "fc163a6a-be7f-4df4-9045-5967c5a2da7d",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationEntry",
+      "schemaId": "ed52e5ed-9dee-4db3-80c6-6cdefafb2d3d",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationEntry",
+      "schemaId": "ed52e5ed-9dee-4db3-80c6-6cdefafb2d3d",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationEntry",
+      "schemaId": "ed52e5ed-9dee-4db3-80c6-6cdefafb2d3d",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationEntry",
+      "schemaId": "ed52e5ed-9dee-4db3-80c6-6cdefafb2d3d",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationRun",
+      "schemaId": "c3694a46-7bc5-49c2-a2a9-65a169061545",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationRun",
+      "schemaId": "c3694a46-7bc5-49c2-a2a9-65a169061545",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationRun",
+      "schemaId": "c3694a46-7bc5-49c2-a2a9-65a169061545",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "DepreciationRun",
+      "schemaId": "c3694a46-7bc5-49c2-a2a9-65a169061545",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
       "schemaName": "ExchangeRate",
       "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03",
       "operation": 0,
@@ -315,6 +411,38 @@
     {
       "schemaName": "ExchangeRate",
       "schemaId": "4af68436-dde0-4f51-9757-9dfee917da03",
+      "operation": 3,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "FixedAsset",
+      "schemaId": "316c17a2-bc73-482a-884c-62c02f1bdeb4",
+      "operation": 0,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "FixedAsset",
+      "schemaId": "316c17a2-bc73-482a-884c-62c02f1bdeb4",
+      "operation": 1,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "FixedAsset",
+      "schemaId": "316c17a2-bc73-482a-884c-62c02f1bdeb4",
+      "operation": 2,
+      "policyType": 0,
+      "accessLevel": 1,
+      "fieldNames": []
+    },
+    {
+      "schemaName": "FixedAsset",
+      "schemaId": "316c17a2-bc73-482a-884c-62c02f1bdeb4",
       "operation": 3,
       "policyType": 0,
       "accessLevel": 1,

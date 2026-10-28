@@ -14,13 +14,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { errorMessage, useResource } from "@/hooks/use-resource"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { cancelAdjustment, createAdjustment, retryAdjustment } from "./actions"
+import { CostNotAppliedError, applyCostAgain, cancelAdjustment, createAdjustment, owesCost, retryAdjustment } from "./actions"
 import { lots, repairIfDue, stockAdjustments, type StockAdjustment } from "./api"
 import { LineEditor, emptyLine, lineProblem, type LineDraft } from "./LineEditor"
 import { STOCK_EDITORS, STOCK_REVIEWERS } from "@/features/team/roles"
 import { locationFilter, seesLocation, useLocationScope } from "@/features/team/location-scope"
 import { useStockLookups, type StockLookups } from "./lookups"
 import { PostingError } from "./posting.ts"
+import { isOpeningStock } from "./reasons"
 
 // Stock adjustments with reasons; saving posts, cancelling reverses (spec 0008 AC-1).
 
@@ -162,6 +163,7 @@ function NewAdjustment({ lookups, canOverride, onClose, onDone }: { lookups: Sto
   const [errors, setErrors] = React.useState<Record<string, string | undefined>>({})
   const [saving, setSaving] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string>()
+  const opening = isOpeningStock(reasonId, lookups.reasons)
 
   async function save(event: React.FormEvent) {
     event.preventDefault()
@@ -171,7 +173,12 @@ function NewAdjustment({ lookups, canOverride, onClose, onDone }: { lookups: Sto
     }
     const lotNumbers = (productId: string) => new Set(lookups.lots.filter((lot) => lot.productId === productId).map((lot) => lot.lotNumber))
     const problems = Object.fromEntries(
-      lines.map((line) => [line.key, lineProblem(line, lookups.product(line.productId), { lotsExist: (number) => lotNumbers(line.productId).has(number) })])
+      lines.map((line) => [
+        line.key,
+        opening && line.direction === "out"
+          ? "Opening stock only adds stock."
+          : lineProblem(line, lookups.product(line.productId), { lotsExist: (number) => lotNumbers(line.productId).has(number), requireCost: opening }),
+      ])
     )
     setErrors(problems)
     if (Object.values(problems).some(Boolean)) {
@@ -188,6 +195,12 @@ function NewAdjustment({ lookups, canOverride, onClose, onDone }: { lookups: Sto
       toast.success(`${doc.number} posted`)
       onDone()
     } catch (caught) {
+      if (caught instanceof CostNotAppliedError) {
+        // Stock is in; only the cost step is owed, and the document offers "Update cost".
+        toast.warning(caught.message)
+        onDone()
+        return
+      }
       setSaveError(`${postingMessage(caught, lookups)} Nothing was changed for this adjustment.`)
       if (!(caught instanceof PostingError)) return
       // The document exists as failed; refresh so it shows in the list.
@@ -226,7 +239,8 @@ function NewAdjustment({ lookups, canOverride, onClose, onDone }: { lookups: Sto
             />
             <DateField id="adjustment-date" label="Date" value={date} onChange={setDate} />
           </div>
-          <LineEditor lines={lines} onChange={setLines} lookups={lookups} locationId={locationId} mode="adjustment" disabled={saving} errors={errors} />
+          <LineEditor lines={lines} onChange={setLines} lookups={lookups} locationId={locationId} mode="adjustment" showCost={opening} disabled={saving} errors={errors} />
+          {opening ? <p className="text-sm text-muted-foreground">Opening stock sets each product's average cost from the cost you enter.</p> : null}
           <TextAreaField id="adjustment-remarks" label="Remarks" value={remarks} onChange={setRemarks} />
           {canOverride ? (
             <CheckboxField
@@ -275,6 +289,7 @@ function AdjustmentDetail({
     return ids.length ? (await lots.list({ filter: { ItemId: { $in: ids } }, pageSize: 200 })).items : []
   }, [doc.ItemId])
   const lotNumber = (id?: string | null) => lotRows.data?.find((lot) => lot.ItemId === id)?.lotNumber ?? lookups.lotNumber(id)
+  const costed = doc.lines.some((line) => line.unitCost != null)
 
   async function run(action: () => Promise<void>, success: string) {
     setBusy(true)
@@ -311,6 +326,7 @@ function AdjustmentDetail({
                 <TableHead className={headClass}>Bin</TableHead>
                 <TableHead className={headClass}>Lot or serial</TableHead>
                 <TableHead className={cn(headClass, "text-right")}>Change</TableHead>
+                {costed ? <TableHead className={cn(headClass, "text-right")}>Unit cost</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -330,6 +346,11 @@ function AdjustmentDetail({
                         </span>
                       ) : null}
                     </TableCell>
+                    {costed ? (
+                      <TableCell className="text-right num">
+                        {line.unitCost == null ? "" : `${formatNumber(line.unitCost)} / ${product?.standardUom ?? ""}`}
+                      </TableCell>
+                    ) : null}
                   </TableRow>
                 )
               })}
@@ -350,6 +371,11 @@ function AdjustmentDetail({
                 Cancel adjustment
               </Button>
             )
+          ) : null}
+          {canEdit && owesCost(doc) ? (
+            <Button variant="secondary" disabled={busy} onClick={() => void run(() => applyCostAgain(doc), "Product cost updated")}>
+              {busy ? "Updating…" : "Update cost"}
+            </Button>
           ) : null}
           {canEdit && doc.status === "failed" ? (
             <Button disabled={busy} onClick={() => void run(() => retryAdjustment(doc, lookups, canOverride), `${doc.number} posted`)}>

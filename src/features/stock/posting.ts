@@ -476,6 +476,38 @@ export function createPosting(client: GraphqlClient) {
     throw new PostingError("conflict_retry_exhausted", "Cost changed too often while receiving. Try again.")
   }
 
+  /**
+   * Moving average cost for an opening stock adjustment, applied once
+   * (spec 0029). A compare and set on StockAdjustment.costStatus claims the
+   * step first, so a retry, a double click or a second seeder run cannot count
+   * the cost twice. Returns false when another run already claimed it. Call
+   * after the document's stock is posted. A failure releases the claim; with
+   * several products, those already applied would be applied again on the next
+   * try, which the product screen avoids by posting one product per document.
+   */
+  async function applyDocumentCost(adjustmentId: string, lines: { productId: string; qty: number; unitCost: number }[]) {
+    const totals = new Map<string, { qty: number; value: number }>()
+    for (const line of lines) {
+      if (!(line.qty > 0)) continue
+      const total = totals.get(line.productId) ?? { qty: 0, value: 0 }
+      total.qty += line.qty
+      total.value += line.qty * line.unitCost
+      totals.set(line.productId, total)
+    }
+    const claimed = await update(client, "StockAdjustment", { ItemId: adjustmentId, costStatus: null }, { costStatus: "applying" })
+    if (claimed !== 1) return false
+    try {
+      for (const [productId, total] of totals) {
+        await applyReceiptCost(productId, total.qty, total.value / total.qty)
+      }
+      await update(client, "StockAdjustment", { ItemId: adjustmentId, costStatus: "applying" }, { costStatus: "applied" })
+      return true
+    } catch (error) {
+      await update(client, "StockAdjustment", { ItemId: adjustmentId, costStatus: "applying" }, { costStatus: null })
+      throw error
+    }
+  }
+
   return {
     postLine,
     postDocument,
@@ -483,6 +515,7 @@ export function createPosting(client: GraphqlClient) {
     undoMovements,
     repairPending,
     applyReceiptCost,
+    applyDocumentCost,
     movementsFor,
     readBalance,
     async balances(filter: Record<string, unknown>, options?: { pageNo?: number; pageSize?: number; sort?: Record<string, 1 | -1> }) {

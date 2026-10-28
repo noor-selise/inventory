@@ -205,6 +205,7 @@ erDiagram
         uuid location_id FK
         text reason
         timestamp adjusted_at
+        enum cost_status "applying | applied (opening stock only)"
     }
     STOCK_TRANSFER {
         uuid stock_transfer_id PK
@@ -251,6 +252,8 @@ erDiagram
 
 > Stock adjustments, transfers, counts and manufacture orders each have **line tables**
 > (product + qty) like sales/purchase orders do. They're left out above to keep it simple.
+> An adjustment line with the "Opening stock" reason also stores `unit_cost` per standard unit;
+> it sets the product's average cost once, guarded by the adjustment's `cost_status` (spec 0029).
 
 ## 2. How stock moves (the one rule to remember)
 

@@ -5,6 +5,11 @@ All changes to this project will be documented in this file.
 ## [Unreleased]
 
 - Reports export at once: removed Run in the background and the Background reports card; CSV and Print are disabled while a report updates, CSV cells that look like formulas are escaped, and the file opens in Excel with the right characters (by noor-selise, 2026-10-29)
+- Fix History “As of” date field stretching in section headers (by noor-selise, 2026-10-29)
+- Restyle opening stock rows: stacked on mobile, clearer labels, unit cost suffix (by noor-selise, 2026-10-28)
+- Opening stock adjustments take a unit cost and set the product's average cost once; standard unit and unit ratios lock once a product has stock history. Products stocked through Adjustments before this keep an average cost of 0 until their next receipt (by noor-selise, 2026-10-28)
+- Product dialog gets a Stock tab: on hand per location, where it sits, Adjust stock to a new total, and View history (by noor-selise, 2026-10-28)
+- New stocked products can be saved with their opening stock per location, lot or serial (by noor-selise, 2026-10-28)
 - Add TablePagination; paginate Team roster and payment balance tables (by noor-selise, 2026-10-27)
 - Hide legacy @example.com users on Team; sync script revokes their org access (by noor-selise, 2026-10-27)
 - Replace demo team with yopmail accounts; add sync-demo-team script and seed password env (by noor-selise, 2026-10-27)

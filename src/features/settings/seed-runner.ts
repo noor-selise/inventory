@@ -4,6 +4,7 @@
 // Every step matches existing records by a natural key and adds only what is missing.
 
 import { createPosting } from "../stock/posting.ts"
+import { MISSING_OPENING_REASON, openingStockReason } from "../stock/reasons.ts"
 import {
   DEMO_COMPANY,
   DEMO_COST_AND_PRICE,
@@ -513,8 +514,9 @@ export async function runSeed(store: SeedStore, parts: SeedParts): Promise<SeedR
     const posting = createPosting(store.client)
     const locationRows = await store.list("Location", ["name"])
     const productRows = await store.list("Product", ["sku", "shelfLifeDays"])
-    const reason = (await store.list("AdjustmentReason", ["name"])).find((item) => lower(item.name) === "opening stock")
-    if (!reason) throw new Error("Run starter settings first: the Opening stock reason is missing.")
+    const reasonRows = await store.list("AdjustmentReason", ["name", "isSystem", "isActive"])
+    const reason = openingStockReason(reasonRows.map((item) => ({ ItemId: item.ItemId, name: String(item.name ?? ""), isSystem: item.isSystem === true, isActive: item.isActive !== false })))
+    if (!reason) throw new Error(MISSING_OPENING_REASON)
     let documents = 0
     let existingDocuments = 0
     let linesPosted = 0
@@ -536,7 +538,8 @@ export async function runSeed(store: SeedStore, parts: SeedParts): Promise<SeedR
         if (!product) continue
         const sublocationId = entry.bin ? binRows.find((bin) => bin.code === entry.bin)?.ItemId ?? null : null
         const cost = DEMO_COST_AND_PRICE[entry.sku]?.[0] ?? 0
-        const base = { productId: product.ItemId, sublocationId, uom: null }
+        // Opening stock lines carry their cost (spec 0029).
+        const base = { productId: product.ItemId, sublocationId, uom: null, unitCost: cost }
         if (entry.serials) {
           entry.serials.forEach((serial, index) =>
             lines.push({ ...base, lineId: `${entry.sku}:sn:${index}`, serial, lotId: null, qtyDelta: 1, enteredQty: 1 })
@@ -593,18 +596,18 @@ export async function runSeed(store: SeedStore, parts: SeedParts): Promise<SeedR
           serial: (line.serial as string | null) ?? null,
           qtyDelta: Number(line.qtyDelta),
           enteredQty: Number(line.enteredQty),
-          unitCost: costs.find((cost) => cost.productId === line.productId)?.cost ?? null,
+          unitCost: Number(line.unitCost),
         })),
         { sourceType: "adjustment", sourceId: documentId, sourceNumber: number, note: remarks }
       )
       linesPosted += lines.length
       await store.updateWhere("StockAdjustment", { ItemId: documentId }, { status: "posted" })
-      // Opening stock sets the moving average cost, like a receipt.
-      if (!prior) {
-        for (const { productId, qty, cost } of costs) {
-          if (cost > 0) await posting.applyReceiptCost(productId, qty, cost)
-        }
-      }
+      // Opening stock sets the moving average cost, like a receipt, once per
+      // document: a re-run finds the cost step already claimed (spec 0029).
+      await posting.applyDocumentCost(
+        documentId,
+        costs.filter(({ cost }) => cost > 0).map(({ productId, qty, cost }) => ({ productId, qty, unitCost: cost }))
+      )
     }
     report.push({ label: "Opening stock documents", added: documents, existing: existingDocuments })
     report.push({ label: "Opening stock lines posted", added: linesPosted, existing: 0 })

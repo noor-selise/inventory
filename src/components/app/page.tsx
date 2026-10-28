@@ -45,14 +45,14 @@ export function SectionCard({
   return (
     <section className={cn("rounded-lg border bg-card p-4 md:p-6 dark:border-transparent", className)}>
       {title || actions ? (
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
             {title ? <h2 className="text-base font-semibold">{title}</h2> : null}
             {description ? (
               <p className="mt-1 text-xs text-muted-foreground">{description}</p>
             ) : null}
           </div>
-          {actions}
+          {actions ? <div className="flex w-full shrink-0 flex-wrap items-end gap-3 sm:w-auto">{actions}</div> : null}
         </div>
       ) : null}
       {children}

@@ -30,6 +30,8 @@ export type LineDraft = {
   lotNumber: string
   lotExpiresOn: string
   serial: string
+  /** Cost per chosen unit, entered on opening stock lines only (spec 0029). */
+  unitCost: string
 }
 
 export function emptyLine(): LineDraft {
@@ -44,11 +46,16 @@ export function emptyLine(): LineDraft {
     lotNumber: "",
     lotExpiresOn: "",
     serial: "",
+    unitCost: "",
   }
 }
 
 /** Problems that stop a line from saving, or undefined when it is fine. */
-export function lineProblem(line: LineDraft, product: Product | undefined, options: { lotsExist: (number: string) => boolean }): string | undefined {
+export function lineProblem(
+  line: LineDraft,
+  product: Product | undefined,
+  options: { lotsExist: (number: string) => boolean; requireCost?: boolean }
+): string | undefined {
   if (!product) return "Choose a product."
   if (product.itemType !== "stocked") return `${product.name} is not a stocked product.`
   const qty = Number(line.qty)
@@ -61,6 +68,7 @@ export function lineProblem(line: LineDraft, product: Product | undefined, optio
   if (product.trackLots && line.direction === "out" && !options.lotsExist(line.lotNumber.trim())) {
     return `Lot ${line.lotNumber.trim()} does not exist for ${product.name}.`
   }
+  if (options.requireCost && !(line.unitCost.trim() !== "" && Number(line.unitCost) >= 0)) return "Enter a unit cost of 0 or more."
   return undefined
 }
 
@@ -73,6 +81,7 @@ export function LineEditor({
   locationId,
   toLocationId,
   mode,
+  showCost,
   disabled,
   errors,
 }: {
@@ -82,6 +91,8 @@ export function LineEditor({
   locationId: string
   toLocationId?: string
   mode: "adjustment" | "transfer"
+  /** Opening stock: each line takes a unit cost (spec 0029). */
+  showCost?: boolean
   disabled?: boolean
   errors?: Record<string, string | undefined>
 }) {
@@ -174,6 +185,22 @@ export function LineEditor({
                   </SelectContent>
                 </Select>
               </div>
+              {showCost ? (
+                <div className="flex flex-col gap-1.5 md:col-span-2">
+                  <Label htmlFor={id("cost")}>Cost per {line.uom || product?.standardUom || "unit"}</Label>
+                  <Input
+                    id={id("cost")}
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min="0"
+                    className={cn(fieldClass, "text-right num")}
+                    value={line.unitCost}
+                    onChange={(event) => update(line.key, { unitCost: event.target.value })}
+                    disabled={disabled}
+                  />
+                </div>
+              ) : null}
               <div className="flex flex-col gap-1.5 md:col-span-2">
                 <Label htmlFor={id("bin")}>{mode === "transfer" ? "From bin" : "Bin"}</Label>
                 <Input id={id("bin")} list="bins-from" className={cn(fieldClass, "font-mono uppercase")} placeholder="Optional" value={line.binCode} onChange={(event) => update(line.key, { binCode: event.target.value })} disabled={disabled} />

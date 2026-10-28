@@ -19,6 +19,7 @@ import {
 import type { LineDraft } from "./LineEditor"
 import type { StockLookups } from "./lookups"
 import type { PostingLine } from "./posting.ts"
+import { isOpeningStock } from "./reasons"
 
 // Stock document actions (spec 0008). Every status change is a compare and set
 // on the old status (spec 0026), so two people pressing "Send" or "Complete" at
@@ -78,9 +79,46 @@ function toPostingLines(doc: StockAdjustment, costOf: (productId: string) => num
     qtyDelta: line.qtyDelta,
     enteredQty: line.enteredQty,
     enteredUom: line.uom,
-    // Adjustments value stock at the current average cost (spec 0008, PRD §5.4).
-    unitCost: costOf(line.productId),
+    // Opening stock carries the cost the user entered (spec 0029); every other
+    // adjustment values stock at the current average cost (spec 0008, PRD §5.4).
+    unitCost: line.unitCost ?? costOf(line.productId),
   }))
+}
+
+/** Raised when an opening stock document posted but its cost did not reach the moving average. */
+export class CostNotAppliedError extends Error {
+  readonly doc: StockAdjustment
+
+  constructor(doc: StockAdjustment, cause: unknown) {
+    super(`${doc.number} posted, but the product cost wasn't updated. ${cause instanceof Error ? cause.message : ""}`.trim())
+    this.name = "CostNotAppliedError"
+    this.doc = doc
+  }
+}
+
+/** Opening stock lines carry a cost; it feeds the moving average once (spec 0029). */
+async function applyOpeningCost(doc: StockAdjustment) {
+  const costed = doc.lines.filter((line) => line.unitCost != null && line.qtyDelta > 0)
+  if (!costed.length || doc.costStatus === "applied") return
+  try {
+    await posting.applyDocumentCost(
+      doc.ItemId,
+      costed.map((line) => ({ productId: line.productId, qty: line.qtyDelta, unitCost: Number(line.unitCost) }))
+    )
+  } catch (error) {
+    throw new CostNotAppliedError(doc, error)
+  }
+}
+
+/** Runs the cost step again for a posted opening stock document ("Update cost"). */
+export async function applyCostAgain(doc: StockAdjustment) {
+  if (doc.status !== "posted") throw new Error("Post the adjustment first.")
+  await applyOpeningCost(doc)
+}
+
+/** True when a posted opening stock document still owes its cost step. */
+export function owesCost(doc: StockAdjustment) {
+  return doc.status === "posted" && doc.costStatus !== "applied" && doc.lines.some((line) => line.unitCost != null && line.qtyDelta > 0)
 }
 
 async function postAdjustment(doc: StockAdjustment, lookups: Pick<StockLookups, "product">, allowNegative: boolean) {
@@ -106,9 +144,15 @@ export async function createAdjustment(input: {
   lookups: StockLookups
   allowNegative: boolean
 }): Promise<StockAdjustment> {
+  const opening = isOpeningStock(input.reasonId, input.lookups.reasons)
+  if (opening && input.lines.some((line) => line.direction === "out")) throw new Error("Opening stock only adds stock.")
+  if (opening && input.lines.some((line) => !(line.unitCost.trim() !== "" && Number(line.unitCost) >= 0))) {
+    throw new Error("Enter a unit cost for every opening stock line.")
+  }
   const resolved = await resolveLines(input.lines, input.lookups, input.locationId)
   const lines: AdjustmentLine[] = resolved.map((line) => {
     const sign = line.draft.direction === "out" ? -1 : 1
+    const entered = Number(line.draft.qty)
     return {
       lineId: line.lineId,
       productId: line.product.ItemId,
@@ -116,8 +160,10 @@ export async function createAdjustment(input: {
       lotId: line.lotId,
       serial: line.serial,
       qtyDelta: sign * line.qty,
-      enteredQty: sign * Number(line.draft.qty),
+      enteredQty: sign * entered,
       uom: line.draft.uom || line.product.standardUom,
+      // The cost is entered per chosen unit and stored per standard unit.
+      unitCost: opening ? (Number(line.draft.unitCost) * entered) / line.qty : null,
     }
   })
   const base = {
@@ -131,13 +177,16 @@ export async function createAdjustment(input: {
   const { number, result: itemId } = await withNextNumber("stock_adjustment", (value) => stockAdjustments.create({ ...base, number: value }))
   const doc: StockAdjustment = { ItemId: itemId, number, ...base }
   await postAdjustment(doc, input.lookups, input.allowNegative)
-  return { ...doc, status: "posted" }
+  const posted: StockAdjustment = { ...doc, status: "posted" }
+  await applyOpeningCost(posted)
+  return { ...posted, costStatus: opening ? "applied" : null }
 }
 
 /** Posts an adjustment again after a failure. Lines already posted are skipped by their posting key. */
 export async function retryAdjustment(doc: StockAdjustment, lookups: StockLookups, allowNegative: boolean) {
   await claim(stockAdjustments, doc, "failed", "posting")
   await postAdjustment({ ...doc, status: "posting" }, lookups, allowNegative)
+  await applyOpeningCost({ ...doc, status: "posted" })
 }
 
 export async function cancelAdjustment(doc: StockAdjustment) {

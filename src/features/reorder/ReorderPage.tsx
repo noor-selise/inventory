@@ -423,6 +423,7 @@ async function createDrafts(rows: ReorderSuggestion[], lookups: OrderLookups, st
         lotNumber: "",
         lotExpiresOn: "",
         serial: "",
+        unitCost: "",
       })),
     })
     made.push(transfer.number)

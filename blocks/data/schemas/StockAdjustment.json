@@ -38,6 +38,11 @@
       "name": "lines",
       "type": "AdjustmentLine",
       "isArray": true
+    },
+    {
+      "name": "costStatus",
+      "type": "String",
+      "isArray": false
     }
   ]
 }

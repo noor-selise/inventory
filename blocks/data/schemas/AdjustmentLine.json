@@ -43,6 +43,11 @@
       "name": "uom",
       "type": "String",
       "isArray": false
+    },
+    {
+      "name": "unitCost",
+      "type": "Float",
+      "isArray": false
     }
   ]
 }

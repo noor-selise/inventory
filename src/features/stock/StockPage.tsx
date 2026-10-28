@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Boxes, History, Search } from "lucide-react"
 
+import { useNavigation } from "@/app/router/navigation"
 import { formatDateTime, useUserName } from "@/components/app/audit"
 import { SelectField } from "@/components/app/form"
 import { DateField } from "@/components/app/date-picker"
@@ -23,8 +24,11 @@ const headClass = "h-9 label-overline"
 
 export function StockPage() {
   const lookups = useStockLookups()
-  const [productId, setProductId] = React.useState("")
-  const [tab, setTab] = React.useState("on-hand")
+  // A product's "View history" link opens here as ?tab=product&product=<id> (spec 0029).
+  const { search } = useNavigation()
+  const query = new URLSearchParams(search)
+  const [productId, setProductId] = React.useState(query.get("product") ?? "")
+  const [tab, setTab] = React.useState(query.get("tab") === "product" ? "product" : "on-hand")
 
   React.useEffect(() => {
     void repairIfDue()
@@ -224,7 +228,7 @@ function ProductStock({ lookups, productId, onProductChange }: { lookups: StockL
           <SectionCard
             title="History"
             description="Every posted change, newest first. Pick a date to see what was on hand at the end of that day, across all locations."
-            actions={<DateField id="stock-as-of" label="As of" value={asOf} onChange={setAsOf} className="w-44" />}
+            actions={<DateField id="stock-as-of" label="As of" value={asOf} onChange={setAsOf} className="w-full sm:w-48" />}
           >
             {history.error ? <ErrorBanner message={history.error} /> : null}
             {historyRows.length === 0 ? (

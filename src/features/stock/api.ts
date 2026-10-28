@@ -19,6 +19,8 @@ export type AdjustmentLine = {
   qtyDelta: number
   enteredQty?: number | null
   uom?: string | null
+  /** Cost per standard unit, set on Opening stock lines only (spec 0029). */
+  unitCost?: number | null
 }
 
 export type StockAdjustment = Entity & {
@@ -29,6 +31,8 @@ export type StockAdjustment = Entity & {
   status: "posting" | "posted" | "failed" | "cancelling" | "cancelled"
   remarks?: string | null
   lines: AdjustmentLine[]
+  /** Opening stock only: the moving average cost step, claimed once (spec 0029). */
+  costStatus?: "applying" | "applied" | null
 }
 
 export type TransferLine = {
@@ -100,7 +104,8 @@ export const stockAdjustments = collection<StockAdjustment>("StockAdjustment", [
   "adjustedAt",
   "status",
   "remarks",
-  "lines { lineId productId sublocationId lotId serial qtyDelta enteredQty uom }",
+  "costStatus",
+  "lines { lineId productId sublocationId lotId serial qtyDelta enteredQty uom unitCost }",
 ])
 
 export const stockTransfers = collection<StockTransfer>("StockTransfer", [
